@@ -1,7 +1,8 @@
 {
-  "margin-top": 5,
-  "margin-left": 10,
-  "margin-right": 10,
+  "margin-top": 0,
+  "margin-left": 0,
+  "margin-right": 0,
+  "height":30,
   "modules-left": [
     "hyprland/window"
   ],
@@ -12,15 +13,15 @@
     "tray",
     "pulseaudio",
     // "network",
-    // "temperature",
+    "temperature",
     "battery",
     "clock",
   ],
   "hyprland/window": {
     "format": "{}",
-    "max-length": 45,
+    "max-length": 30,
     "rewrite": {
-      "": "blank"
+      "": "Chit"
     },
     "separate-outputs": true,
   },
@@ -28,7 +29,7 @@
     "format": "{icon}",
     "on-click": "activate",
     "format-icons": {
-      "active": " ",
+      "active": "",
     },
     "sort-by-number": true,
     "persistent-workspaces": {
@@ -48,12 +49,14 @@
     "format": "{}%  "
   },
   "temperature": {
-    "critical-threshold": 80,
-    "format": "{icon} {temperatureC}°C",
+    "critical-threshold": 90,
+    "warning-threshold": 70,
+    "format": "{icon} CPU:{temperatureC}°C",
+    "hwmon-path":"/sys/class/hwmon/hwmon5/temp1_input",
     "format-icons": [
-      "",
+      "",
       "",
-      ""
+      ""
     ]
   },
   "battery": {

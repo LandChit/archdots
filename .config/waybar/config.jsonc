@@ -12,7 +12,6 @@
   "modules-right": [
     "tray",
     "pulseaudio",
-    // "network",
     "temperature",
     "battery",
     "clock",

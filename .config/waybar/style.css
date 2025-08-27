@@ -19,7 +19,7 @@
 }
 
 #workspaces,#window,#clock,#temperature,#pulseaudio,#battery{
-  background-color: rgba(15,27,53,0.9);
+  background-color: rgba(0, 0, 0, 0.5);
   padding: 4px 7px;
   border-radius: 10px;
   border-width: 0px;

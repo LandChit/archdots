@@ -1,5 +1,5 @@
 window {
-        background-color: rgba(113, 145, 187, 0.973);
+        background-color: rgba(0, 0, 0, 0.5);
 		border-radius: 10px;
 }
 
@@ -12,11 +12,10 @@ window {
 
 /* Inner bar container, surrounds buttons */
 #inner-box {
-	background-color: rgb(0, 52, 82);
+	/* background-color: rgba(0, 52, 82, 0.5); */
 	border-radius: 10px;
 	border-style: none;
 	border-width: 1px;
-	border-color: rgba (156, 142, 122, 0.7);
 	padding: 5px;
 	margin: 5px
 }

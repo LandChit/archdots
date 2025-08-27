@@ -1,4 +1,3 @@
-# Created by newuser for 5.9
 
 export ANDROID_HOME=~/Android/Sdk
 export PATH=$PATH:$ANDROID_HOME/emulator
@@ -10,6 +9,12 @@ export PATH=$/usr/lib/flutter/bin:$PATH
 
 alias protontricks='flatpak run com.github.Matoking.protontricks'
 alias protontricks-launch='flatpak run --command=protontricks-launch com.github.Matoking.protontricks'
+
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="foxmod"
+plugins=(git)
+
+source $ZSH/oh-my-zsh.sh
 
 
 #

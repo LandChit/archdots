@@ -2,7 +2,7 @@ window {
     font-size: 15px;
     font-family: "Jetbrainsmono NF";
     background-color: rgba(31, 31, 31, 0.99);
-    border-radius: 15px;
+    border-radius: 5px;
     overflow: hidden;
 }
 
@@ -16,7 +16,7 @@ window {
     background-color: #ff5784;
     /* background: linear-gradient(45deg, rgba(144,205,250,0.7) 0%, rgba(182,155,241,0.7) 60%); */
     color: #ffffff;
-    border-radius: 10px;
+    border-radius: 5px;
 }
 
 #expander-box {
@@ -30,14 +30,16 @@ window {
 
 #input{
     background-color: rgb(21, 21, 24);
-    border-radius: 15px;
-   
+    border-radius: 5px;
+    box-sizing: border-box;
+
     font-size: 20px;
     font-weight: 500;
     color: rgb(255, 255, 255);
-    padding: 5px;
+    padding: 2px;
     box-shadow: none; 
-    border: none;
+    border: #ff5784 solid 2px;
+    margin:10px;
 }
 
 #input:focus{

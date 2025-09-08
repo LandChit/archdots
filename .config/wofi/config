@@ -2,8 +2,8 @@ width=500px
 
 hide_scroll = true
 allow_images = true
-image_size = 25
-prompt=Search...
+image_size = 17
+prompt=What do you want?
 normal_window = false
 
 matching=fuzzy

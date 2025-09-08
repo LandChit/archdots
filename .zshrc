@@ -1,4 +1,10 @@
 
+# Other
+export EDITOR=nano
+
+alias py=python
+
+# Development
 export ANDROID_HOME=~/Android/Sdk
 export PATH=$PATH:$ANDROID_HOME/emulator
 export PATH=$PATH:$ANDROID_HOME/tools
@@ -7,9 +13,12 @@ export PATH=$PATH:$ANDROID_HOME/platform-tools
 
 export PATH=$/usr/lib/flutter/bin:$PATH
 
+# Gaming
 alias protontricks='flatpak run com.github.Matoking.protontricks'
 alias protontricks-launch='flatpak run --command=protontricks-launch com.github.Matoking.protontricks'
 
+
+# oh my zsh
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="foxmod"
 plugins=(git)

@@ -12,6 +12,8 @@ export PATH=$PATH:$ANDROID_HOME/tools/bin
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 
 export PATH=$/usr/lib/flutter/bin:$PATH
+export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=lcd -Dswing.aatext=true' 
+
 
 # Gaming
 alias protontricks='flatpak run com.github.Matoking.protontricks'

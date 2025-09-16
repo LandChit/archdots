@@ -1,0 +1,80 @@
+
+
+configuration {
+    font: "Jetbrainsmono NF 12";
+}
+
+
+* {
+    background-color: #1F1F1Ffc;
+    text-color: #ffffff;
+}
+
+
+window {
+    border: 0px;
+    padding: 0px;
+    margin: 0px;
+    border-radius: 0px;
+    width: 500px;
+    height: 615px;
+}
+
+
+inputbar {
+    children: [ entry ];
+    border-radius: 5px;
+    border-color: #ff5784;
+    border: 2px;
+    padding: 0px;
+    margin: 0px;
+    font: "Jetbrainsmono NF 25";
+    text-color: #ffffff;
+    
+}
+
+
+entry {
+    text-color: #ffffff;
+    padding: 5px 5px;   
+}
+
+
+
+
+listview {
+    scrollbar: false;
+}
+
+element normal.normal, element.alternate.normal{
+  background-color: inherit;
+  text-color: #ffffff;
+}
+
+element {
+    children: [element-icon, element-text];
+    padding: 5px 5px;
+    margin: 5px 5px;
+    border-radius: 5px;
+
+}
+
+element.selected.normal {
+    background-color: #ff5784;
+    text-color: #ffffff;
+    border-radius: 5px;
+}
+
+element-text {
+    text-color: inherit;
+}
+
+element-icon {
+    size: 20px;
+    padding: 0px 10px 0px 20px;
+    background-color:inherit;
+}
+
+mainbox{
+    border-radius: 0px;
+}

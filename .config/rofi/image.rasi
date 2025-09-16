@@ -1,0 +1,18 @@
+
+@theme "config"
+
+element {
+    children: [element-text, element-icon];
+}
+
+element-text {
+    text-color: inherit;
+    background-color: inherit;
+}
+
+element-icon {
+    size: 50px;
+    margin:0;
+    padding: 0px;
+    background-color:inherit;
+}

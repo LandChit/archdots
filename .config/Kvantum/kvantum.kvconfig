@@ -1,0 +1,5 @@
+[General]
+theme=KvGlass
+
+[Applications]
+KvGlass=dolphin

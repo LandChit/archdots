@@ -18,6 +18,8 @@ window {
     border-radius: 0px;
     width: 500px;
     height: 615px;
+    border-radius: 5px;
+    background-color: rgba(0,0,0,0.99);
 }
 
 

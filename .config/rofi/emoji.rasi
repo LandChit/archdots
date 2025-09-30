@@ -1,0 +1,11 @@
+
+@theme "config"
+
+element {
+    children: [element-text];
+}
+
+element-text {
+    text-color: inherit;
+    background-color: inherit;
+}

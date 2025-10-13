@@ -1,13 +1,12 @@
 window {
-        background-color: rgba(0, 0, 0, 0.5);
-		border-radius: 10px;
+	background-color: rgba(0, 0, 0, 0.328);
+	border-radius: 10px;
 }
 
 /* Outer bar container, takes all the window width/height */
 #outer-box {
 	/* margin: 0px;
 	border-radius:10px; */
-
 }
 
 /* Inner bar container, surrounds buttons */
@@ -16,11 +15,12 @@ window {
 	border-radius: 10px;
 	border-style: none;
 	border-width: 1px;
-	padding: 5px;
-	margin: 5px
+	/* padding: 5px; */
+	/* margin: 5px */
 }
 
-button, image {
+button,
+image {
 	background: none;
 	border: none;
 	box-shadow: none

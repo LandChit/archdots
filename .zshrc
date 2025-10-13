@@ -22,7 +22,9 @@ alias protontricks-launch='flatpak run --command=protontricks-launch com.github.
 
 # oh my zsh
 export ZSH="$HOME/.oh-my-zsh"
+export ZSH_CUSTOM=~/.zsh_custom
 ZSH_THEME="fino"
+
 plugins=(git zsh-syntax-highlighting)
 
 source $ZSH/oh-my-zsh.sh

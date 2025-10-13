@@ -18,9 +18,9 @@
   ],
   "hyprland/window": {
     "format": "{}",
-    "max-length": 30,
+    "max-length": 20,
     "rewrite": {
-      "": "Chit"
+      "": "Desktop"
     },
     "separate-outputs": true,
   },
@@ -76,19 +76,6 @@
       ""
     ],
     "interval": 5,
-  },
-  "network": {
-    "format": "{ifname}",
-    "format-wifi": "  {signalStrength}%  {bandwidthDownBytes}  {bandwidthUpBytes} ",
-    "format-ethernet": "   {bandwidthDownBytes}  {bandwidthUpBytes} ",
-    "format-disconnected": "Not connected",
-    "tooltip-format": "  {ifname} via {gwaddri}",
-    "tooltip-format-wifi": "   {essid} ({signalStrength}%)",
-    "tooltip-format-ethernet": "  {ifname} ({ipaddr}/{cidr})",
-    "tooltip-format-disconnected": "Disconnected",
-    "max-length": 50,
-    "interval": 1,
-    "on-click": "nm-connection-editor"
   },
   "pulseaudio": {
     "format": "{icon}  {volume}%",

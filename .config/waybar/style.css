@@ -18,14 +18,14 @@
   border-width: 0px;
 }
 
-#workspaces,#window,#clock,#temperature,#pulseaudio,#battery{
+#workspaces,#window,#clock,#temperature,#pulseaudio,#battery, #tray{
   background-color: rgba(0, 0, 0, 0.5);
   padding: 4px 7px;
   border-radius: 10px;
   border-width: 0px;
 }
 
-#tray,#clock,#temperature,#pulseaudio,#battery{
+#clock,#temperature,#pulseaudio,#battery{
   margin-left: 5px;
 }
 

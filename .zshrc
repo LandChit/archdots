@@ -1,3 +1,5 @@
+# your custom zshconfig
+source .zsh_custom
 
 # Other
 export EDITOR=nano
@@ -22,7 +24,7 @@ alias protontricks-launch='flatpak run --command=protontricks-launch com.github.
 
 # oh my zsh
 export ZSH="$HOME/.oh-my-zsh"
-ZSH_CUSTOM=~/.zsh_custom
+ZSH_CUSTOM=~/.ohmyzsh_custom
 ZSH_THEME="fino"
 
 plugins=(git zsh-syntax-highlighting)

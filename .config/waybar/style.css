@@ -25,18 +25,27 @@
   border-width: 0px;
 }
 
+#workspaces{
+  margin-right: 5px;
+  margin-left: 5px;
+}
+
+#tray{
+  background-color: rgba(255, 87, 132, 0.783);
+}
+
 #clock,#temperature,#pulseaudio,#battery{
   margin-left: 5px;
 }
 
 #workspaces button:hover{
-  background-color: rgba(97, 175, 239, 0.2);
+  background-color: rgba(255, 87, 132, 0.444);
   padding: 2px 8px;
   border-radius: 10px;
 }
 
 #workspaces button.active {
-  color: #ffffff;
+  color: rgb(253, 127, 161);
   padding: 2px 8px;
   border-radius: 10px;
 }
@@ -45,7 +54,11 @@
 #workspaces button {
   background: transparent;
   border: none;
-  color: #888888;
+  color: #a5a5a5;
   padding: 2px 8px;
   font-weight: bold;
+}
+
+#temperature.critical {
+  color: #ff5858;
 }

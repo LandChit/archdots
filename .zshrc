@@ -1,10 +1,10 @@
 # your custom zshconfig (Add this to your home directory)
-source .zsh_custom 
+source ~/.zsh_custom 
 
 # Other
 export EDITOR=nano
-
 alias py=python
+alias ssh="TERM=xterm-256color ssh"
 
 # Development
 export ANDROID_HOME=~/Android/Sdk

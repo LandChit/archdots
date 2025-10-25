@@ -109,6 +109,7 @@ visual-studio-code-bin
 ```
 com.github.tchx84.Flatseal
 io.missioncenter.MissionCenter
+com.interversehq.qView
 ```
 ## Additional
 ```

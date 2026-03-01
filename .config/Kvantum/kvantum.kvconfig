@@ -2,4 +2,6 @@
 theme=KvGlass
 
 [Applications]
+Default=freecad
+KvAdaptaDark=freecad
 KvGlass=dolphin

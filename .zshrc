@@ -6,14 +6,6 @@ export EDITOR=nano
 alias py=python
 alias ssh="TERM=xterm-256color ssh"
 
-# Development
-export ANDROID_HOME=~/Android/Sdk
-export PATH=$PATH:$ANDROID_HOME/emulator
-export PATH=$PATH:$ANDROID_HOME/tools
-export PATH=$PATH:$ANDROID_HOME/tools/bin
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-
-export PATH=$/usr/lib/flutter/bin:$PATH
 export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=lcd -Dswing.aatext=true' 
 
 
@@ -96,3 +88,4 @@ alias ls="eza --icons=always --color=always --git --no-time --no-user --no-permi
 eval "$(zoxide init zsh)"
 
 alias cd="z"
+alias cat="bat"

@@ -28,7 +28,7 @@ View Style=DetailTree
 [PreviewSettings]
 EnableRemoteFolderThumbnail=false
 MaximumRemoteSize=1048576000
-MaximumSize=1048576000
+MaximumSize=104857600000
 
 [UiSettings]
 ColorScheme=KvGlass

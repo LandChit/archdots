@@ -19,6 +19,15 @@ hl.bind(mainMod .. "+ B", hl.dsp.exec_cmd(browser))
 hl.bind("CONTROL + SHIFT + ESCAPE", hl.dsp.exec_cmd(processManager))
 hl.bind(mainMod .. "+ ESCAPE", hl.dsp.exec_cmd(powerMenu))
 
+-- ScreenShot
+local region_ss =
+"sh -c 'REGION=$(slurp) || exit; grim -g \"$REGION\" - | wl-copy &&  wl-paste > ~/Pictures/screenshots/Screenshot-$(date +%F_%T).png && dunstify \"Screenshot of the region taken\" -t 2000'"
+hl.bind(mainMod .. "+ SHIFT + S", hl.dsp.exec_cmd(region_ss))
+hl.bind("PRINT", hl.dsp.exec_cmd(region_ss))
+hl.bind("SHIFT + PRINT",
+    hl.dsp.exec_cmd(
+        "grim - | wl-copy && wl-paste > ~/Pictures/screenshots/Screenshot-$(date +%F_%T).png && dunstify \"Screenshot of the whole screen taken\" -t 2000"))
+
 -- Launcher and tools
 hl.bind(mainMod .. "+ SPACE",
     hl.dsp.exec_cmd("pgrep -x " ..
@@ -44,6 +53,11 @@ hl.bind(mainMod .. "+ P", hl.dsp.window.resize({ x = 10, y = 0, relative = true 
 hl.bind(mainMod .. "+ U", hl.dsp.window.resize({ x = -10, y = 0, relative = true }), { repeating = true })
 hl.bind(mainMod .. "+ O", hl.dsp.window.resize({ y = 10, x = 0, relative = true }), { repeating = true })
 hl.bind(mainMod .. "+ I", hl.dsp.window.resize({ y = -10, x = 0, relative = true }), { repeating = true })
+
+hl.bind(mainMod .. "+ T", hl.dsp.window.float())
+
+
+hl.bind(mainMod .. "+ F", hl.dsp.window.fullscreen())
 
 for i = 1, 10 do
     local key = i % 10 -- 10 maps to key 0

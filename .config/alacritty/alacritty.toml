@@ -1,0 +1,32 @@
+import = ["~/.cache/wal/colors-alacritty.toml"]
+
+[shell]
+program = "/bin/zsh"
+
+[font]
+size = 17.0
+
+[font.normal]
+family = "JetBrainsMono NF"
+style = "Regular"
+
+[font.bold]
+family = "JetBrainsMono NF"
+style = "Bold"
+
+[font.italic]
+family = "JetBrainsMono NF"
+style = "Italic"
+
+[window]
+dimensions = { columns = 120, lines = 35 }
+opacity = 1.0
+decorations = "None"
+
+[keyboard]
+bindings = [
+  { key = "Equal",  mods = "Control", action = "IncreaseFontSize" },
+  { key = "Plus",   mods = "Control", action = "IncreaseFontSize" },
+  { key = "Minus",  mods = "Control", action = "DecreaseFontSize" },
+  { key = "Key0",   mods = "Control", action = "ResetFontSize" },
+]

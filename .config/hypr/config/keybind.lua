@@ -1,13 +1,8 @@
 -- Variables
-local terminal = "foot"
+local terminal = "alacritty"
 local filemanager = "dolphin"
-local menu = "rofi"
 local browser = "zen-browser"
-local emojiManager = menu .. " -modi emoji -show emoji -emoji-mode copy -theme ~/.config/rofi/emoji.rasi"
-local clipboardManager = menu ..
-    " -modi clipboard:~/.config/hypr/Scripts/rofi_image -show clipboard -show-icons -theme ~/.config/rofi/image.rasi"
 local processManager = "flatpak run io.missioncenter.MissionCenter"
-local powerMenu = "nwg-bar"
 
 local mainMod = "SUPER"
 
@@ -17,7 +12,7 @@ hl.bind(mainMod .. "+ RETURN", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. "+ E", hl.dsp.exec_cmd(filemanager))
 hl.bind(mainMod .. "+ B", hl.dsp.exec_cmd(browser))
 hl.bind("CONTROL + SHIFT + ESCAPE", hl.dsp.exec_cmd(processManager))
-hl.bind(mainMod .. "+ ESCAPE", hl.dsp.exec_cmd(powerMenu))
+hl.bind(mainMod .. "+ ESCAPE", hl.dsp.exec_cmd("echo powermenu > /tmp/qs-ipc"))
 
 -- ScreenShot
 local region_ss =
@@ -29,11 +24,9 @@ hl.bind("SHIFT + PRINT",
         "grim - | wl-copy && wl-paste > ~/Pictures/screenshots/Screenshot-$(date +%F_%T).png && dunstify \"Screenshot of the whole screen taken\" -t 2000"))
 
 -- Launcher and tools
-hl.bind(mainMod .. "+ SPACE",
-    hl.dsp.exec_cmd("pgrep -x " ..
-        menu .. " >/dev/null 2>&1 && killall " .. menu .. " || " .. menu .. " --dmenu -show drun"))
-hl.bind(mainMod .. "+ PERIOD", hl.dsp.exec_cmd(emojiManager))
-hl.bind(mainMod .. "+ V", hl.dsp.exec_cmd(clipboardManager))
+hl.bind(mainMod .. "+ SPACE",  hl.dsp.exec_cmd("echo launcher  > /tmp/qs-ipc"))
+hl.bind(mainMod .. "+ PERIOD", hl.dsp.exec_cmd("echo emoji     > /tmp/qs-ipc"))
+hl.bind(mainMod .. "+ V",      hl.dsp.exec_cmd("echo clipboard > /tmp/qs-ipc"))
 
 -- Other
 hl.bind(mainMod .. "+ SHIFT + Q", hl.dsp.window.close())

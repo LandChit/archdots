@@ -1,0 +1,175 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1779285340482,
+  "projectRoot": "/home/chit/archdots",
+  "techStack": {
+    "languages": [],
+    "frameworks": [],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "kvantum": {
+      "path": "kvantum",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1779285340475,
+      "keyFiles": []
+    },
+    "wallpapers": {
+      "path": "wallpapers",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1779285340479,
+      "keyFiles": [
+        "mountains.jpg"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": ".config/hypr/config/keybind.lua",
+      "accessCount": 7,
+      "lastAccessed": 1779296435769,
+      "type": "file"
+    },
+    {
+      "path": ".config/dunst/dunstrc",
+      "accessCount": 5,
+      "lastAccessed": 1779285880775,
+      "type": "file"
+    },
+    {
+      "path": ".config/hypr/config/autorun.lua",
+      "accessCount": 4,
+      "lastAccessed": 1779296421157,
+      "type": "file"
+    },
+    {
+      "path": ".config/waybar/style.css",
+      "accessCount": 2,
+      "lastAccessed": 1779285858295,
+      "type": "file"
+    },
+    {
+      "path": ".config/rofi/config.rasi",
+      "accessCount": 2,
+      "lastAccessed": 1779285861994,
+      "type": "file"
+    },
+    {
+      "path": ".config/alacritty/alacritty.toml",
+      "accessCount": 2,
+      "lastAccessed": 1779295643113,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/shell.qml",
+      "accessCount": 2,
+      "lastAccessed": 1779295786542,
+      "type": "file"
+    },
+    {
+      "path": ".config/foot/foot.ini",
+      "accessCount": 1,
+      "lastAccessed": 1779285563922,
+      "type": "file"
+    },
+    {
+      "path": ".config/hypr/config/theme.lua",
+      "accessCount": 1,
+      "lastAccessed": 1779285569498,
+      "type": "file"
+    },
+    {
+      "path": ".config/waybar/config.jsonc",
+      "accessCount": 1,
+      "lastAccessed": 1779285681641,
+      "type": "file"
+    },
+    {
+      "path": ".config/wal/templates/dunstrc",
+      "accessCount": 1,
+      "lastAccessed": 1779285808427,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/qmldir",
+      "accessCount": 1,
+      "lastAccessed": 1779295720176,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/Palette.qml",
+      "accessCount": 1,
+      "lastAccessed": 1779295726950,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/Bar.qml",
+      "accessCount": 1,
+      "lastAccessed": 1779295804306,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/AppLauncher.qml",
+      "accessCount": 1,
+      "lastAccessed": 1779296195836,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/PowerMenu.qml",
+      "accessCount": 1,
+      "lastAccessed": 1779296205511,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/EmojiPicker.qml",
+      "accessCount": 1,
+      "lastAccessed": 1779296339711,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/ClipboardMenu.qml",
+      "accessCount": 1,
+      "lastAccessed": 1779296358053,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/NotificationPopup.qml",
+      "accessCount": 1,
+      "lastAccessed": 1779296370273,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/scripts/clipboard-paste.sh",
+      "accessCount": 1,
+      "lastAccessed": 1779296375816,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

@@ -1,6 +1,5 @@
-import = ["~/.cache/wal/colors-alacritty.toml"]
 
-[shell]
+[terminal.shell]
 program = "/bin/zsh"
 
 [font]
@@ -25,8 +24,13 @@ decorations = "None"
 
 [keyboard]
 bindings = [
-  { key = "Equal",  mods = "Control", action = "IncreaseFontSize" },
-  { key = "Plus",   mods = "Control", action = "IncreaseFontSize" },
-  { key = "Minus",  mods = "Control", action = "DecreaseFontSize" },
+  { key = "=",  mods = "Control", action = "IncreaseFontSize" },
+  { key = "+",   mods = "Control", action = "IncreaseFontSize" },
+  { key = "-",  mods = "Control", action = "DecreaseFontSize" },
   { key = "Key0",   mods = "Control", action = "ResetFontSize" },
 ]
+
+[general]
+import = ["~/.cache/wal/colors-alacritty.toml"]
+
+[terminal]

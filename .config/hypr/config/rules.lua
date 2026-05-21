@@ -122,3 +122,24 @@ hl.window_rule({
     tile = true,
     workspace = "4",
 })
+
+
+-- hl.window_rule({
+--     name = "Bitwarden",
+--     match = {
+--         -- class = "zen",
+--         -- initial_title = "Zen Browser",
+--         title = "^Extension:.*"
+--     },
+--     float = true
+-- })
+
+-- Layer rules
+hl.layer_rule(
+    {
+        name = "fabric",
+        match = { namespace = "fabric*" },
+        blur = true,
+        ignore_alpha = 0,
+    }
+)

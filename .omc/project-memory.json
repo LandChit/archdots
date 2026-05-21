@@ -51,9 +51,45 @@
   },
   "hotPaths": [
     {
+      "path": ".config/quickshell/AppLauncher.qml",
+      "accessCount": 9,
+      "lastAccessed": 1779325870928,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/PowerMenu.qml",
+      "accessCount": 8,
+      "lastAccessed": 1779327304240,
+      "type": "file"
+    },
+    {
       "path": ".config/hypr/config/keybind.lua",
       "accessCount": 7,
       "lastAccessed": 1779296435769,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/ClipboardMenu.qml",
+      "accessCount": 7,
+      "lastAccessed": 1779325872937,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/EmojiPicker.qml",
+      "accessCount": 6,
+      "lastAccessed": 1779325874414,
+      "type": "file"
+    },
+    {
+      "path": ".config/hypr/config/autorun.lua",
+      "accessCount": 6,
+      "lastAccessed": 1779326329478,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/Bar.qml",
+      "accessCount": 6,
+      "lastAccessed": 1779327258308,
       "type": "file"
     },
     {
@@ -63,9 +99,15 @@
       "type": "file"
     },
     {
-      "path": ".config/hypr/config/autorun.lua",
+      "path": ".config/quickshell/qmldir",
       "accessCount": 4,
-      "lastAccessed": 1779296421157,
+      "lastAccessed": 1779326308070,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/shell.qml",
+      "accessCount": 4,
+      "lastAccessed": 1779326315093,
       "type": "file"
     },
     {
@@ -87,9 +129,15 @@
       "type": "file"
     },
     {
-      "path": ".config/quickshell/shell.qml",
+      "path": ".config/quickshell/NotificationPopup.qml",
       "accessCount": 2,
-      "lastAccessed": 1779295786542,
+      "lastAccessed": 1779326022448,
+      "type": "file"
+    },
+    {
+      "path": ".config/quickshell/Palette.qml",
+      "accessCount": 2,
+      "lastAccessed": 1779327007917,
       "type": "file"
     },
     {
@@ -114,54 +162,6 @@
       "path": ".config/wal/templates/dunstrc",
       "accessCount": 1,
       "lastAccessed": 1779285808427,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/qmldir",
-      "accessCount": 1,
-      "lastAccessed": 1779295720176,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/Palette.qml",
-      "accessCount": 1,
-      "lastAccessed": 1779295726950,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/Bar.qml",
-      "accessCount": 1,
-      "lastAccessed": 1779295804306,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/AppLauncher.qml",
-      "accessCount": 1,
-      "lastAccessed": 1779296195836,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/PowerMenu.qml",
-      "accessCount": 1,
-      "lastAccessed": 1779296205511,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/EmojiPicker.qml",
-      "accessCount": 1,
-      "lastAccessed": 1779296339711,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/ClipboardMenu.qml",
-      "accessCount": 1,
-      "lastAccessed": 1779296358053,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/NotificationPopup.qml",
-      "accessCount": 1,
-      "lastAccessed": 1779296370273,
       "type": "file"
     },
     {

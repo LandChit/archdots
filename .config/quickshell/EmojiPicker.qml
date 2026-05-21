@@ -5,12 +5,13 @@ import Quickshell.Wayland
 import Quickshell.Io
 import "./"
 
-FloatingWindow {
+PanelWindow {
     id: root
     visible: false
+    exclusiveZone: 0
 
-    WlrLayerShell.layer: WlrLayerShell.Layer.Overlay
-    WlrLayerShell.keyboardFocus: WlrLayerShell.KeyboardFocus.Exclusive
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     anchors { top: true; bottom: true; left: true; right: true }
     color: "transparent"
 

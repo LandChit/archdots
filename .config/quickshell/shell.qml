@@ -22,9 +22,6 @@ ShellRoot {
     ClipboardMenu { id: clipMenu }
     PowerMenu     { id: powerMenu }
 
-    // ── notification manager ──────────────────────────────────────
-    NotificationPopup {}
-
     // ── FIFO IPC: keybinds write to /tmp/qs-ipc to toggle popups ──
     // Usage: exec, echo launcher > /tmp/qs-ipc
     Process {

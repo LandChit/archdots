@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rm /home/chit/archdots/.config/quickshell/clipboard-paste.sh && echo \\\"cleaned\\\"\",\"description\":\"Remove duplicate clipboard-paste.sh from quickshell root\"}",
-  "error": "Exit code 1\nrm: cannot remove '/home/chit/archdots/.config/quickshell/clipboard-paste.sh': No such file or directory",
-  "timestamp": "2026-05-20T17:01:22.419Z",
-  "retry_count": 1
-}

@@ -5,12 +5,13 @@ import Quickshell.Wayland
 import Quickshell.Io
 import "./"
 
-FloatingWindow {
+PanelWindow {
     id: root
     visible: false
+    exclusiveZone: 0
 
-    WlrLayerShell.layer: WlrLayerShell.Layer.Overlay
-    WlrLayerShell.keyboardFocus: WlrLayerShell.KeyboardFocus.OnDemand
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     anchors { top: true; bottom: true; left: true; right: true }
     color: "transparent"
 
@@ -43,8 +44,8 @@ FloatingWindow {
                     delegate: Rectangle {
                         required property var modelData
                         width: 60; height: 72
-                        radius: Palette.radius
-                        color: hov ? Palette.surface : "transparent"
+                        radius: Palette?.radius ?? 8
+                        color: hov ? Qt.rgba(1, 1, 1, 0.10) : "transparent"
                         property bool hov: false
 
                         Column {
@@ -53,14 +54,14 @@ FloatingWindow {
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: modelData.icon
-                                color: parent.parent.hov ? Palette.accent : Palette.fg
-                                font { family: Palette.font; pixelSize: 24 }
+                                color: parent.parent.hov ? (Palette?.accent ?? "#f38ba8") : (Palette?.fg ?? "#cdd6f4")
+                                font { family: Palette?.font ?? "monospace"; pixelSize: 24 }
                             }
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: modelData.label
-                                color: Palette.muted
-                                font { family: Palette.font; pixelSize: 10 }
+                                color: Palette?.muted ?? "#888888"
+                                font { family: Palette?.font ?? "monospace"; pixelSize: 10 }
                             }
                         }
 

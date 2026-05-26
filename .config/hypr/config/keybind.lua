@@ -12,7 +12,6 @@ hl.bind(mainMod .. "+ RETURN", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. "+ E", hl.dsp.exec_cmd(filemanager))
 hl.bind(mainMod .. "+ B", hl.dsp.exec_cmd(browser))
 hl.bind("CONTROL + SHIFT + ESCAPE", hl.dsp.exec_cmd(processManager))
-hl.bind(mainMod .. "+ ESCAPE", hl.dsp.exec_cmd("echo powermenu > /tmp/qs-ipc"))
 
 -- ScreenShot
 local region_ss =
@@ -27,6 +26,7 @@ hl.bind("SHIFT + PRINT",
 -- hl.bind(mainMod .. "+ SPACE", hl.dsp.exec_cmd("echo launcher  > /tmp/qs-ipc"))
 -- hl.bind(mainMod .. "+ PERIOD", hl.dsp.exec_cmd("echo emoji     > /tmp/qs-ipc"))
 -- hl.bind(mainMod .. "+ V", hl.dsp.exec_cmd("echo clipboard > /tmp/qs-ipc"))
+-- hl.bind(mainMod .. "+ ESCAPE", hl.dsp.exec_cmd("echo powermenu > /tmp/qs-ipc"))
 
 hl.bind(mainMod .. "+ SPACE",
     hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/launcher.py &"))
@@ -34,7 +34,8 @@ hl.bind(mainMod .. "+ PERIOD",
     hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/emoji.py &"))
 hl.bind(mainMod .. "+ V",
     hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/clipboard.py &"))
-
+hl.bind(mainMod .. "+ ESCAPE",
+    hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/powermenu.py &"))
 
 
 -- Other

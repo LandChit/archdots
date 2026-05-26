@@ -1,8 +1,25 @@
+import json
 import os
 import re
 import shlex
 import subprocess
 from urllib.parse import quote_plus
+
+COUNTS_PATH = os.path.expanduser("~/.local/share/fabric-launcher/counts.json")
+
+
+def _load_counts() -> dict[str, int]:
+    try:
+        with open(COUNTS_PATH) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def _save_counts(counts: dict[str, int]) -> None:
+    os.makedirs(os.path.dirname(COUNTS_PATH), exist_ok=True)
+    with open(COUNTS_PATH, "w") as f:
+        json.dump(counts, f, indent=2)
 
 from fabric import Application
 from fabric.widgets.scrolledwindow import ScrolledWindow
@@ -45,7 +62,11 @@ class Launcher(Window):
         self.set_size_request(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.set_resizable(False)
 
-        self._apps = sorted(get_desktop_applications(), key=lambda app: app.name)
+        self._counts = _load_counts()
+        self._apps = sorted(
+            get_desktop_applications(),
+            key=lambda app: (-self._counts.get(app.name, 0), app.name.casefold()),
+        )
         self._items: list[Button] = []
         self._selected_index: int | None = None
 
@@ -222,7 +243,8 @@ class Launcher(Window):
 
         button = Button(child=content, style_classes="app-button")
         button._launch_action = launch_fn  # type: ignore[attr-defined]
-        button.connect("clicked", lambda *_: self._launch_and_close(launch_fn))
+        button._app_id = app.name  # type: ignore[attr-defined]
+        button.connect("clicked", lambda *_, fn=launch_fn, aid=app.name: self._launch_and_close(fn, aid))
         return button
 
     def _build_web_search_item(self, query: str):
@@ -334,10 +356,14 @@ class Launcher(Window):
             return
         button = self._items[self._selected_index]
         action = getattr(button, "_launch_action", None)
+        app_id = getattr(button, "_app_id", None)
         if action is not None:
-            self._launch_and_close(action)
+            self._launch_and_close(action, app_id)
 
-    def _launch_and_close(self, launcher):
+    def _launch_and_close(self, launcher, app_id: str | None = None):
+        if app_id:
+            self._counts[app_id] = self._counts.get(app_id, 0) + 1
+            _save_counts(self._counts)
         launcher()
         app = getattr(self, "_app_ref", None) or self.get_application()
         if app is not None:

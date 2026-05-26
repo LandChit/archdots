@@ -1,0 +1,97 @@
+@import url("style.css");
+
+
+@keyframes window-open {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes content-slide {
+    from { margin-top: -16px; }
+    to   { margin-top: 0px; }
+}
+
+.powermenu-window {
+    background-color: transparent;
+    animation: window-open 180ms ease-out;
+}
+
+.powermenu-root {
+    padding: 40px;
+    animation: content-slide 200ms ease-out;
+}
+
+.powermenu-row {
+    padding: 8px;
+}
+
+/* ── action card ─────────────────────────────────────────────────── */
+
+.powermenu-btn {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+}
+
+.powermenu-btn > * {
+    margin-bottom: 0;
+}
+
+.powermenu-btn:focus,
+.powermenu-btn:focus-visible,
+.powermenu-btn:active {
+    outline: none;
+    box-shadow: none;
+}
+
+.powermenu-card {
+    padding: 24px 20px 16px 20px;
+    border-radius: 20px;
+    background-color: var(--color1);
+    border: 1px solid var(--color3);
+    min-width: 110px;
+    min-height: 110px;
+}
+
+.powermenu-btn:hover .powermenu-card {
+    background-color: var(--color2);
+    border-color: var(--color5);
+}
+
+.powermenu-card.powermenu-selected {
+    background-color: var(--color2);
+    border-color: var(--color7);
+    box-shadow: 0 0 0 2px var(--color7);
+}
+
+.powermenu-card.shutdown.powermenu-selected {
+    border-color: #cc3333;
+    box-shadow: 0 0 0 2px #cc3333;
+}
+
+.powermenu-btn:hover .powermenu-card.shutdown {
+    border-color: #cc3333;
+}
+
+/* ── icon + label ────────────────────────────────────────────────── */
+
+.powermenu-icon {
+    font-size: 36px;
+    color: var(--foreground);
+}
+
+.powermenu-label {
+    font-size: 12px;
+    color: var(--foreground);
+    opacity: 0.85;
+}
+
+/* ── hint line ───────────────────────────────────────────────────── */
+
+.powermenu-hint {
+    font-size: 10px;
+    color: var(--foreground);
+    opacity: 0.4;
+}

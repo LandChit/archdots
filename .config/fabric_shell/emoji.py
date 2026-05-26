@@ -20,6 +20,22 @@ EMOJI_URL = "https://raw.githubusercontent.com/LandChit/unicode-emoji-json/refs/
 CACHE_DIR = os.path.expanduser("~/.cache/emoji-picker")
 CACHE_FILE = os.path.join(CACHE_DIR, "data-by-emoji.json")
 
+EMOJI_COUNTS_PATH = os.path.expanduser("~/.local/share/fabric-launcher/emoji-counts.json")
+
+
+def _load_emoji_counts() -> dict[str, int]:
+    try:
+        with open(EMOJI_COUNTS_PATH) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def _save_emoji_counts(counts: dict[str, int]) -> None:
+    os.makedirs(os.path.dirname(EMOJI_COUNTS_PATH), exist_ok=True)
+    with open(EMOJI_COUNTS_PATH, "w") as f:
+        json.dump(counts, f, indent=2)
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSS_DIR = os.path.join(BASE_DIR, "css")
 
@@ -110,7 +126,12 @@ class EmojiPicker(Window):
         self.set_size_request(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.set_resizable(False)
 
-        self._all_emojis: list[tuple[str, str, str]] = _load_emojis()
+        self._emoji_counts = _load_emoji_counts()
+        raw_emojis = _load_emojis()
+        self._all_emojis: list[tuple[str, str, str]] = sorted(
+            raw_emojis,
+            key=lambda e: (-self._emoji_counts.get(e[0], 0), e[1]),
+        )
         self._all_buttons: list[Button] = []
         self._visible_items: list[Button] = []
         self._selected_index: int | None = None
@@ -369,6 +390,8 @@ class EmojiPicker(Window):
         self._copy_and_close(char)
 
     def _copy_and_close(self, char: str):
+        self._emoji_counts[char] = self._emoji_counts.get(char, 0) + 1
+        _save_emoji_counts(self._emoji_counts)
         subprocess.run(["wl-copy"], input=char.encode("utf-8"), check=False)
         self._quit()
 

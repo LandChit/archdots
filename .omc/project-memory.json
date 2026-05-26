@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1779285340482,
+  "lastScanned": 1779783498472,
   "projectRoot": "/home/chit/archdots",
   "techStack": {
     "languages": [],
@@ -36,14 +36,14 @@
       "path": "kvantum",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1779285340475,
+      "lastAccessed": 1779783498468,
       "keyFiles": []
     },
     "wallpapers": {
       "path": "wallpapers",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1779285340479,
+      "lastAccessed": 1779783498469,
       "keyFiles": [
         "mountains.jpg"
       ]
@@ -51,123 +51,15 @@
   },
   "hotPaths": [
     {
-      "path": ".config/quickshell/AppLauncher.qml",
-      "accessCount": 9,
-      "lastAccessed": 1779325870928,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/PowerMenu.qml",
-      "accessCount": 8,
-      "lastAccessed": 1779327304240,
-      "type": "file"
-    },
-    {
-      "path": ".config/hypr/config/keybind.lua",
-      "accessCount": 7,
-      "lastAccessed": 1779296435769,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/ClipboardMenu.qml",
-      "accessCount": 7,
-      "lastAccessed": 1779325872937,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/EmojiPicker.qml",
-      "accessCount": 6,
-      "lastAccessed": 1779325874414,
+      "path": ".config/fabric_shell/bar.py",
+      "accessCount": 2,
+      "lastAccessed": 1779784561695,
       "type": "file"
     },
     {
       "path": ".config/hypr/config/autorun.lua",
-      "accessCount": 6,
-      "lastAccessed": 1779326329478,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/Bar.qml",
-      "accessCount": 6,
-      "lastAccessed": 1779327258308,
-      "type": "file"
-    },
-    {
-      "path": ".config/dunst/dunstrc",
-      "accessCount": 5,
-      "lastAccessed": 1779285880775,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/qmldir",
-      "accessCount": 4,
-      "lastAccessed": 1779326308070,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/shell.qml",
-      "accessCount": 4,
-      "lastAccessed": 1779326315093,
-      "type": "file"
-    },
-    {
-      "path": ".config/waybar/style.css",
-      "accessCount": 2,
-      "lastAccessed": 1779285858295,
-      "type": "file"
-    },
-    {
-      "path": ".config/rofi/config.rasi",
-      "accessCount": 2,
-      "lastAccessed": 1779285861994,
-      "type": "file"
-    },
-    {
-      "path": ".config/alacritty/alacritty.toml",
-      "accessCount": 2,
-      "lastAccessed": 1779295643113,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/NotificationPopup.qml",
-      "accessCount": 2,
-      "lastAccessed": 1779326022448,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/Palette.qml",
-      "accessCount": 2,
-      "lastAccessed": 1779327007917,
-      "type": "file"
-    },
-    {
-      "path": ".config/foot/foot.ini",
       "accessCount": 1,
-      "lastAccessed": 1779285563922,
-      "type": "file"
-    },
-    {
-      "path": ".config/hypr/config/theme.lua",
-      "accessCount": 1,
-      "lastAccessed": 1779285569498,
-      "type": "file"
-    },
-    {
-      "path": ".config/waybar/config.jsonc",
-      "accessCount": 1,
-      "lastAccessed": 1779285681641,
-      "type": "file"
-    },
-    {
-      "path": ".config/wal/templates/dunstrc",
-      "accessCount": 1,
-      "lastAccessed": 1779285808427,
-      "type": "file"
-    },
-    {
-      "path": ".config/quickshell/scripts/clipboard-paste.sh",
-      "accessCount": 1,
-      "lastAccessed": 1779296375816,
+      "lastAccessed": 1779784518183,
       "type": "file"
     }
   ],

@@ -1,0 +1,134 @@
+@import url("style.css");
+
+
+@keyframes window-open {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes content-slide {
+    from { margin-top: -12px; }
+    to   { margin-top: 0px; }
+}
+
+.window {
+    background-color: var(--color1);
+    color: var(--foreground);
+    margin: 0 50px 0 0;
+    border-radius: 0px 0px 10px 10px;
+    animation: window-open 160ms ease-out;
+}
+
+.launcher-root {
+    padding: 10px 10px 0px 10px;
+    animation: content-slide 200ms ease-out;
+}
+
+.search-row {
+    padding: 2px 5px;
+    border-radius: 18px;
+    background-color: var(--color0);
+    border: 1px solid var(--color2);
+    margin-bottom: 6px;
+}
+
+.search-entry {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 2px 2px;
+    color: var(--foreground);
+}
+
+.emoji-search-icon {
+    font-size: 16px;
+    padding: 0 2px;
+}
+
+.app-scroll {
+    background-color: transparent;
+}
+
+.app-scroll scrollbar,
+.app-scroll scrollbar slider {
+    opacity: 0;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* ── group filter column (right side) ───────────────────────────────── */
+
+.group-scroll {
+    background-color: transparent;
+}
+
+.group-scroll scrollbar,
+.group-scroll scrollbar slider {
+    opacity: 0;
+    min-width: 0;
+    min-height: 0;
+}
+
+.group-inner {
+    padding: 2px 4px;
+}
+
+.group-button {
+    background-color: transparent;
+    border: 1px solid var(--color3);
+    border-radius: 10px;
+    padding: 4px 6px;
+    font-size: 10px;
+    color: var(--foreground);
+    box-shadow: none;
+    min-height: 0;
+}
+
+.group-button:hover {
+    background-color: var(--color3);
+    border-color: var(--color4);
+}
+
+.group-button.group-active {
+    background-color: var(--color3);
+    border-color: var(--color7);
+    box-shadow: 0 0 0 1px var(--color7);
+}
+
+/* ── emoji grid ─────────────────────────────────────────────────────── */
+
+.emoji-grid {
+    padding: 2px;
+}
+
+.emoji-button {
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    box-shadow: none;
+    padding: 0;
+    min-width: 46px;
+    min-height: 46px;
+}
+
+.emoji-button:hover {
+    background-color: var(--color3);
+    border-color: var(--color4);
+}
+
+.emoji-button:focus,
+.emoji-button:focus-visible,
+.emoji-button:active {
+    outline: none;
+    box-shadow: none;
+}
+
+.emoji-button.emoji-selected {
+    background-color: var(--color2);
+    border-color: var(--color7);
+    box-shadow: 0 0 0 1px var(--color7);
+}
+
+.emoji-char {
+    font-size: 22px;
+}

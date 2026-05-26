@@ -24,9 +24,18 @@ hl.bind("SHIFT + PRINT",
         "grim - | wl-copy && wl-paste > ~/Pictures/screenshots/Screenshot-$(date +%F_%T).png && dunstify \"Screenshot of the whole screen taken\" -t 2000"))
 
 -- Launcher and tools
-hl.bind(mainMod .. "+ SPACE",  hl.dsp.exec_cmd("echo launcher  > /tmp/qs-ipc"))
-hl.bind(mainMod .. "+ PERIOD", hl.dsp.exec_cmd("echo emoji     > /tmp/qs-ipc"))
-hl.bind(mainMod .. "+ V",      hl.dsp.exec_cmd("echo clipboard > /tmp/qs-ipc"))
+-- hl.bind(mainMod .. "+ SPACE", hl.dsp.exec_cmd("echo launcher  > /tmp/qs-ipc"))
+-- hl.bind(mainMod .. "+ PERIOD", hl.dsp.exec_cmd("echo emoji     > /tmp/qs-ipc"))
+-- hl.bind(mainMod .. "+ V", hl.dsp.exec_cmd("echo clipboard > /tmp/qs-ipc"))
+
+hl.bind(mainMod .. "+ SPACE",
+    hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/launcher.py &"))
+hl.bind(mainMod .. "+ PERIOD",
+    hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/emoji.py &"))
+hl.bind(mainMod .. "+ V",
+    hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/clipboard.py &"))
+
+
 
 -- Other
 hl.bind(mainMod .. "+ SHIFT + Q", hl.dsp.window.close())

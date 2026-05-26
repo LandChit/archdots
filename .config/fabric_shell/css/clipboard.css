@@ -1,0 +1,116 @@
+@import url("style.css");
+
+
+@keyframes window-open {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes content-slide {
+    from { margin-top: -12px; }
+    to   { margin-top: 0px; }
+}
+
+.window {
+    background-color: var(--color1);
+    color: var(--foreground);
+    margin: 0 50px 0 0;
+    border-radius: 0px 0px 10px 10px;
+    animation: window-open 160ms ease-out;
+}
+
+.launcher-root {
+    padding: 10px 10px 0px 10px;
+    animation: content-slide 200ms ease-out;
+}
+
+.search-row {
+    padding: 2px 5px;
+    border-radius: 18px;
+    background-color: var(--color0);
+    border: 1px solid var(--color2);
+    margin-bottom: 8px;
+}
+
+.search-entry {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 2px 2px;
+    color: var(--foreground);
+}
+
+.app-scroll {
+    background-color: transparent;
+}
+
+.app-scroll scrollbar,
+.app-scroll scrollbar slider {
+    opacity: 0;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* ── list container ─────────────────────────────────────────────────── */
+
+.clip-list {
+    padding: 4px 0px;
+}
+
+/* ── item button (full-width, transparent shell) ────────────────────── */
+
+.clip-button {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+.clip-button:focus,
+.clip-button:focus-visible,
+.clip-button:active {
+    outline: none;
+    box-shadow: none;
+}
+
+/* ── item card (horizontal row) ─────────────────────────────────────── */
+
+.clip-item {
+    padding: 8px 10px;
+    border-radius: 12px;
+    background-color: var(--color2);
+    border: 1px solid var(--color3);
+    min-height: 52px;
+}
+
+.clip-button:hover .clip-item {
+    background-color: var(--color3);
+    border-color: var(--color4);
+}
+
+.clip-button:focus .clip-item,
+.clip-button:focus-visible .clip-item,
+.clip-button:active .clip-item {
+    box-shadow: none;
+}
+
+.clip-button.clip-selected .clip-item {
+    border-color: var(--color7);
+    box-shadow: 0 0 0 1px var(--color7);
+}
+
+/* ── item content ───────────────────────────────────────────────────── */
+
+.clip-label {
+    font-size: 11px;
+    color: var(--foreground);
+}
+
+.clip-text-icon {
+    opacity: 0.5;
+    min-width: 20px;
+}
+
+.clip-thumb {
+    border-radius: 6px;
+}

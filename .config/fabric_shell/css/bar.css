@@ -1,0 +1,39 @@
+@import url("style.css");
+
+/* Section containers */
+.content>* {
+    padding: 5px 3px 5px 3px;
+    margin: 0px 5px;
+    background-color: var(--color1);
+    border-radius: 0px 0px 10px 10px;
+}
+
+/* Plain label modules (volume, cpu, battery, datetime) */
+.module {
+    background-color: var(--color2);
+    color: var(--foreground);
+    padding: 7px 10px;
+    margin: 0px 3px;
+    border-radius: 10px;
+}
+
+.workspaces>* {
+    padding: 6px;
+}
+
+.workspaces>*>* {
+    /* background-color: red; */
+    padding: 0;
+    margin: 0 3;
+}
+
+/* Padding compensation */
+.tray {
+    margin: 0px 0px;
+    padding: 5px 8px;
+}
+
+.tray>* {
+    padding: 0;
+    margin: 2;
+}

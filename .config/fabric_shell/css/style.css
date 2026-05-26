@@ -1,0 +1,9 @@
+.window {
+    background-color: rgba(0, 0, 0, 0);
+    font-weight: 900;
+}
+
+* {
+    font-family: "JetbrainsMono NF", "Font Awesome 6 Free", "Font Awesome 6 Free Solid";
+    font-weight: bold;
+}

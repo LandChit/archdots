@@ -1,0 +1,117 @@
+@import url("style.css");
+
+
+/* ── outer window (transparent container) ───────────────────────────── */
+
+.notif-window {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.notif-container {
+    background-color: transparent;
+}
+
+/* ── card ───────────────────────────────────────────────────────────── */
+
+.notif-card {
+    background-color: var(--color1);
+    border: 1px solid var(--color3);
+    border-left: 3px solid var(--color4);
+    border-radius: 12px;
+    padding: 10px 12px;
+    min-width: 360px;
+}
+
+.notif-card.notif-low {
+    border-left-color: var(--color2);
+    opacity: 0.85;
+}
+
+.notif-card.notif-normal {
+    border-left-color: var(--color4);
+}
+
+.notif-card.notif-critical {
+    background-color: var(--color1);
+    border-color: var(--color8);
+    border-left-color: var(--color8);
+    box-shadow: 0 0 0 1px var(--color8);
+}
+
+/* ── header row ─────────────────────────────────────────────────────── */
+
+.notif-icon {
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.notif-app-name {
+    font-size: 10px;
+    color: var(--color6);
+}
+
+.notif-summary {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--foreground);
+}
+
+.notif-close {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    color: var(--color6);
+    font-size: 18px;
+    padding: 0 2px;
+    min-height: 0;
+    min-width: 0;
+}
+
+.notif-close:hover {
+    color: var(--foreground);
+}
+
+.notif-close:focus,
+.notif-close:active {
+    outline: none;
+    box-shadow: none;
+}
+
+/* ── body ───────────────────────────────────────────────────────────── */
+
+.notif-body {
+    font-size: 11px;
+    color: var(--color7);
+    padding-left: 40px;
+}
+
+/* ── action buttons ─────────────────────────────────────────────────── */
+
+.notif-actions {
+    padding-top: 2px;
+    padding-left: 40px;
+}
+
+.notif-action-btn {
+    background-color: var(--color2);
+    border: 1px solid var(--color3);
+    border-radius: 8px;
+    padding: 3px 12px;
+    font-size: 10px;
+    color: var(--foreground);
+    box-shadow: none;
+    min-height: 0;
+}
+
+.notif-action-btn:hover {
+    background-color: var(--color3);
+    border-color: var(--color4);
+}
+
+.notif-action-btn:focus,
+.notif-action-btn:active {
+    outline: none;
+    box-shadow: none;
+}

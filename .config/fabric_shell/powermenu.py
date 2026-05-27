@@ -12,10 +12,20 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSS_DIR = os.path.join(BASE_DIR, "css")
 
 ACTIONS = [
-    {"label": "Lock",     "icon": "󰍁", "cmd": ["loginctl", "lock-session"],   "style": ""},
-    {"label": "Logout",   "icon": "󰍃", "cmd": ["hyprctl", "dispatch", "exit"], "style": ""},
-    {"label": "Restart",  "icon": "󰑙", "cmd": ["systemctl", "reboot"],         "style": ""},
-    {"label": "Shutdown", "icon": "󰐥", "cmd": ["systemctl", "poweroff"],       "style": "shutdown"},
+    {"label": "Lock", "icon": "󰍁", "cmd": ["loginctl", "lock-session"], "style": ""},
+    {
+        "label": "Logout",
+        "icon": "󰍃",
+        "cmd": ["hyprctl", "dispatch", '"hl.dsp.exit()"'],
+        "style": "",
+    },
+    {"label": "Restart", "icon": "󰑙", "cmd": ["systemctl", "reboot"], "style": ""},
+    {
+        "label": "Shutdown",
+        "icon": "󰐥",
+        "cmd": ["systemctl", "poweroff"],
+        "style": "shutdown",
+    },
 ]
 
 

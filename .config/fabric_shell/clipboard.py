@@ -88,7 +88,7 @@ def _copy_entry(original_line: str, is_image: bool, img_format: str = "png"):
 
 
 class ClipboardManager(Window):
-    def __init__(self, **kwargs):
+    def __init__(self, daemon_mode: bool = False, **kwargs):
         super().__init__(
             layer="top",
             anchor="top",
@@ -98,6 +98,7 @@ class ClipboardManager(Window):
             visible=False,
             **kwargs,
         )
+        self._daemon_mode = daemon_mode
         self.add_style_class("window")
         self.set_default_size(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.set_size_request(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -162,7 +163,10 @@ class ClipboardManager(Window):
         self.connect("key-press-event", self._on_key_press)
         self._refresh_list("")
         self.show_all()
-        self._search_entry.grab_focus()
+        if self._daemon_mode:
+            self.hide()
+        else:
+            self._search_entry.grab_focus()
 
     # ── list management ────────────────────────────────────────────────────
 
@@ -325,12 +329,29 @@ class ClipboardManager(Window):
         _copy_entry(original_line, is_image, fmt)
         self._quit()
 
-    def _quit(self):
-        app = getattr(self, "_app_ref", None) or self.get_application()
-        if app is not None:
-            app.quit()
+    # ── daemon support ─────────────────────────────────────────────────────────
+
+    def dismiss(self) -> None:
+        """Hide the window without quitting the process (daemon mode)."""
+        self.hide()
+
+    def reveal(self) -> None:
+        """Reload clipboard entries, reset search, and show the window."""
+        self._all_entries = _load_cliphist()
+        self._search_entry.set_text("")
+        self._refresh_list("")
+        self.show()
+        self._search_entry.grab_focus()
+
+    def _quit(self) -> None:
+        if self._daemon_mode:
+            self.dismiss()
         else:
-            os._exit(0)
+            app = getattr(self, "_app_ref", None) or self.get_application()
+            if app is not None:
+                app.quit()
+            else:
+                os._exit(0)
 
 
 def load_css(app: Application) -> None:

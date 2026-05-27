@@ -29,13 +29,13 @@ hl.bind("SHIFT + PRINT",
 -- hl.bind(mainMod .. "+ ESCAPE", hl.dsp.exec_cmd("echo powermenu > /tmp/qs-ipc"))
 
 hl.bind(mainMod .. "+ SPACE",
-    hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/launcher.py &"))
+    hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python ~/.config/fabric_shell/ctl.py toggle launcher"))
 hl.bind(mainMod .. "+ PERIOD",
-    hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/emoji.py &"))
+    hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python ~/.config/fabric_shell/ctl.py toggle emoji"))
 hl.bind(mainMod .. "+ V",
-    hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/clipboard.py &"))
+    hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python ~/.config/fabric_shell/ctl.py toggle clipboard"))
 hl.bind(mainMod .. "+ ESCAPE",
-    hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/powermenu.py &"))
+    hl.dsp.exec_cmd("~/.config/fabric_shell/.venv/bin/python ~/.config/fabric_shell/ctl.py toggle powermenu"))
 
 
 -- Other

@@ -111,7 +111,7 @@ def _load_emojis() -> list[tuple[str, str, str]]:
 # ── picker window ──────────────────────────────────────────────────────────────
 
 class EmojiPicker(Window):
-    def __init__(self, **kwargs):
+    def __init__(self, daemon_mode: bool = False, **kwargs):
         super().__init__(
             layer="top",
             anchor="top",
@@ -121,6 +121,7 @@ class EmojiPicker(Window):
             visible=False,
             **kwargs,
         )
+        self._daemon_mode = daemon_mode
         self.add_style_class("window")
         self.set_default_size(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.set_size_request(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -216,7 +217,10 @@ class EmojiPicker(Window):
         self._populate_grid()
         self._apply_filter()
         self.show_all()
-        self._search_entry.grab_focus()
+        if self._daemon_mode:
+            self.hide()
+        else:
+            self._search_entry.grab_focus()
 
     # ── group bar ──────────────────────────────────────────────────────────
 
@@ -395,12 +399,33 @@ class EmojiPicker(Window):
         subprocess.run(["wl-copy"], input=char.encode("utf-8"), check=False)
         self._quit()
 
-    def _quit(self):
-        app = getattr(self, "_app_ref", None) or self.get_application()
-        if app is not None:
-            app.quit()
+    # ── daemon support ─────────────────────────────────────────────────────────
+
+    def dismiss(self) -> None:
+        """Hide the window without quitting the process (daemon mode)."""
+        self.hide()
+
+    def reveal(self) -> None:
+        """Refresh counts, reset search/group, and show the window."""
+        self._emoji_counts = _load_emoji_counts()
+        self._search_entry.set_text("")
+        self._current_query = ""
+        if self._current_group != "All":
+            self._set_group("All")
         else:
-            os._exit(0)
+            self._apply_filter()
+        self.show()
+        self._search_entry.grab_focus()
+
+    def _quit(self) -> None:
+        if self._daemon_mode:
+            self.dismiss()
+        else:
+            app = getattr(self, "_app_ref", None) or self.get_application()
+            if app is not None:
+                app.quit()
+            else:
+                os._exit(0)
 
 
 # ── css + entry point ──────────────────────────────────────────────────────────

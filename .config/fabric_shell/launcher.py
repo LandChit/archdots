@@ -47,7 +47,7 @@ GRID_HEIGHT = WINDOW_HEIGHT
 
 
 class Launcher(Window):
-    def __init__(self, **kwargs):
+    def __init__(self, daemon_mode: bool = False, **kwargs):
         super().__init__(
             layer="top",
             anchor="top",
@@ -57,6 +57,7 @@ class Launcher(Window):
             visible=False,
             **kwargs,
         )
+        self._daemon_mode = daemon_mode
         self.add_style_class("window")
         self.set_default_size(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.set_size_request(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -136,7 +137,10 @@ class Launcher(Window):
 
         self._refresh_app_grid("")
         self.show_all()
-        self._search_entry.grab_focus()
+        if self._daemon_mode:
+            self.hide()
+        else:
+            self._search_entry.grab_focus()
 
     def _on_search_changed(self, *_):
         self._refresh_app_grid(self._search_entry.get_text() or "")
@@ -296,8 +300,7 @@ class Launcher(Window):
     def _on_key_press(self, _widget, event):
         keyval = event.keyval
         if keyval in (65307,):  # Escape
-            app = self.get_application()
-            app.quit() if app is not None else self.close()
+            self._quit()
             return True
 
         if keyval in (65293, 65421):  # Return, KP_Enter
@@ -365,11 +368,34 @@ class Launcher(Window):
             self._counts[app_id] = self._counts.get(app_id, 0) + 1
             _save_counts(self._counts)
         launcher()
-        app = getattr(self, "_app_ref", None) or self.get_application()
-        if app is not None:
-            app.quit()
+        self._quit()
+
+    # ── daemon support ─────────────────────────────────────────────────────────
+
+    def dismiss(self) -> None:
+        """Hide the window without quitting the process (daemon mode)."""
+        self.hide()
+
+    def reveal(self) -> None:
+        """Refresh counts, reset search, and show the window."""
+        self._counts = _load_counts()
+        self._apps.sort(
+            key=lambda a: (-self._counts.get(a.name, 0), a.name.casefold())
+        )
+        self._search_entry.set_text("")
+        self._refresh_app_grid("")
+        self.show()
+        self._search_entry.grab_focus()
+
+    def _quit(self) -> None:
+        if self._daemon_mode:
+            self.dismiss()
         else:
-            os._exit(0)
+            app = getattr(self, "_app_ref", None) or self.get_application()
+            if app is not None:
+                app.quit()
+            else:
+                os._exit(0)
 
 
 def load_css(app: Application) -> None:

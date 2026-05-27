@@ -52,8 +52,26 @@
   "hotPaths": [
     {
       "path": ".config/fabric_shell/launcher.py",
+      "accessCount": 13,
+      "lastAccessed": 1779868651592,
+      "type": "file"
+    },
+    {
+      "path": ".config/fabric_shell/emoji.py",
+      "accessCount": 11,
+      "lastAccessed": 1779868655970,
+      "type": "file"
+    },
+    {
+      "path": ".config/fabric_shell/powermenu.py",
+      "accessCount": 6,
+      "lastAccessed": 1779868653091,
+      "type": "file"
+    },
+    {
+      "path": ".config/fabric_shell/clipboard.py",
       "accessCount": 5,
-      "lastAccessed": 1779805898822,
+      "lastAccessed": 1779868654477,
       "type": "file"
     },
     {
@@ -63,9 +81,9 @@
       "type": "file"
     },
     {
-      "path": ".config/fabric_shell/emoji.py",
-      "accessCount": 4,
-      "lastAccessed": 1779805935893,
+      "path": ".config/hypr/config/autorun.lua",
+      "accessCount": 3,
+      "lastAccessed": 1779867924299,
       "type": "file"
     },
     {
@@ -75,15 +93,21 @@
       "type": "file"
     },
     {
-      "path": ".config/hypr/config/autorun.lua",
-      "accessCount": 1,
-      "lastAccessed": 1779784518183,
+      "path": ".config/hypr/config/keybind.lua",
+      "accessCount": 2,
+      "lastAccessed": 1779867928450,
       "type": "file"
     },
     {
-      "path": ".config/fabric_shell/powermenu.py",
+      "path": ".config/fabric_shell/daemon.py",
+      "accessCount": 2,
+      "lastAccessed": 1779868254989,
+      "type": "file"
+    },
+    {
+      "path": ".config/fabric_shell/ctl.py",
       "accessCount": 1,
-      "lastAccessed": 1779805682383,
+      "lastAccessed": 1779867768624,
       "type": "file"
     }
   ],

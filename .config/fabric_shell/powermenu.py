@@ -30,7 +30,7 @@ ACTIONS = [
 
 
 class PowerMenu(Window):
-    def __init__(self, **kwargs):
+    def __init__(self, daemon_mode: bool = False, **kwargs):
         super().__init__(
             layer="overlay",
             anchor="",
@@ -39,6 +39,7 @@ class PowerMenu(Window):
             visible=False,
             **kwargs,
         )
+        self._daemon_mode = daemon_mode
         self.add_style_class("powermenu-window")
 
         self._buttons: list[Button] = []
@@ -74,6 +75,8 @@ class PowerMenu(Window):
 
         self.connect("key-press-event", self._on_key_press)
         self.show_all()
+        if self._daemon_mode:
+            self.hide()
         self._highlight(0)
 
     def _build_button(self, action: dict) -> Button:
@@ -129,12 +132,26 @@ class PowerMenu(Window):
         self._quit()
         subprocess.Popen(action["cmd"])
 
-    def _quit(self):
-        app = getattr(self, "_app_ref", None) or self.get_application()
-        if app is not None:
-            app.quit()
+    # ── daemon support ─────────────────────────────────────────────────────────
+
+    def dismiss(self) -> None:
+        """Hide the window without quitting the process (daemon mode)."""
+        self.hide()
+
+    def reveal(self) -> None:
+        """Reset selection and show the window."""
+        self._highlight(0)
+        self.show()
+
+    def _quit(self) -> None:
+        if self._daemon_mode:
+            self.dismiss()
         else:
-            os._exit(0)
+            app = getattr(self, "_app_ref", None) or self.get_application()
+            if app is not None:
+                app.quit()
+            else:
+                os._exit(0)
 
 
 def load_css(app: Application) -> None:

@@ -7,6 +7,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("wal -R && cp ~/.cache/wal/colors-fabric.css ~/.config/fabric_shell/css/colors-fabric.css")
     hl.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/bar.py &")
     hl.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/notification.py &")
+    hl.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/daemon.py &")
 
 
     hl.exec_cmd("hyprpaper &")

@@ -116,6 +116,12 @@
       "type": "file"
     },
     {
+      "path": "daemon.py",
+      "accessCount": 2,
+      "lastAccessed": 1779868471115,
+      "type": "file"
+    },
+    {
       "path": ".venv/lib/python3.14/site-packages/fabric/notifications/service.py",
       "accessCount": 1,
       "lastAccessed": 1779762500495,

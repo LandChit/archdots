@@ -12,7 +12,7 @@ from fabric.widgets.image import Image
 from fabric.widgets.label import Label
 from fabric.utils.helpers import monitor_file
 
-from gi.repository import GdkPixbuf  # type: ignore
+from gi.repository import GdkPixbuf, GLib  # type: ignore
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSS_DIR = os.path.join(BASE_DIR, "css")
@@ -99,6 +99,7 @@ class ClipboardManager(Window):
             **kwargs,
         )
         self._daemon_mode = daemon_mode
+        self._dismiss_timer_id: int | None = None
         self.add_style_class("window")
         self.set_default_size(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.set_size_request(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -332,16 +333,31 @@ class ClipboardManager(Window):
     # ── daemon support ─────────────────────────────────────────────────────────
 
     def dismiss(self) -> None:
-        """Hide the window without quitting the process (daemon mode)."""
+        if self._dismiss_timer_id is not None:
+            GLib.source_remove(self._dismiss_timer_id)
+        self.add_style_class("anim-out")
+        self._dismiss_timer_id = GLib.timeout_add(220, self._finish_dismiss)
+
+    def _finish_dismiss(self) -> bool:
+        self._dismiss_timer_id = None
         self.hide()
+        return False
 
     def reveal(self) -> None:
-        """Reload clipboard entries, reset search, and show the window."""
+        if self._dismiss_timer_id is not None:
+            GLib.source_remove(self._dismiss_timer_id)
+            self._dismiss_timer_id = None
         self._all_entries = _load_cliphist()
         self._search_entry.set_text("")
         self._refresh_list("")
+        self.add_style_class("anim-out")
         self.show()
+        GLib.timeout_add(16, self._finish_reveal)
         self._search_entry.grab_focus()
+
+    def _finish_reveal(self) -> bool:
+        self.remove_style_class("anim-out")
+        return False
 
     def _quit(self) -> None:
         if self._daemon_mode:

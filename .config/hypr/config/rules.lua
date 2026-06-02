@@ -127,7 +127,7 @@ hl.layer_rule(
     {
         name = "fabric",
         match = { namespace = "fabric*" },
-        blur = true,
+        blur = false,
         ignore_alpha = 0,
     }
 )

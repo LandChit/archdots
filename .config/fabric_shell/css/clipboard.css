@@ -1,27 +1,27 @@
 @import url("style.css");
 
 
-@keyframes window-open {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-
-@keyframes content-slide {
-    from { margin-top: -12px; }
-    to   { margin-top: 0px; }
-}
-
 .window {
     background-color: var(--color1);
     color: var(--foreground);
     margin: 0 50px 0 0;
     border-radius: 0px 0px 10px 10px;
-    animation: window-open 160ms ease-out;
+    transition: opacity 200ms ease;
+    opacity: 1;
+}
+
+.window.anim-out {
+    opacity: 0;
 }
 
 .launcher-root {
     padding: 10px 10px 0px 10px;
-    animation: content-slide 200ms ease-out;
+    transition: margin-top 200ms ease;
+    margin-top: 0px;
+}
+
+.window.anim-out .launcher-root {
+    margin-top: -20px;
 }
 
 .search-row {

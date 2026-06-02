@@ -63,45 +63,45 @@
       "type": "file"
     },
     {
+      "path": ".config/fabric_shell/launcher.py",
+      "accessCount": 4,
+      "lastAccessed": 1780394649059,
+      "type": "file"
+    },
+    {
       "path": ".config/fabric_shell/clipboard.py",
-      "accessCount": 1,
-      "lastAccessed": 1780394410232,
+      "accessCount": 4,
+      "lastAccessed": 1780394671717,
+      "type": "file"
+    },
+    {
+      "path": ".config/fabric_shell/css/launcher.css",
+      "accessCount": 4,
+      "lastAccessed": 1780394877710,
       "type": "file"
     },
     {
       "path": ".config/fabric_shell/emoji.py",
-      "accessCount": 1,
-      "lastAccessed": 1780394410243,
+      "accessCount": 3,
+      "lastAccessed": 1780394693227,
       "type": "file"
     },
     {
-      "path": ".config/fabric_shell/launcher.py",
-      "accessCount": 1,
-      "lastAccessed": 1780394410721,
+      "path": ".config/fabric_shell/css/clipboard.css",
+      "accessCount": 3,
+      "lastAccessed": 1780394886194,
+      "type": "file"
+    },
+    {
+      "path": ".config/fabric_shell/css/emoji.css",
+      "accessCount": 3,
+      "lastAccessed": 1780394892565,
       "type": "file"
     },
     {
       "path": ".config/fabric_shell/daemon.py",
       "accessCount": 1,
       "lastAccessed": 1780394411100,
-      "type": "file"
-    },
-    {
-      "path": ".config/fabric_shell/css/launcher.css",
-      "accessCount": 1,
-      "lastAccessed": 1780394435048,
-      "type": "file"
-    },
-    {
-      "path": ".config/fabric_shell/css/emoji.css",
-      "accessCount": 1,
-      "lastAccessed": 1780394468510,
-      "type": "file"
-    },
-    {
-      "path": ".config/fabric_shell/css/clipboard.css",
-      "accessCount": 1,
-      "lastAccessed": 1780394468533,
       "type": "file"
     }
   ],

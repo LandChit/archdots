@@ -16,7 +16,7 @@ ACTIONS = [
     {
         "label": "Logout",
         "icon": "󰍃",
-        "cmd": ["hyprctl", "dispatch", '"hl.dsp.exit()"'],
+        "cmd": 'hyprctl dispatch "hl.dsp.exit()"',
         "style": "",
     },
     {"label": "Restart", "icon": "󰑙", "cmd": ["systemctl", "reboot"], "style": ""},
@@ -130,7 +130,11 @@ class PowerMenu(Window):
 
     def _execute(self, action: dict):
         self._quit()
-        subprocess.Popen(action["cmd"])
+        cmd = action["cmd"]
+        if isinstance(cmd, str):
+            subprocess.Popen(cmd, shell=True)
+        else:
+            subprocess.Popen(cmd)
 
     # ── daemon support ─────────────────────────────────────────────────────────
 

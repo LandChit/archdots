@@ -122,3 +122,12 @@ hl.window_rule({
     tile = true,
     workspace = "4",
 })
+
+hl.layer_rule(
+    {
+        name = "fabric",
+        match = { namespace = "fabric*" },
+        blur = true,
+        ignore_alpha = 0,
+    }
+)

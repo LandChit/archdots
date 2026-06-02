@@ -17,6 +17,9 @@ from fabric.hyprland.widgets import HyprlandWorkspaces, HyprlandActiveWindow
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSS_DIR = os.path.join(BASE_DIR, "css")
 
+# Monitor that gets the system tray (Hyprland connector name, e.g. "eDP-1", "HDMI-A-1")
+MAIN_MONITOR = "eDP-1"
+
 
 def _vol_icon(volume: int, muted: bool) -> str:
     if muted or volume == 0:
@@ -56,7 +59,7 @@ BAT_PATH = _find_battery()
 
 
 class StatusBar(Window):
-    def __init__(self, **kwargs):
+    def __init__(self, show_tray: bool = True, **kwargs):
         super().__init__(
             layer="top", anchor="left top right", exclusivity="auto", **kwargs
         )
@@ -80,14 +83,17 @@ class StatusBar(Window):
         self.date_time = DateTime()
         self.date_time.add_style_class("module")
 
-        # System tray
-        self.tray = SystemTray(icon_size=15)
-        self.tray.add_style_class("module")
-        self.tray.add_style_class("tray")
-        self._tray_fab = Fabricator(
-            poll_from=self._poll_tray,
-            interval=3000,  # find a better way, can be resource intensive
-        )  # Checks if tray has items, hides if it doesnt
+        # System tray — only on the designated main monitor
+        if show_tray:
+            self.tray = SystemTray(icon_size=15)
+            self.tray.add_style_class("module")
+            self.tray.add_style_class("tray")
+            self._tray_fab = Fabricator(
+                poll_from=self._poll_tray,
+                interval=3000,  # find a better way, can be resource intensive
+            )  # Checks if tray has items, hides if it doesnt
+        else:
+            self.tray = None
 
         # Volume — polled via wpctl every 0.3 s
         self.volume_label = Label("󰕾 --%")
@@ -114,16 +120,12 @@ class StatusBar(Window):
             self._bat_fab.connect("changed", lambda _f, v: self.bat_label.set_label(v))
             self._bat_fab.start()
 
+        end = [self.tray] if self.tray else []
+        end += [self.volume_label, self.cpu_label, self.bat_label, self.date_time]
         self.bar_content = CenterBox(
             start_children=[self.active_window],
             center_children=[self.workspaces],
-            end_children=[
-                self.tray,
-                self.volume_label,
-                self.cpu_label,
-                self.bat_label,
-                self.date_time,
-            ],
+            end_children=end,
         )
         self.bar_content.add_style_class("content")
         self.children = self.bar_content
@@ -190,7 +192,10 @@ if __name__ == "__main__":
     from gi.repository import Gdk
     display = Gdk.Display.get_default()
     n_monitors = display.get_n_monitors()
-    bars = [StatusBar(monitor=i) for i in range(n_monitors)]
+    bars = [
+        StatusBar(monitor=i, show_tray=(display.get_monitor(i).get_model() == MAIN_MONITOR))
+        for i in range(n_monitors)
+    ]
     app = Application("bar", *bars)
     load_css(app)
     # Reload all styles whenever pywal regenerates colors-fabric.css

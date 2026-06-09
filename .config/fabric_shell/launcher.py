@@ -382,6 +382,10 @@ class Launcher(Window):
     def _finish_dismiss(self) -> bool:
         self._dismiss_timer_id = None
         self.hide()
+        self._apps = sorted(
+            get_desktop_applications(),
+            key=lambda app: (-self._counts.get(app.name, 0), app.name.casefold()),
+        )
         return False
 
     def reveal(self) -> None:

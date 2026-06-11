@@ -39,13 +39,29 @@ def _save_emoji_counts(counts: dict[str, int]) -> None:
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSS_DIR = os.path.join(BASE_DIR, "css")
 
-COLUMNS = 9
+COLUMNS = 7
 CELL_SIZE = 46
 GRID_WIDTH = COLUMNS * CELL_SIZE
-GROUP_COL_WIDTH = 90
+GROUP_COL_WIDTH = 52
 WINDOW_WIDTH = GRID_WIDTH + GROUP_COL_WIDTH + 36
 WINDOW_HEIGHT = 540
 ICON_SIZE = 18
+
+# Icon-only rail buttons (full group name lives in the tooltip) — fixed-size
+# glyphs keep the window width independent of group label text
+GROUP_ICONS = {
+    "All": "▦",
+    "Smileys & Emotion": "🙂",
+    "People & Body": "👤",
+    "Animals & Nature": "🐾",
+    "Food & Drink": "🍴",
+    "Travel & Places": "✈",
+    "Activities": "⚽",
+    "Objects": "💡",
+    "Symbols": "🔣",
+    "Flags": "🚩",
+    "Component": "🖐",
+}
 
 
 # ── cache management ───────────────────────────────────────────────────────────
@@ -196,12 +212,23 @@ class EmojiPicker(Window):
             h_expand=True,
         )
 
+        self._section_label = Label(
+            label="ALL",
+            h_align="start",
+            style_classes="section-label",
+        )
+        grid_col = Box(
+            orientation="vertical",
+            spacing=0,
+            children=[self._section_label, self._scroller],
+        )
+
         content_row = Box(
             orientation="horizontal",
             spacing=6,
             h_expand=True,
             v_expand=True,
-            children=[self._scroller, self._build_group_col()],
+            children=[grid_col, self._build_group_col()],
         )
 
         self.children = Box(
@@ -228,11 +255,12 @@ class EmojiPicker(Window):
     def _build_group_col(self) -> ScrolledWindow:
         children = []
         for group in self._groups:
-            short = group if group == "All" else group.split(" & ")[0]
+            icon = GROUP_ICONS.get(group, group[:1])
             btn = Button(
-                label=short,
+                label=icon,
                 style_classes="group-button group-active" if group == "All" else "group-button",
             )
+            btn.set_tooltip_text(group)
             btn.connect("clicked", lambda _, g=group: self._set_group(g))
             self._group_buttons[group] = btn
             children.append(btn)
@@ -313,8 +341,6 @@ class EmojiPicker(Window):
             btn for btn in self._all_buttons
             if self._matches(btn._data["name"], btn._data["group"])
         ]
-        if self._visible_items:
-            self._select_index(0)
 
     def _on_search_changed(self, *_):
         self._current_query = self._search_entry.get_text().strip().casefold()
@@ -326,6 +352,7 @@ class EmojiPicker(Window):
         self._current_group = group
         if btn := self._group_buttons.get(group):
             btn.add_style_class("group-active")
+        self._section_label.set_label(group.split(" & ")[0].upper())
         self._apply_filter()
 
     # ── keyboard navigation ────────────────────────────────────────────────
@@ -389,9 +416,11 @@ class EmojiPicker(Window):
     # ── actions ────────────────────────────────────────────────────────────
 
     def _activate_selected(self):
-        if self._selected_index is None:
+        # No visual preselection on open — Enter falls back to the first match
+        index = self._selected_index if self._selected_index is not None else 0
+        if not self._visible_items:
             return
-        char = self._visible_items[self._selected_index]._data["char"]
+        char = self._visible_items[index]._data["char"]
         self._copy_and_close(char)
 
     def _copy_and_close(self, char: str):

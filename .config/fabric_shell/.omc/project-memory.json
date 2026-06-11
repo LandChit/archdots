@@ -75,26 +75,38 @@
     },
     {
       "path": "emoji.py",
-      "accessCount": 12,
-      "lastAccessed": 1779766873231,
+      "accessCount": 16,
+      "lastAccessed": 1781184762587,
       "type": "file"
     },
     {
       "path": "css/launcher.css",
+      "accessCount": 14,
+      "lastAccessed": 1781184954947,
+      "type": "file"
+    },
+    {
+      "path": "css/bar.css",
       "accessCount": 10,
-      "lastAccessed": 1779765020195,
+      "lastAccessed": 1781184565872,
       "type": "file"
     },
     {
       "path": "css/emoji.css",
-      "accessCount": 6,
-      "lastAccessed": 1779765037928,
+      "accessCount": 9,
+      "lastAccessed": 1781184690248,
       "type": "file"
     },
     {
       "path": "css/clipboard.css",
-      "accessCount": 5,
-      "lastAccessed": 1779765027657,
+      "accessCount": 7,
+      "lastAccessed": 1781184967577,
+      "type": "file"
+    },
+    {
+      "path": "powermenu.py",
+      "accessCount": 6,
+      "lastAccessed": 1781184863659,
       "type": "file"
     },
     {
@@ -110,6 +122,12 @@
       "type": "file"
     },
     {
+      "path": "bar.py",
+      "accessCount": 3,
+      "lastAccessed": 1781166674556,
+      "type": "file"
+    },
+    {
       "path": "css/notifications.css",
       "accessCount": 2,
       "lastAccessed": 1779762814914,
@@ -119,6 +137,12 @@
       "path": "daemon.py",
       "accessCount": 2,
       "lastAccessed": 1779868471115,
+      "type": "file"
+    },
+    {
+      "path": "css/style.css",
+      "accessCount": 2,
+      "lastAccessed": 1781184594167,
       "type": "file"
     },
     {
@@ -134,15 +158,9 @@
       "type": "file"
     },
     {
-      "path": "css/style.css",
+      "path": "css/powermenu.css",
       "accessCount": 1,
-      "lastAccessed": 1779763239317,
-      "type": "file"
-    },
-    {
-      "path": "css/bar.css",
-      "accessCount": 1,
-      "lastAccessed": 1779763239369,
+      "lastAccessed": 1781184908826,
       "type": "file"
     }
   ],

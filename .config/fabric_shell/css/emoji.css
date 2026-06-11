@@ -1,119 +1,103 @@
 @import url("style.css");
 
-
+/* ── Panel window ────────────────────────────────────────────── */
 .window {
-    background-color: var(--color1);
-    color: var(--foreground);
-    margin: 0 50px 0 0;
-    border-radius: 0px 0px 10px 10px;
-    transition: opacity 200ms ease;
-    opacity: 1;
-}
-
-.window.anim-out {
-    opacity: 0;
-}
-
-.launcher-root {
-    padding: 10px 10px 0px 10px;
-    transition: margin-top 200ms ease;
-    margin-top: 0px;
-}
-
-.window.anim-out .launcher-root {
-    margin-top: -20px;
-}
-
-.search-row {
-    padding: 2px 5px;
+    background-color: rgba(14, 17, 22, 0.85);
     border-radius: 18px;
-    background-color: var(--color0);
-    border: 1px solid var(--color2);
-    margin-bottom: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.085);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    margin: 0;
 }
 
-.search-entry {
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 2px 2px;
-    color: var(--foreground);
+/* ── Root container ──────────────────────────────────────────── */
+.launcher-root {
+    padding: 13px 13px 0 13px;
+}
+
+/* ── Search row ──────────────────────────────────────────────── */
+.search-row {
+    background-color: rgba(255, 255, 255, 0.045);
+    border-radius: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.085);
+    padding: 7px 12px;
+    margin-bottom: 8px;
 }
 
 .emoji-search-icon {
-    font-size: 16px;
-    padding: 0 2px;
+    color: var(--color4);
+    font-size: 18px;
+    padding: 0 4px;
+    opacity: 0.85;
 }
 
+/* ── Scroll area ─────────────────────────────────────────────── */
 .app-scroll {
     background-color: transparent;
 }
 
-.app-scroll scrollbar,
-.app-scroll scrollbar slider {
-    opacity: 0;
-    min-width: 0;
-    min-height: 0;
-}
-
-/* ── group filter column (right side) ───────────────────────────────── */
-
+/* ── Group filter column (right rail) ────────────────────────── */
 .group-scroll {
     background-color: transparent;
-}
-
-.group-scroll scrollbar,
-.group-scroll scrollbar slider {
-    opacity: 0;
-    min-width: 0;
-    min-height: 0;
 }
 
 .group-inner {
     padding: 2px 4px;
 }
 
+/* Icon-only square rail buttons — fixed size so the window width
+   never depends on label text */
 .group-button {
     background-color: transparent;
-    border: 1px solid var(--color3);
-    border-radius: 10px;
-    padding: 4px 6px;
-    font-size: 10px;
-    color: var(--foreground);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 9px;
+    padding: 0;
+    font-size: 15px;
+    color: #9aa0a9;
     box-shadow: none;
-    min-height: 0;
+    min-height: 34px;
+    min-width: 34px;
+    transition: background-color 140ms ease, border-color 140ms ease,
+                color 140ms ease;
 }
 
 .group-button:hover {
-    background-color: var(--color3);
-    border-color: var(--color4);
+    background-color: rgba(255, 255, 255, 0.07);
+    color: #c3c8d0;
 }
 
 .group-button.group-active {
-    background-color: var(--color3);
-    border-color: var(--color7);
-    box-shadow: 0 0 0 1px var(--color7);
+    background-color: alpha(var(--color4), 0.18);
+    border-color: alpha(var(--color4), 0.50);
+    color: var(--color7);
+    box-shadow: 0 0 8px alpha(var(--color4), 0.15);
 }
 
-/* ── emoji grid ─────────────────────────────────────────────────────── */
+/* Uppercase section caption above the grid */
+.section-label {
+    font-size: 10px;
+    color: #7b818a;
+    padding: 2px 4px 5px 6px;
+}
 
+/* ── Emoji grid ──────────────────────────────────────────────── */
 .emoji-grid {
-    padding: 2px;
+    padding: 4px 2px;
 }
 
 .emoji-button {
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: 9px;
     box-shadow: none;
     padding: 0;
     min-width: 46px;
     min-height: 46px;
+    transition: background-color 140ms ease, border-color 140ms ease;
 }
 
 .emoji-button:hover {
-    background-color: var(--color3);
-    border-color: var(--color4);
+    background-color: rgba(255, 255, 255, 0.07);
 }
 
 .emoji-button:focus,
@@ -124,11 +108,11 @@
 }
 
 .emoji-button.emoji-selected {
-    background-color: var(--color2);
-    border-color: var(--color7);
-    box-shadow: 0 0 0 1px var(--color7);
+    background-color: alpha(var(--color4), 0.18);
+    border-color: alpha(var(--color4), 0.50);
+    box-shadow: 0 0 14px alpha(var(--color4), 0.18);
 }
 
 .emoji-char {
-    font-size: 22px;
+    font-size: 21px;
 }

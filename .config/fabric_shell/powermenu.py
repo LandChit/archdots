@@ -3,6 +3,9 @@ import subprocess
 
 from fabric import Application
 from fabric.widgets.wayland import WaylandWindow as Window
+
+# fabric locks in the GtkLayerShell version when wayland is imported above
+from gi.repository import GtkLayerShell  # type: ignore
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.label import Label
@@ -31,19 +34,25 @@ ACTIONS = [
 
 class PowerMenu(Window):
     def __init__(self, daemon_mode: bool = False, **kwargs):
+        # Anchor all four edges so the window (and its scrim background)
+        # covers the entire screen instead of shrinking to content size
         super().__init__(
             layer="overlay",
-            anchor="",
+            anchor="left top right bottom",
             exclusivity="none",
             keyboard_mode="exclusive",
             visible=False,
             **kwargs,
         )
         self._daemon_mode = daemon_mode
+        # -1 = ignore other windows' exclusive zones so the scrim also
+        # covers the bar (fabric's exclusivity="none" maps to zone 0,
+        # which still leaves the bar's reserved strip uncovered)
+        GtkLayerShell.set_exclusive_zone(self, -1)
         self.add_style_class("powermenu-window")
 
         self._buttons: list[Button] = []
-        self._selected: int = 0
+        self._selected: int | None = None
 
         buttons_row = Box(
             orientation="horizontal",
@@ -59,7 +68,7 @@ class PowerMenu(Window):
             buttons_row.add(btn)
 
         hint = Label(
-            label="↑↓←→ navigate   ↵ confirm   esc cancel",
+            label="↑↓←→ navigate · ↵ confirm · esc cancel",
             style_classes="powermenu-hint",
             h_align="center",
         )
@@ -69,6 +78,8 @@ class PowerMenu(Window):
             spacing=20,
             h_align="center",
             v_align="center",
+            h_expand=True,
+            v_expand=True,
             style_classes="powermenu-root",
             children=[buttons_row, hint],
         )
@@ -77,7 +88,11 @@ class PowerMenu(Window):
         self.show_all()
         if self._daemon_mode:
             self.hide()
-        self._highlight(0)
+
+    def _clear_selection(self):
+        for btn in self._buttons:
+            btn.get_child().remove_style_class("powermenu-selected")
+        self._selected = None
 
     def _build_button(self, action: dict) -> Button:
         icon = Label(
@@ -118,13 +133,21 @@ class PowerMenu(Window):
             self._quit()
             return True
         if keyval in (65293, 65421):  # Return / KP_Enter
-            self._execute(ACTIONS[self._selected])
+            # Only fire on an explicit selection — never guess a power action
+            if self._selected is not None:
+                self._execute(ACTIONS[self._selected])
             return True
         if keyval in (65361, 65362):  # Left / Up
-            self._highlight((self._selected - 1) % len(self._buttons))
+            self._highlight(
+                0 if self._selected is None
+                else (self._selected - 1) % len(self._buttons)
+            )
             return True
         if keyval in (65363, 65364):  # Right / Down
-            self._highlight((self._selected + 1) % len(self._buttons))
+            self._highlight(
+                0 if self._selected is None
+                else (self._selected + 1) % len(self._buttons)
+            )
             return True
         return False
 
@@ -143,8 +166,8 @@ class PowerMenu(Window):
         self.hide()
 
     def reveal(self) -> None:
-        """Reset selection and show the window."""
-        self._highlight(0)
+        """Show the window with nothing preselected."""
+        self._clear_selection()
         self.show()
 
     def _quit(self) -> None:

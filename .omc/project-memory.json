@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1780393380257,
+  "lastScanned": 1781183510706,
   "projectRoot": "/home/chit/archdots",
   "techStack": {
     "languages": [],
@@ -36,14 +36,14 @@
       "path": "kvantum",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1780393380252,
+      "lastAccessed": 1781183510700,
       "keyFiles": []
     },
     "wallpapers": {
       "path": "wallpapers",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1780393380255,
+      "lastAccessed": 1781183510703,
       "keyFiles": [
         "mountains.jpg"
       ]
@@ -51,57 +51,93 @@
   },
   "hotPaths": [
     {
-      "path": ".config/fabric_shell/bar.py",
-      "accessCount": 7,
-      "lastAccessed": 1780393629027,
+      "path": ".config/fabric_shell/powermenu.py",
+      "accessCount": 14,
+      "lastAccessed": 1781185912139,
       "type": "file"
     },
     {
-      "path": ".config/fabric_shell/powermenu.py",
-      "accessCount": 4,
-      "lastAccessed": 1780394207576,
+      "path": ".config/fabric_shell/bar.py",
+      "accessCount": 12,
+      "lastAccessed": 1781185531885,
       "type": "file"
     },
     {
       "path": ".config/fabric_shell/launcher.py",
-      "accessCount": 4,
-      "lastAccessed": 1780394649059,
-      "type": "file"
-    },
-    {
-      "path": ".config/fabric_shell/clipboard.py",
-      "accessCount": 4,
-      "lastAccessed": 1780394671717,
-      "type": "file"
-    },
-    {
-      "path": ".config/fabric_shell/css/launcher.css",
-      "accessCount": 4,
-      "lastAccessed": 1780394877710,
+      "accessCount": 10,
+      "lastAccessed": 1781185782667,
       "type": "file"
     },
     {
       "path": ".config/fabric_shell/emoji.py",
-      "accessCount": 3,
-      "lastAccessed": 1780394693227,
+      "accessCount": 9,
+      "lastAccessed": 1781185734770,
+      "type": "file"
+    },
+    {
+      "path": ".config/fabric_shell/css/bar.css",
+      "accessCount": 8,
+      "lastAccessed": 1781185375023,
+      "type": "file"
+    },
+    {
+      "path": ".config/fabric_shell/clipboard.py",
+      "accessCount": 7,
+      "lastAccessed": 1781185815900,
+      "type": "file"
+    },
+    {
+      "path": ".config/fabric_shell/css/launcher.css",
+      "accessCount": 6,
+      "lastAccessed": 1781165615164,
+      "type": "file"
+    },
+    {
+      "path": ".zshrc",
+      "accessCount": 5,
+      "lastAccessed": 1780395406552,
       "type": "file"
     },
     {
       "path": ".config/fabric_shell/css/clipboard.css",
-      "accessCount": 3,
-      "lastAccessed": 1780394886194,
+      "accessCount": 5,
+      "lastAccessed": 1781165658801,
       "type": "file"
     },
     {
       "path": ".config/fabric_shell/css/emoji.css",
+      "accessCount": 5,
+      "lastAccessed": 1781165697478,
+      "type": "file"
+    },
+    {
+      "path": ".config/fabric_shell/css/style.css",
       "accessCount": 3,
-      "lastAccessed": 1780394892565,
+      "lastAccessed": 1781183619505,
+      "type": "file"
+    },
+    {
+      "path": ".config/fabric_shell/css/powermenu.css",
+      "accessCount": 3,
+      "lastAccessed": 1781185926677,
       "type": "file"
     },
     {
       "path": ".config/fabric_shell/daemon.py",
+      "accessCount": 2,
+      "lastAccessed": 1781163209395,
+      "type": "file"
+    },
+    {
+      "path": ".zsh_custom",
       "accessCount": 1,
-      "lastAccessed": 1780394411100,
+      "lastAccessed": 1780395238743,
+      "type": "file"
+    },
+    {
+      "path": ".config/fabric_shell/design_handoff_hyprland_suite/README.md",
+      "accessCount": 1,
+      "lastAccessed": 1781163121637,
       "type": "file"
     }
   ],

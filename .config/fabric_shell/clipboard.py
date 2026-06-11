@@ -193,9 +193,6 @@ class ClipboardManager(Window):
 
         self._list_box.show_all()
 
-        if self._items:
-            self._select_index(0)
-
     # ── item builders ──────────────────────────────────────────────────────
 
     def _build_item(self, original_line: str, content: str, is_image: bool, fmt: str, size: int) -> Button:
@@ -321,9 +318,11 @@ class ClipboardManager(Window):
     # ── actions ────────────────────────────────────────────────────────────
 
     def _activate_selected(self):
-        if self._selected_index is None:
+        # No visual preselection on open — Enter falls back to the newest entry
+        index = self._selected_index if self._selected_index is not None else 0
+        if not self._entry_meta:
             return
-        original_line, is_image, fmt = self._entry_meta[self._selected_index]
+        original_line, is_image, fmt = self._entry_meta[index]
         self._copy_and_close(original_line, is_image, fmt)
 
     def _copy_and_close(self, original_line: str, is_image: bool, fmt: str):

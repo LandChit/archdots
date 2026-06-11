@@ -1,81 +1,52 @@
 @import url("style.css");
 
-
+/* ── Panel window ────────────────────────────────────────────── */
 .window {
-    background-color: var(--color1);
-    color: var(--foreground);
-    margin: 0 50px 0 0;
-    /* TL TR BL BR */
-    border-radius: 0px 0px 10px 10px;
-    transition: opacity 200ms ease;
-    opacity: 1;
-}
-
-.window.anim-out {
-    opacity: 0;
-}
-
-.launcher-root {
-    /* T R B L */
-    padding: 10px 10px 0px 10px;
-    transition: margin-top 200ms ease;
-    margin-top: 0px;
-}
-
-.window.anim-out .launcher-root {
-    margin-top: -20px;
-}
-
-.search-row {
-    padding: 2px 5px;
+    background-color: rgba(14, 17, 22, 0.85);
     border-radius: 18px;
-    background-color: var(--color0);
-    border: 1px solid var(--color2);
+    border: 1px solid rgba(255, 255, 255, 0.085);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    margin: 0;
 }
 
-.search-entry {
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 2px 2px;
-    color: var(--foreground);
+/* ── Root container ──────────────────────────────────────────── */
+.launcher-root {
+    padding: 14px 14px 0 14px;
 }
 
+/* ── Search row ──────────────────────────────────────────────── */
+.search-row {
+    background-color: rgba(255, 255, 255, 0.045);
+    border-radius: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.085);
+    padding: 7px 12px;
+    margin-bottom: 8px;
+}
+
+.search-icon {
+    color: var(--color4);
+    font-size: 16px;
+    padding: 0 4px;
+    opacity: 0.85;
+}
+
+/* ── Scroll area ─────────────────────────────────────────────── */
 .app-scroll {
     background-color: transparent;
 }
 
-.app-scroll scrollbar,
-.app-scroll scrollbar slider {
-    opacity: 0;
-    min-width: 0;
-    min-height: 0;
+/* ── App list container ──────────────────────────────────────── */
+.app-list {
+    padding: 2px 0;
 }
 
-.app-grid {
-    /* padding: 2px; */
-}
-
+/* ── App row button (transparent shell) ──────────────────────── */
 .app-button {
     background-color: transparent;
     border: none;
     box-shadow: none;
-}
-
-.app-card {
-    padding: 8px 8px;
-    border-radius: 16px;
-    background-color: var(--color2);
-    border: 1px solid var(--color3);
-    min-width: 110px;
-    /* min-height: 10px; */
-    /* max-width: 110px;
-    max-height: 110px; */
-}
-
-.app-button:hover .app-card {
-    background-color: var(--color3);
-    border-color: var(--color4);
+    padding: 0;
 }
 
 .app-button:focus,
@@ -83,27 +54,81 @@
 .app-button:active {
     outline: none;
     box-shadow: none;
+    background-color: transparent;
+    border: none;
 }
 
-.app-button:focus .app-card,
-.app-button:focus-visible .app-card,
-.app-button:active .app-card {
-    box-shadow: none;
+/* ── App row card ────────────────────────────────────────────── */
+.app-row {
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    transition: background-color 140ms ease, border-color 140ms ease;
 }
 
-.app-button.app-selected .app-card {
-    border-color: var(--color7);
-    box-shadow: 0 0 0 1px var(--color7);
+.app-button:hover .app-row {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
-.app-label {
-    font-size: 10px;
+.app-button.app-selected .app-row {
+    background-color: alpha(var(--color4), 0.18);
+    border-color: alpha(var(--color4), 0.50);
+    box-shadow: 0 0 18px alpha(var(--color4), 0.16);
 }
 
-.web-card {
-    background-color: var(--color4);
+/* ── Icon tile ───────────────────────────────────────────────── */
+.app-icon-tile {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 4px;
 }
 
-.web-button:hover .web-card {
-    background-color: var(--color5);
+.app-button.app-selected .app-icon-tile {
+    background-color: alpha(var(--color4), 0.25);
+}
+
+/* ── App name ────────────────────────────────────────────────── */
+.app-name {
+    font-size: 13.5px;
+    color: #f0ede5;
+    font-weight: 500;
+}
+
+/* ── App category ────────────────────────────────────────────── */
+.app-category {
+    font-size: 11px;
+    color: #9aa0a9;
+}
+
+/* ── Trailing "open ↵" hint (shown only when selected) ──────── */
+.app-hint {
+    font-size: 10.5px;
+    color: #7b818a;
+    padding: 2px 6px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background-color: rgba(255, 255, 255, 0.04);
+    opacity: 0;
+    transition: opacity 120ms ease;
+}
+
+.app-button.app-selected .app-hint {
+    color: var(--color7);
+    border-color: alpha(var(--color4), 0.45);
+    background-color: alpha(var(--color4), 0.20);
+    opacity: 1;
+}
+
+/* ── Footer hint bar ─────────────────────────────────────────── */
+.launcher-footer {
+    padding: 8px 10px 10px 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 4px;
+}
+
+.hint {
+    font-size: 10.5px;
+    color: #7b818a;
 }

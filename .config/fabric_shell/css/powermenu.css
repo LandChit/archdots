@@ -1,42 +1,25 @@
 @import url("style.css");
 
-
-@keyframes window-open {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-
-@keyframes content-slide {
-    from { margin-top: -16px; }
-    to   { margin-top: 0px; }
-}
-
+/* ── Full-screen scrim ───────────────────────────────────────── */
 .powermenu-window {
-    background-color: transparent;
-    animation: window-open 180ms ease-out;
+    background-color: rgba(8, 10, 14, 0.62);
 }
 
+/* ── Root centering ──────────────────────────────────────────── */
 .powermenu-root {
-    padding: 40px;
-    animation: content-slide 200ms ease-out;
+    background-color: transparent;
 }
 
 .powermenu-row {
-    padding: 8px;
+    background-color: transparent;
 }
 
-/* ── action card ─────────────────────────────────────────────────── */
-
+/* ── Button shell (no chrome) ────────────────────────────────── */
 .powermenu-btn {
     background-color: transparent;
     border: none;
     box-shadow: none;
     padding: 0;
-    margin: 0;
-}
-
-.powermenu-btn > * {
-    margin-bottom: 0;
 }
 
 .powermenu-btn:focus,
@@ -44,54 +27,73 @@
 .powermenu-btn:active {
     outline: none;
     box-shadow: none;
+    background-color: transparent;
+    border: none;
 }
 
+/* ── Card ────────────────────────────────────────────────────── */
 .powermenu-card {
-    padding: 24px 20px 16px 20px;
+    background-color: rgba(14, 17, 22, 0.85);
     border-radius: 20px;
-    background-color: var(--color1);
-    border: 1px solid var(--color3);
-    min-width: 110px;
-    min-height: 110px;
+    border: 1px solid rgba(255, 255, 255, 0.085);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    min-width: 148px;
+    min-height: 148px;
+    padding: 20px 16px 16px 16px;
+    transition: background-color 140ms ease, border-color 140ms ease,
+                box-shadow 140ms ease;
 }
 
 .powermenu-btn:hover .powermenu-card {
-    background-color: var(--color2);
-    border-color: var(--color5);
+    background-color: alpha(var(--color4), 0.16);
+    border-color: alpha(var(--color4), 0.45);
 }
 
+/* ── Selected card — accent fill + pulsing glow ──────────────── */
 .powermenu-card.powermenu-selected {
-    background-color: var(--color2);
-    border-color: var(--color7);
-    box-shadow: 0 0 0 2px var(--color7);
+    background-color: alpha(var(--color4), 0.18);
+    border-color: alpha(var(--color4), 0.50);
+    animation: glowpulse 2.6s ease-in-out infinite;
 }
 
-.powermenu-card.shutdown.powermenu-selected {
-    border-color: #cc3333;
-    box-shadow: 0 0 0 2px #cc3333;
+@keyframes glowpulse {
+    0%   { box-shadow: 0 0 18px alpha(var(--color4), 0.18),
+                       0 20px 50px rgba(0, 0, 0, 0.55),
+                       inset 0 1px 0 rgba(255, 255, 255, 0.07); }
+    50%  { box-shadow: 0 0 34px alpha(var(--color4), 0.38),
+                       0 20px 50px rgba(0, 0, 0, 0.55),
+                       inset 0 1px 0 rgba(255, 255, 255, 0.07); }
+    100% { box-shadow: 0 0 18px alpha(var(--color4), 0.18),
+                       0 20px 50px rgba(0, 0, 0, 0.55),
+                       inset 0 1px 0 rgba(255, 255, 255, 0.07); }
 }
 
-.powermenu-btn:hover .powermenu-card.shutdown {
-    border-color: #cc3333;
-}
-
-/* ── icon + label ────────────────────────────────────────────────── */
-
+/* ── Icon ────────────────────────────────────────────────────── */
 .powermenu-icon {
-    font-size: 36px;
-    color: var(--foreground);
+    font-size: 38px;
+    color: #9aa0a9;
+    transition: color 140ms ease;
 }
 
+.powermenu-card.powermenu-selected .powermenu-icon {
+    color: var(--color4);
+}
+
+/* ── Label ───────────────────────────────────────────────────── */
 .powermenu-label {
-    font-size: 12px;
-    color: var(--foreground);
-    opacity: 0.85;
+    font-size: 12.5px;
+    color: #c3c8d0;
+    transition: color 140ms ease;
 }
 
-/* ── hint line ───────────────────────────────────────────────────── */
+.powermenu-card.powermenu-selected .powermenu-label {
+    color: var(--color4);
+}
 
+/* ── Hint line ───────────────────────────────────────────────── */
 .powermenu-hint {
-    font-size: 10px;
-    color: var(--foreground);
-    opacity: 0.4;
+    font-size: 11px;
+    color: #7b818a;
+    letter-spacing: 0.04em;
 }

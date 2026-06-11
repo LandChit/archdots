@@ -1,39 +1,143 @@
 @import url("style.css");
 
-/* Section containers */
-.content>* {
-    padding: 5px 3px 5px 3px;
-    margin: 0px 5px;
-    background-color: var(--color1);
-    border-radius: 0px 0px 10px 10px;
+/* ── Bar window (floating) ──────────────────────────────────── */
+.bar-window {
+    background-color: transparent;
+    background: rgba(0, 0, 0, 0);
 }
 
-/* Plain label modules (volume, cpu, battery, datetime) */
-.module {
-    background-color: var(--color2);
-    color: var(--foreground);
-    padding: 7px 10px;
-    margin: 0px 3px;
-    border-radius: 10px;
-}
-
-.workspaces>* {
-    padding: 6px;
-}
-
-.workspaces>*>* {
-    /* background-color: red; */
+/* Nuke any default GTK backgrounds on the CenterBox and its three inner boxes */
+.bar-content,
+.bar-content > *,
+.bar-content > * > * {
+    background-color: transparent;
+    background: rgba(0, 0, 0, 0);
+    border: none;
+    box-shadow: none;
     padding: 0;
-    margin: 0 3;
+    margin: 0;
 }
 
-/* Padding compensation */
-.tray {
-    margin: 0px 0px;
-    padding: 5px 8px;
+
+/* ── Island base ─────────────────────────────────────────────── */
+.island {
+    background-color: rgba(15, 18, 23, 0.82);
+    border-radius: 11px;
+    border: 1px solid rgba(255, 255, 255, 0.085);
+    box-shadow: none;
+    min-height: 32px;
+    padding: 0 11px;
+    margin: 0 3px;
+    transition: background-color 140ms ease;
 }
 
-.tray>* {
+/* Strip default GTK padding from every direct child so islands stay 32px */
+.island > *,
+.island label,
+.island button {
     padding: 0;
-    margin: 2;
+    margin: 0;
+    min-height: 0;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+/* ── Left: title island ──────────────────────────────────────── */
+.title-island {
+    color: #c3c8d0;
+    font-size: 12.5px;
+    padding: 0 13px;
+}
+
+/* ── Center: workspaces island ───────────────────────────────── */
+.workspaces-island {
+    padding: 0 6px;
+}
+
+/* HyprlandWorkspaces outer box */
+.workspaces-island > * {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 2px 2px;
+}
+
+/* Individual workspace buttons */
+.workspaces-island > * > * {
+    padding: 0;
+    margin: 0 2px;
+    min-width: 22px;
+    min-height: 22px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    font-size: 12px;
+    transition: all 140ms ease;
+    background-color: transparent;
+    box-shadow: none;
+}
+
+/* occupied workspace */
+.workspaces-island > * > .occupied {
+    background-color: rgba(255, 255, 255, 0.07);
+    color: #aeb4bd;
+}
+
+/* active workspace — accent-tinted */
+.workspaces-island > * > .active {
+    background-color: alpha(var(--color4), 0.30);
+    border-color: alpha(var(--color4), 0.55);
+    color: var(--color7);
+}
+
+/* ── Right: tray island ──────────────────────────────────────── */
+.tray-island {
+    padding: 0 8px;
+}
+
+.tray-island > * {
+    padding: 0;
+    margin: 2px;
+}
+
+/* ── Right: resources island (vol · cpu · bat) ───────────────── */
+.resources-island {
+    padding: 0 10px;
+}
+
+/* Re-add horizontal spacing after the global island label reset */
+.resources-island label {
+    font-size: 12.5px;
+    color: #c3c8d0;
+    padding: 0 5px;
+    margin: 0;
+}
+
+/* vertical divider between resources */
+.resources-island .res-divider {
+    color: rgba(255, 255, 255, 0.22);
+    font-size: 10px;
+    padding: 0;
+    min-width: 4px;
+}
+
+/* ── Right: clock island (accent-tinted anchor) ──────────────── */
+/* Accent mixed over the dark island base so text stays readable on
+   any wallpaper — pure alpha-accent washed out over light walls. */
+.clock-island {
+    background-color: alpha(mix(var(--background), var(--color4), 0.35), 0.92);
+    border-color: alpha(var(--color4), 0.55);
+    box-shadow: none;
+    color: var(--color7);
+    font-size: 12.5px;
+    padding: 0 13px;
+}
+
+.clock-island label {
+    color: var(--color7);
+    padding: 0;
+}
+
+.clock-island:hover {
+    background-color: alpha(mix(var(--background), var(--color4), 0.50), 0.94);
 }

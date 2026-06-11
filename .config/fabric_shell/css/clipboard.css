@@ -1,64 +1,47 @@
 @import url("style.css");
 
-
+/* ── Panel window ────────────────────────────────────────────── */
 .window {
-    background-color: var(--color1);
-    color: var(--foreground);
-    margin: 0 50px 0 0;
-    border-radius: 0px 0px 10px 10px;
-    transition: opacity 200ms ease;
-    opacity: 1;
-}
-
-.window.anim-out {
-    opacity: 0;
-}
-
-.launcher-root {
-    padding: 10px 10px 0px 10px;
-    transition: margin-top 200ms ease;
-    margin-top: 0px;
-}
-
-.window.anim-out .launcher-root {
-    margin-top: -20px;
-}
-
-.search-row {
-    padding: 2px 5px;
+    background-color: rgba(14, 17, 22, 0.85);
     border-radius: 18px;
-    background-color: var(--color0);
-    border: 1px solid var(--color2);
+    border: 1px solid rgba(255, 255, 255, 0.085);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    margin: 0;
+}
+
+/* ── Root container ──────────────────────────────────────────── */
+.launcher-root {
+    padding: 13px 13px 0 13px;
+}
+
+/* ── Search row ──────────────────────────────────────────────── */
+.search-row {
+    background-color: rgba(255, 255, 255, 0.045);
+    border-radius: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.085);
+    padding: 7px 12px;
     margin-bottom: 8px;
 }
 
-.search-entry {
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 2px 2px;
-    color: var(--foreground);
+.search-icon {
+    color: var(--color4);
+    font-size: 16px;
+    padding: 0 4px;
+    opacity: 0.85;
 }
 
+/* ── Scroll area ─────────────────────────────────────────────── */
 .app-scroll {
     background-color: transparent;
 }
 
-.app-scroll scrollbar,
-.app-scroll scrollbar slider {
-    opacity: 0;
-    min-width: 0;
-    min-height: 0;
-}
-
-/* ── list container ─────────────────────────────────────────────────── */
-
+/* ── List container ──────────────────────────────────────────── */
 .clip-list {
-    padding: 4px 0px;
+    padding: 2px 0;
 }
 
-/* ── item button (full-width, transparent shell) ────────────────────── */
-
+/* ── Row button (transparent shell) ─────────────────────────── */
 .clip-button {
     background-color: transparent;
     border: none;
@@ -71,46 +54,52 @@
 .clip-button:active {
     outline: none;
     box-shadow: none;
+    background-color: transparent;
+    border: none;
 }
 
-/* ── item card (horizontal row) ─────────────────────────────────────── */
-
+/* ── Row card ────────────────────────────────────────────────── */
 .clip-item {
-    padding: 8px 10px;
+    padding: 9px 11px;
     border-radius: 12px;
-    background-color: var(--color2);
-    border: 1px solid var(--color3);
+    border: 1px solid transparent;
     min-height: 52px;
+    transition: background-color 140ms ease, border-color 140ms ease;
 }
 
 .clip-button:hover .clip-item {
-    background-color: var(--color3);
-    border-color: var(--color4);
-}
-
-.clip-button:focus .clip-item,
-.clip-button:focus-visible .clip-item,
-.clip-button:active .clip-item {
-    box-shadow: none;
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .clip-button.clip-selected .clip-item {
-    border-color: var(--color7);
-    box-shadow: 0 0 0 1px var(--color7);
+    background-color: alpha(var(--color4), 0.18);
+    border-color: alpha(var(--color4), 0.50);
+    box-shadow: 0 0 18px alpha(var(--color4), 0.16);
 }
 
-/* ── item content ───────────────────────────────────────────────────── */
-
+/* ── Entry text ──────────────────────────────────────────────── */
 .clip-label {
-    font-size: 11px;
-    color: var(--foreground);
+    font-size: 12px;
+    color: #dcdad2;
+    font-family: "JetBrainsMono NF", "JetBrains Mono", monospace;
 }
 
+/* ── Icon (text/file/link entries) ──────────────────────────── */
 .clip-text-icon {
-    opacity: 0.5;
+    opacity: 0.45;
     min-width: 20px;
+    color: #9aa0a9;
 }
 
+.clip-button.clip-selected .clip-text-icon {
+    color: var(--color4);
+    opacity: 0.90;
+}
+
+/* ── Image thumbnail ─────────────────────────────────────────── */
 .clip-thumb {
-    border-radius: 6px;
+    border-radius: 9px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    min-width: 52px;
+    min-height: 40px;
 }

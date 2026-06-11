@@ -1,9 +1,53 @@
-.window {
-    background-color: rgba(0, 0, 0, 0);
-    font-weight: 900;
+/* Shared base — all surfaces import this */
+* {
+    font-family: "JetBrainsMono NF", "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    font-weight: 400;
 }
 
-* {
-    font-family: "JetbrainsMono NF", "Font Awesome 6 Free", "Font Awesome 6 Free Solid";
-    font-weight: bold;
+/* Panel windows start transparent; individual CSS files set surface bg */
+.window {
+    background-color: transparent;
+    transition: opacity 180ms ease;
+    opacity: 1;
+}
+
+/* Slide-fade out */
+.window.anim-out {
+    opacity: 0;
+}
+
+.launcher-root {
+    transition: margin-top 180ms ease;
+    margin-top: 0;
+}
+
+.window.anim-out .launcher-root {
+    margin-top: -18px;
+}
+
+/* Hide all scrollbars */
+scrollbar,
+scrollbar slider {
+    opacity: 0;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Shared search entry reset — min-height 0 kills the GTK theme's
+   default entry height which made the field way too tall */
+.search-entry {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    color: #edeae2;
+    caret-color: var(--color4);
+    font-size: 13.5px;
+    padding: 2px 4px;
+    min-height: 0;
+}
+
+.search-entry:focus {
+    outline: none;
+    box-shadow: none;
 }

@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd /home/chit/archdots/.config/fabric_shell && pkill -f \\\"[d]aemon.py\\\"; sleep 0.5; nohup .venv/bin/python daemon.py >/tmp/fabric-daemon.log 2>&1 & sleep 3; tail -3 /tmp/fabric-daemon.log ...",
-  "error": "Exit code 144",
-  "timestamp": "2026-06-12T02:02:15.867Z",
-  "retry_count": 2
-}

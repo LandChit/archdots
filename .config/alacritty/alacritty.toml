@@ -19,8 +19,11 @@ style = "Italic"
 
 [window]
 dimensions = { columns = 120, lines = 35 }
-opacity = 1.0
+# glass look — matches the shell's ~85% surface opacity; Hyprland blurs it
+opacity = 0.85
 decorations = "None"
+padding = { x = 14, y = 12 }
+dynamic_padding = true
 
 [keyboard]
 bindings = [

@@ -123,11 +123,15 @@ hl.window_rule({
     workspace = "4",
 })
 
+-- Frosted glass for the fabric shell. The 0.7 alpha threshold keeps the
+-- ~0.85-alpha panel surfaces blurred while excluding the panels' CSS
+-- box-shadows (alpha <= 0.6) — blurring those painted a sharp frosted
+-- rectangle behind the rounded corners.
 hl.layer_rule(
     {
         name = "fabric",
         match = { namespace = "fabric*" },
-        blur = false,
-        ignore_alpha = 0,
+        blur = true,
+        ignore_alpha = 0.7,
     }
 )

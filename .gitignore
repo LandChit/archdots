@@ -23,3 +23,5 @@ TestResults.xml
 .directory
 
 installscript.sh
+
+.config/fabric_shell/design_handoff_hyprland_suite

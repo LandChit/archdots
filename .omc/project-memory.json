@@ -70,8 +70,8 @@
     },
     {
       "path": ".config/fabric_shell/emoji.py",
-      "accessCount": 9,
-      "lastAccessed": 1781185734770,
+      "accessCount": 10,
+      "lastAccessed": 1781229588788,
       "type": "file"
     },
     {
@@ -81,21 +81,21 @@
       "type": "file"
     },
     {
+      "path": ".zshrc",
+      "accessCount": 8,
+      "lastAccessed": 1781228609658,
+      "type": "file"
+    },
+    {
       "path": ".config/fabric_shell/clipboard.py",
-      "accessCount": 7,
-      "lastAccessed": 1781185815900,
+      "accessCount": 8,
+      "lastAccessed": 1781229606737,
       "type": "file"
     },
     {
       "path": ".config/fabric_shell/css/launcher.css",
       "accessCount": 6,
       "lastAccessed": 1781165615164,
-      "type": "file"
-    },
-    {
-      "path": ".zshrc",
-      "accessCount": 5,
-      "lastAccessed": 1780395406552,
       "type": "file"
     },
     {
@@ -123,9 +123,39 @@
       "type": "file"
     },
     {
+      "path": ".config/hypr/config/rules.lua",
+      "accessCount": 3,
+      "lastAccessed": 1781229194056,
+      "type": "file"
+    },
+    {
       "path": ".config/fabric_shell/daemon.py",
       "accessCount": 2,
       "lastAccessed": 1781163209395,
+      "type": "file"
+    },
+    {
+      "path": ".config/hypr/config/theme.lua",
+      "accessCount": 2,
+      "lastAccessed": 1781186546861,
+      "type": "file"
+    },
+    {
+      "path": ".config/hypr/config/animation.lua",
+      "accessCount": 2,
+      "lastAccessed": 1781186592444,
+      "type": "file"
+    },
+    {
+      "path": ".config/alacritty/alacritty.toml",
+      "accessCount": 2,
+      "lastAccessed": 1781186648380,
+      "type": "file"
+    },
+    {
+      "path": ".config/wal/templates/colors-alacritty.toml",
+      "accessCount": 2,
+      "lastAccessed": 1781186814478,
       "type": "file"
     },
     {
@@ -138,6 +168,18 @@
       "path": ".config/fabric_shell/design_handoff_hyprland_suite/README.md",
       "accessCount": 1,
       "lastAccessed": 1781163121637,
+      "type": "file"
+    },
+    {
+      "path": ".config/hypr/hyprland.lua",
+      "accessCount": 1,
+      "lastAccessed": 1781186256573,
+      "type": "file"
+    },
+    {
+      "path": ".ohmyzsh_custom/themes/chit.zsh-theme",
+      "accessCount": 1,
+      "lastAccessed": 1781186867615,
       "type": "file"
     }
   ],

@@ -21,3 +21,11 @@ blue    = '{color12}'
 magenta = '{color13}'
 cyan    = '{color14}'
 white   = '{color15}'
+
+[colors.cursor]
+text   = '{background}'
+cursor = '{color4}'
+
+[colors.selection]
+text       = '{foreground}'
+background = '{color2}'

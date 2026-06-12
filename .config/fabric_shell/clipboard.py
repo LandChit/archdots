@@ -92,7 +92,7 @@ class ClipboardManager(Window):
         super().__init__(
             layer="top",
             anchor="top",
-            margin="0px 0px 0px 0px",
+            margin="18px 0px 0px 0px",
             exclusivity="none",
             keyboard_mode="on-demand",
             visible=False,

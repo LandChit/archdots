@@ -40,7 +40,7 @@ scrollbar slider {
     background-color: transparent;
     border: none;
     box-shadow: none;
-    color: #edeae2;
+    color: var(--foreground);
     caret-color: var(--color4);
     font-size: 13.5px;
     padding: 2px 4px;

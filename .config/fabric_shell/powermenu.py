@@ -37,6 +37,7 @@ class PowerMenu(Window):
         # Anchor all four edges so the window (and its scrim background)
         # covers the entire screen instead of shrinking to content size
         super().__init__(
+            title="fabric-powermenu",
             layer="overlay",
             anchor="left top right bottom",
             exclusivity="none",

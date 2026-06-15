@@ -45,6 +45,7 @@ LIST_HEIGHT = 460
 class Launcher(Window):
     def __init__(self, daemon_mode: bool = False, **kwargs):
         super().__init__(
+            title="fabric-launcher",
             layer="top",
             anchor="top",
             margin="18px 0px 0px 0px",

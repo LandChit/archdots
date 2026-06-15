@@ -90,6 +90,7 @@ def _copy_entry(original_line: str, is_image: bool, img_format: str = "png"):
 class ClipboardManager(Window):
     def __init__(self, daemon_mode: bool = False, **kwargs):
         super().__init__(
+            title="fabric-clipboard",
             layer="top",
             anchor="top",
             margin="18px 0px 0px 0px",

@@ -16,7 +16,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSS_DIR = os.path.join(BASE_DIR, "css")
 
 NOTIF_WIDTH = 360
-ICON_SIZE = 32
+ICON_SIZE = 26
 DEFAULT_TIMEOUT_MS = 5000
 
 _MARKUP_RE = re.compile(r"<[^>]+>")
@@ -42,13 +42,19 @@ class NotificationCard(Box):
 
     def _build(self):
         n = self._notif
-        icon = self._make_icon()
+        icon_tile = Box(
+            style_classes="notif-icon-tile",
+            v_align="start",
+            h_align="center",
+            children=[self._make_icon()],
+        )
 
         app_name = Label(
-            label=n.app_name or "",
+            label=(n.app_name or "").upper(),
             h_align="start",
             style_classes="notif-app-name",
-            ellipsization="end",
+            h_expand=True,
+            x_align=0.0,
         )
         summary = Label(
             label=_plain(n.summary or ""),
@@ -70,10 +76,10 @@ class NotificationCard(Box):
 
         self.add(Box(
             orientation="horizontal",
-            spacing=8,
+            spacing=10,
             style_classes="notif-header",
             h_expand=True,
-            children=[icon, title_col, close_btn],
+            children=[icon_tile, title_col, close_btn],
         ))
 
         if n.body:
@@ -138,6 +144,7 @@ class NotificationCard(Box):
 class NotificationDaemon(Window):
     def __init__(self):
         super().__init__(
+            title="fabric-notifications",
             layer="overlay",
             anchor="top right",
             margin="10px 10px 0px 0px",

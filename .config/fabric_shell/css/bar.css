@@ -21,9 +21,9 @@
 
 /* ── Island base ─────────────────────────────────────────────── */
 .island {
-    background-color: rgba(15, 18, 23, 0.82);
+    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.88);
     border-radius: 11px;
-    border: 1px solid rgba(255, 255, 255, 0.085);
+    border: 1px solid alpha(var(--color4), 0.28);
     box-shadow: none;
     min-height: 32px;
     padding: 0 11px;
@@ -45,7 +45,7 @@
 
 /* ── Left: title island ──────────────────────────────────────── */
 .title-island {
-    color: #c3c8d0;
+    color: var(--foreground);
     font-size: 12.5px;
     padding: 0 13px;
 }
@@ -79,8 +79,8 @@
 
 /* occupied workspace */
 .workspaces-island > * > .occupied {
-    background-color: rgba(255, 255, 255, 0.07);
-    color: #aeb4bd;
+    background-color: alpha(var(--color4), 0.12);
+    color: alpha(var(--foreground), 0.85);
 }
 
 /* active workspace — accent-tinted */
@@ -108,14 +108,14 @@
 /* Re-add horizontal spacing after the global island label reset */
 .resources-island label {
     font-size: 12.5px;
-    color: #c3c8d0;
+    color: var(--foreground);
     padding: 0 5px;
     margin: 0;
 }
 
 /* vertical divider between resources */
 .resources-island .res-divider {
-    color: rgba(255, 255, 255, 0.22);
+    color: alpha(var(--foreground), 0.30);
     font-size: 10px;
     padding: 0;
     min-width: 4px;

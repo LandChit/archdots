@@ -130,8 +130,17 @@ hl.window_rule({
 hl.layer_rule(
     {
         name = "fabric",
-        match = { namespace = "fabric*" },
+        match = { namespace = "fabric-*" },
         blur = true,
-        ignore_alpha = 0.7,
+        ignore_alpha = 1,
+    }
+)
+
+hl.layer_rule(
+    {
+        name = "fabric-powermenu",
+        match = { namespace = "fabric-powermenu" },
+        blur = true,
+        ignore_alpha = 0.1,
     }
 )

@@ -62,6 +62,7 @@ BAT_PATH = _find_battery()
 class StatusBar(Window):
     def __init__(self, show_tray: bool = True, **kwargs):
         super().__init__(
+            title="fabric-bar",
             layer="top",
             anchor="left top right",
             margin="6px 14px 0px 14px",

@@ -2,9 +2,9 @@
 
 /* ── Panel window ────────────────────────────────────────────── */
 .window {
-    background-color: rgba(14, 17, 22, 0.85);
+    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.92);
     border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.085);
+    border: 1px solid alpha(var(--color4), 0.28);
     box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6),
                 inset 0 1px 0 rgba(255, 255, 255, 0.06);
     margin: 0;
@@ -17,9 +17,9 @@
 
 /* ── Search row ──────────────────────────────────────────────── */
 .search-row {
-    background-color: rgba(255, 255, 255, 0.045);
+    background-color: alpha(var(--color4), 0.10);
     border-radius: 13px;
-    border: 1px solid rgba(255, 255, 255, 0.085);
+    border: 1px solid alpha(var(--color4), 0.25);
     padding: 7px 12px;
     margin-bottom: 8px;
 }
@@ -49,11 +49,11 @@
    never depends on label text */
 .group-button {
     background-color: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    border: 1px solid alpha(var(--color4), 0.18);
     border-radius: 9px;
     padding: 0;
     font-size: 15px;
-    color: #9aa0a9;
+    color: alpha(var(--foreground), 0.55);
     box-shadow: none;
     min-height: 34px;
     min-width: 34px;
@@ -62,8 +62,8 @@
 }
 
 .group-button:hover {
-    background-color: rgba(255, 255, 255, 0.07);
-    color: #c3c8d0;
+    background-color: alpha(var(--color4), 0.12);
+    color: var(--foreground);
 }
 
 .group-button.group-active {
@@ -76,7 +76,7 @@
 /* Uppercase section caption above the grid */
 .section-label {
     font-size: 10px;
-    color: #7b818a;
+    color: alpha(var(--foreground), 0.50);
     padding: 2px 4px 5px 6px;
 }
 
@@ -97,7 +97,7 @@
 }
 
 .emoji-button:hover {
-    background-color: rgba(255, 255, 255, 0.07);
+    background-color: alpha(var(--color4), 0.12);
 }
 
 .emoji-button:focus,

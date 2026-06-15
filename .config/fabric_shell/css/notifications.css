@@ -13,48 +13,53 @@
     background-color: transparent;
 }
 
-/* ── card ───────────────────────────────────────────────────────────── */
+/* ── card (floating glass panel) ────────────────────────────────────── */
 
 .notif-card {
-    background-color: var(--color1);
-    border: 1px solid var(--color3);
-    border-left: 3px solid var(--color4);
-    border-radius: 12px;
-    padding: 10px 12px;
+    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.92);
+    border: 1px solid alpha(var(--color4), 0.28);
+    border-radius: 14px;
+    padding: 11px 13px;
     min-width: 360px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .notif-card.notif-low {
-    border-left-color: var(--color2);
-    opacity: 0.85;
-}
-
-.notif-card.notif-normal {
-    border-left-color: var(--color4);
+    opacity: 0.9;
 }
 
 .notif-card.notif-critical {
-    background-color: var(--color1);
-    border-color: var(--color8);
-    border-left-color: var(--color8);
-    box-shadow: 0 0 0 1px var(--color8);
+    border-color: alpha(var(--color4), 0.50);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55),
+                0 0 18px alpha(var(--color4), 0.16),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 /* ── header row ─────────────────────────────────────────────────────── */
 
-.notif-icon {
-    min-width: 32px;
-    min-height: 32px;
+.notif-icon-tile {
+    background-color: alpha(var(--color4), 0.12);
+    border-radius: 10px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 4px;
+}
+
+.notif-card.notif-critical .notif-icon-tile {
+    background-color: alpha(var(--color4), 0.25);
 }
 
 .notif-app-name {
     font-size: 10px;
-    color: var(--color6);
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    color: alpha(var(--foreground), 0.50);
 }
 
 .notif-summary {
-    font-size: 12px;
-    font-weight: bold;
+    font-size: 13.5px;
+    font-weight: 500;
     color: var(--foreground);
 }
 
@@ -62,11 +67,12 @@
     background-color: transparent;
     border: none;
     box-shadow: none;
-    color: var(--color6);
+    color: alpha(var(--foreground), 0.50);
     font-size: 18px;
     padding: 0 2px;
     min-height: 0;
     min-width: 0;
+    transition: color 140ms ease;
 }
 
 .notif-close:hover {
@@ -83,31 +89,34 @@
 
 .notif-body {
     font-size: 11px;
-    color: var(--color7);
-    padding-left: 40px;
+    color: alpha(var(--foreground), 0.55);
+    padding-left: 46px;
 }
 
-/* ── action buttons ─────────────────────────────────────────────────── */
+/* ── action buttons (key-cap style) ─────────────────────────────────── */
 
 .notif-actions {
-    padding-top: 2px;
-    padding-left: 40px;
+    padding-top: 4px;
+    padding-left: 46px;
 }
 
 .notif-action-btn {
-    background-color: var(--color2);
-    border: 1px solid var(--color3);
+    background-color: alpha(var(--color4), 0.10);
+    border: 1px solid alpha(var(--color4), 0.25);
     border-radius: 8px;
-    padding: 3px 12px;
-    font-size: 10px;
+    padding: 4px 12px;
+    font-size: 10.5px;
     color: var(--foreground);
     box-shadow: none;
     min-height: 0;
+    transition: background-color 140ms ease, border-color 140ms ease,
+                color 140ms ease;
 }
 
 .notif-action-btn:hover {
-    background-color: var(--color3);
-    border-color: var(--color4);
+    background-color: alpha(var(--color4), 0.18);
+    border-color: alpha(var(--color4), 0.45);
+    color: var(--color7);
 }
 
 .notif-action-btn:focus,

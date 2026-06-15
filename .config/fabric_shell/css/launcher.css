@@ -2,9 +2,9 @@
 
 /* ── Panel window ────────────────────────────────────────────── */
 .window {
-    background-color: rgba(14, 17, 22, 0.85);
+    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.92);
     border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.085);
+    border: 1px solid alpha(var(--color4), 0.28);
     box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6),
                 inset 0 1px 0 rgba(255, 255, 255, 0.06);
     margin: 0;
@@ -17,9 +17,9 @@
 
 /* ── Search row ──────────────────────────────────────────────── */
 .search-row {
-    background-color: rgba(255, 255, 255, 0.045);
+    background-color: alpha(var(--color4), 0.10);
     border-radius: 13px;
-    border: 1px solid rgba(255, 255, 255, 0.085);
+    border: 1px solid alpha(var(--color4), 0.25);
     padding: 7px 12px;
     margin-bottom: 8px;
 }
@@ -67,7 +67,7 @@
 }
 
 .app-button:hover .app-row {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: alpha(var(--color4), 0.10);
 }
 
 .app-button.app-selected .app-row {
@@ -78,7 +78,7 @@
 
 /* ── Icon tile ───────────────────────────────────────────────── */
 .app-icon-tile {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: alpha(var(--color4), 0.12);
     border-radius: 10px;
     min-width: 36px;
     min-height: 36px;
@@ -92,24 +92,24 @@
 /* ── App name ────────────────────────────────────────────────── */
 .app-name {
     font-size: 13.5px;
-    color: #f0ede5;
+    color: var(--foreground);
     font-weight: 500;
 }
 
 /* ── App category ────────────────────────────────────────────── */
 .app-category {
     font-size: 11px;
-    color: #9aa0a9;
+    color: alpha(var(--foreground), 0.55);
 }
 
 /* ── Trailing "open ↵" hint (shown only when selected) ──────── */
 .app-hint {
     font-size: 10.5px;
-    color: #7b818a;
+    color: alpha(var(--foreground), 0.50);
     padding: 2px 6px;
     border-radius: 5px;
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid alpha(var(--color4), 0.25);
+    background-color: alpha(var(--color4), 0.10);
     opacity: 0;
     transition: opacity 120ms ease;
 }
@@ -124,11 +124,11 @@
 /* ── Footer hint bar ─────────────────────────────────────────── */
 .launcher-footer {
     padding: 8px 10px 10px 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid alpha(var(--color4), 0.20);
     margin-top: 4px;
 }
 
 .hint {
     font-size: 10.5px;
-    color: #7b818a;
+    color: alpha(var(--foreground), 0.50);
 }

@@ -28,7 +28,7 @@ hl.config({
 
         col = {
             -- accent gradient like the shell's selected-row glow
-            active_border = "rgba(" .. accent2 .. "ee)",
+            active_border = "rgba(" .. accent .. "ee)",
             inactive_border = "rgba(" .. inactive .. "55)",
         },
 

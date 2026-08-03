@@ -104,15 +104,31 @@ hl.window_rule({
     float = true,
 })
 
+
+
+steam_games = "^(?i)steam_app_.*"
+
 -- Games on work 4
 hl.window_rule({
     name = "steam",
     match = {
-        class = "^(?i)steam_app_.*"
+        class = steam_games
     },
     fullscreen = true,
     workspace = "4",
 })
+
+-- hl.on("window.close", function(window)
+--     if window.class == "steam_app_2225070" then
+--         hl.dsp.exec_cmd("pkill steam_app_2225070")
+
+--         hl.notification.create({
+--             text = "Window: " .. window.class .. "\n Title: " .. window.title,
+--             timeout = 4000,
+--             icon = "ok"
+--         })
+--     end
+-- end)
 
 hl.window_rule({
     name = "minecraft",

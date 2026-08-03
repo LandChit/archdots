@@ -1,13 +1,12 @@
+local shell = require("config.helpers.shell")
+
 hl.on("hyprland.start", function()
     hl.exec_cmd("kwalletmanager5", { workspace = "99", no_initial_focus = true, })
     hl.exec_cmd("sleep 1; /usr/lib/pam_kwallet_init --no-startup-id")
     hl.exec_cmd("sleep 5; killall kwalletmanager5")
 
     -- hl.exec_cmd("wal -R && cp ~/.cache/wal/dunstrc ~/.config/dunst/dunstrc && dunst &")
-    hl.exec_cmd("wal -R && cp ~/.cache/wal/colors-fabric.css ~/.config/fabric_shell/css/colors-fabric.css")
-    hl.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/bar.py &")
-    hl.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/notifications.py &")
-    hl.exec_cmd("~/.config/fabric_shell/.venv/bin/python  ~/.config/fabric_shell/daemon.py &")
+    shell.restart()
 
 
     hl.exec_cmd("hyprpaper &")

@@ -25,3 +25,5 @@ TestResults.xml
 installscript.sh
 
 .config/fabric_shell/design_handoff_hyprland_suite
+
+.omc/*

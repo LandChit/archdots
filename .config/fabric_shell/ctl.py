@@ -1,50 +1,41 @@
 #!/usr/bin/env python3
-"""
-fabric-shell control script — sends commands to the running daemon.
+"""fabric-shell control client — sends one command to the running daemon.
 
-Usage:
     ctl.py toggle|show|hide  launcher|powermenu|clipboard|emoji
-
-Examples:
-    ctl.py toggle launcher
-    ctl.py show powermenu
-    ctl.py hide emoji
 """
+
 import socket
 import sys
 
 SOCKET_PATH = "/tmp/fabric-shell.sock"
-VALID_ACTIONS = {"toggle", "show", "hide"}
-VALID_WINDOWS = {"launcher", "powermenu", "clipboard", "emoji"}
+ACTIONS = ("toggle", "show", "hide")
+WINDOWS = ("launcher", "powermenu", "clipboard", "emoji")
 
 
-def main():
+def fail(message: str) -> None:
+    print(f"[ctl] {message}")
+    raise SystemExit(1)
+
+
+def main() -> None:
     if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} toggle|show|hide launcher|powermenu|clipboard|emoji")
-        sys.exit(1)
+        fail(f"usage: {sys.argv[0]} {'|'.join(ACTIONS)} {'|'.join(WINDOWS)}")
 
-    action, name = sys.argv[1], sys.argv[2]
+    action, window = sys.argv[1], sys.argv[2]
+    if action not in ACTIONS:
+        fail(f"unknown action {action!r} (choose: {', '.join(ACTIONS)})")
+    if window not in WINDOWS:
+        fail(f"unknown window {window!r} (choose: {', '.join(WINDOWS)})")
 
-    if action not in VALID_ACTIONS:
-        print(f"[ctl] unknown action: {action!r}  (choose: {', '.join(sorted(VALID_ACTIONS))})")
-        sys.exit(1)
-    if name not in VALID_WINDOWS:
-        print(f"[ctl] unknown window: {name!r}  (choose: {', '.join(sorted(VALID_WINDOWS))})")
-        sys.exit(1)
-
-    cmd = f"{action} {name}"
     try:
-        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        s.settimeout(2)
-        s.connect(SOCKET_PATH)
-        s.sendall(cmd.encode())
-        s.close()
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+            client.settimeout(2)
+            client.connect(SOCKET_PATH)
+            client.sendall(f"{action} {window}".encode())
     except FileNotFoundError:
-        print(f"[ctl] daemon not running (socket not found: {SOCKET_PATH})")
-        sys.exit(1)
+        fail(f"daemon not running (no socket at {SOCKET_PATH})")
     except Exception as e:
-        print(f"[ctl] failed: {e}")
-        sys.exit(1)
+        fail(f"failed: {e}")
 
 
 if __name__ == "__main__":

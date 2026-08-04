@@ -1,4 +1,4 @@
-@import url("style.css");
+/* Power menu. The button chrome reset lives in style.css. */
 
 /* ── Full-screen scrim ───────────────────────────────────────── */
 .powermenu-window {
@@ -12,23 +12,6 @@
 
 .powermenu-row {
     background-color: transparent;
-}
-
-/* ── Button shell (no chrome) ────────────────────────────────── */
-.powermenu-btn {
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-}
-
-.powermenu-btn:focus,
-.powermenu-btn:focus-visible,
-.powermenu-btn:active {
-    outline: none;
-    box-shadow: none;
-    background-color: transparent;
-    border: none;
 }
 
 /* ── Card ────────────────────────────────────────────────────── */

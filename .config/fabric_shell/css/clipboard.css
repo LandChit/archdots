@@ -1,90 +1,22 @@
-@import url("style.css");
+/* Clipboard panel. Window chrome, search row and row selection live in
+   style.css — only what is specific to clipboard rows belongs here. */
 
-/* ── Panel window ────────────────────────────────────────────── */
-.window {
-    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.92);
-    border-radius: 18px;
-    border: 1px solid alpha(var(--color4), 0.28);
-    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6),
-                inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    margin: 0;
-}
-
-/* ── Root container ──────────────────────────────────────────── */
-.launcher-root {
-    padding: 13px 13px 0 13px;
-}
-
-/* ── Search row ──────────────────────────────────────────────── */
-.search-row {
-    background-color: alpha(var(--color4), 0.10);
-    border-radius: 13px;
-    border: 1px solid alpha(var(--color4), 0.25);
-    padding: 7px 12px;
-    margin-bottom: 8px;
-}
-
-.search-icon {
-    color: var(--color4);
-    font-size: 16px;
-    padding: 0 4px;
-    opacity: 0.85;
-}
-
-/* ── Scroll area ─────────────────────────────────────────────── */
-.app-scroll {
-    background-color: transparent;
-}
-
-/* ── List container ──────────────────────────────────────────── */
 .clip-list {
     padding: 2px 0;
 }
 
-/* ── Row button (transparent shell) ─────────────────────────── */
-.clip-button {
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-}
-
-.clip-button:focus,
-.clip-button:focus-visible,
-.clip-button:active {
-    outline: none;
-    box-shadow: none;
-    background-color: transparent;
-    border: none;
-}
-
-/* ── Row card ────────────────────────────────────────────────── */
 .clip-item {
     padding: 9px 11px;
-    border-radius: 12px;
-    border: 1px solid transparent;
     min-height: 52px;
-    transition: background-color 140ms ease, border-color 140ms ease;
-}
-
-.clip-button:hover .clip-item {
-    background-color: alpha(var(--color4), 0.10);
-}
-
-.clip-button.clip-selected .clip-item {
-    background-color: alpha(var(--color4), 0.18);
-    border-color: alpha(var(--color4), 0.50);
-    box-shadow: 0 0 18px alpha(var(--color4), 0.16);
 }
 
 /* ── Entry text ──────────────────────────────────────────────── */
 .clip-label {
     font-size: 12px;
     color: var(--foreground);
-    font-family: "JetBrainsMono NF", "JetBrains Mono", monospace;
 }
 
-/* ── Icon (text/file/link entries) ──────────────────────────── */
+/* ── Icon for text / file / link entries ─────────────────────── */
 .clip-text-icon {
     opacity: 0.45;
     min-width: 20px;

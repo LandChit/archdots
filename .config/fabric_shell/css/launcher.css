@@ -1,79 +1,16 @@
-@import url("style.css");
+/* Launcher panel. Window chrome, search row and row selection live in
+   style.css — only what is specific to app rows belongs here. */
 
-/* ── Panel window ────────────────────────────────────────────── */
-.window {
-    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.92);
-    border-radius: 18px;
-    border: 1px solid alpha(var(--color4), 0.28);
-    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6),
-                inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    margin: 0;
-}
-
-/* ── Root container ──────────────────────────────────────────── */
 .launcher-root {
     padding: 14px 14px 0 14px;
 }
 
-/* ── Search row ──────────────────────────────────────────────── */
-.search-row {
-    background-color: alpha(var(--color4), 0.10);
-    border-radius: 13px;
-    border: 1px solid alpha(var(--color4), 0.25);
-    padding: 7px 12px;
-    margin-bottom: 8px;
-}
-
-.search-icon {
-    color: var(--color4);
-    font-size: 16px;
-    padding: 0 4px;
-    opacity: 0.85;
-}
-
-/* ── Scroll area ─────────────────────────────────────────────── */
-.app-scroll {
-    background-color: transparent;
-}
-
-/* ── App list container ──────────────────────────────────────── */
 .app-list {
     padding: 2px 0;
 }
 
-/* ── App row button (transparent shell) ──────────────────────── */
-.app-button {
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-}
-
-.app-button:focus,
-.app-button:focus-visible,
-.app-button:active {
-    outline: none;
-    box-shadow: none;
-    background-color: transparent;
-    border: none;
-}
-
-/* ── App row card ────────────────────────────────────────────── */
 .app-row {
     padding: 8px 10px;
-    border-radius: 12px;
-    border: 1px solid transparent;
-    transition: background-color 140ms ease, border-color 140ms ease;
-}
-
-.app-button:hover .app-row {
-    background-color: alpha(var(--color4), 0.10);
-}
-
-.app-button.app-selected .app-row {
-    background-color: alpha(var(--color4), 0.18);
-    border-color: alpha(var(--color4), 0.50);
-    box-shadow: 0 0 18px alpha(var(--color4), 0.16);
 }
 
 /* ── Icon tile ───────────────────────────────────────────────── */
@@ -89,20 +26,19 @@
     background-color: alpha(var(--color4), 0.25);
 }
 
-/* ── App name ────────────────────────────────────────────────── */
+/* ── Row text ────────────────────────────────────────────────── */
 .app-name {
     font-size: 13.5px;
     color: var(--foreground);
     font-weight: 500;
 }
 
-/* ── App category ────────────────────────────────────────────── */
 .app-category {
     font-size: 11px;
     color: alpha(var(--foreground), 0.55);
 }
 
-/* ── Trailing "open ↵" hint (shown only when selected) ──────── */
+/* ── Trailing "open ↵" hint, revealed only on the selected row ── */
 .app-hint {
     font-size: 10.5px;
     color: alpha(var(--foreground), 0.50);

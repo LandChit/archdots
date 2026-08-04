@@ -1,54 +1,34 @@
+"""Emoji picker — searchable grid with a group rail, backed by a cached JSON set."""
+
 import json
 import os
 import subprocess
 import threading
 import urllib.request
 
-from fabric import Application
-from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
-from fabric.widgets.entry import Entry
-from fabric.widgets.label import Label
 from fabric.widgets.flowbox import FlowBox
-from fabric.utils.helpers import monitor_file
+from fabric.widgets.label import Label
+from fabric.widgets.scrolledwindow import ScrolledWindow
 
-from gi.repository import GLib  # type: ignore
+from gi.repository import Gdk, GLib  # type: ignore
+
+from common import Panel, Selection, UsageCounts, make_scroller
 
 EMOJI_URL = "https://raw.githubusercontent.com/LandChit/unicode-emoji-json/refs/heads/main/data-by-emoji.json"
-CACHE_DIR = os.path.expanduser("~/.cache/emoji-picker")
-CACHE_FILE = os.path.join(CACHE_DIR, "data-by-emoji.json")
-
-EMOJI_COUNTS_PATH = os.path.expanduser("~/.local/share/fabric-launcher/emoji-counts.json")
-
-
-def _load_emoji_counts() -> dict[str, int]:
-    try:
-        with open(EMOJI_COUNTS_PATH) as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
-
-
-def _save_emoji_counts(counts: dict[str, int]) -> None:
-    os.makedirs(os.path.dirname(EMOJI_COUNTS_PATH), exist_ok=True)
-    with open(EMOJI_COUNTS_PATH, "w") as f:
-        json.dump(counts, f, indent=2)
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CSS_DIR = os.path.join(BASE_DIR, "css")
+CACHE_FILE = os.path.expanduser("~/.cache/emoji-picker/data-by-emoji.json")
+COUNTS_PATH = "~/.local/share/fabric-launcher/emoji-counts.json"
 
 COLUMNS = 7
 CELL_SIZE = 46
 GRID_WIDTH = COLUMNS * CELL_SIZE
-GROUP_COL_WIDTH = 52
-WINDOW_WIDTH = GRID_WIDTH + GROUP_COL_WIDTH + 36
-WINDOW_HEIGHT = 540
-ICON_SIZE = 18
+RAIL_WIDTH = 52
+WIDTH = GRID_WIDTH + RAIL_WIDTH + 36
+HEIGHT = 540
 
-# Icon-only rail buttons (full group name lives in the tooltip) — fixed-size
-# glyphs keep the window width independent of group label text
+# Icon-only rail buttons — fixed-width glyphs keep the window width independent
+# of how long the group names are. The full name lives in the tooltip.
 GROUP_ICONS = {
     "All": "▦",
     "Smileys & Emotion": "🙂",
@@ -64,116 +44,82 @@ GROUP_ICONS = {
 }
 
 
-# ── cache management ───────────────────────────────────────────────────────────
+# ── cache ──────────────────────────────────────────────────────────────────────
 
-def _atomic_write(data: bytes):
+def _write_cache(data: bytes) -> None:
+    os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
     tmp = CACHE_FILE + ".part"
     with open(tmp, "wb") as f:
         f.write(data)
-    os.replace(tmp, CACHE_FILE)
+    os.replace(tmp, CACHE_FILE)  # atomic, so a torn download is never read
 
 
-def _ensure_cache():
-    """Synchronous first-run download. No-op if cache already exists."""
+def _fetch() -> bytes:
+    with urllib.request.urlopen(EMOJI_URL, timeout=20) as response:
+        data = response.read()
+    json.loads(data)  # validate the whole payload before it touches the cache
+    return data
+
+
+def _ensure_cache() -> None:
+    """Blocking first-run download. No-op once the cache exists."""
     if os.path.isfile(CACHE_FILE):
         return
-    os.makedirs(CACHE_DIR, exist_ok=True)
     try:
-        with urllib.request.urlopen(EMOJI_URL, timeout=20) as resp:
-            data = resp.read()
-        json.loads(data)  # validate before writing
-        _atomic_write(data)
+        _write_cache(_fetch())
     except Exception as e:
-        print(f"[emoji] Failed to download emoji data: {e}")
+        print(f"[emoji] could not download emoji data: {e}")
 
 
-def _check_and_update_cache(on_updated=None):
-    """Background thread: fetch remote JSON and atomically replace cache if changed."""
-    def _run():
+def _refresh_cache(on_updated) -> None:
+    """Re-fetch in the background, notifying only if the data actually changed."""
+    def run():
         try:
-            with urllib.request.urlopen(EMOJI_URL, timeout=20) as resp:
-                new_data = resp.read()
-            json.loads(new_data)  # validate entire payload before touching cache
-
+            data = _fetch()
             try:
                 with open(CACHE_FILE, "rb") as f:
-                    if f.read() == new_data:
-                        return  # identical — nothing to do
+                    if f.read() == data:
+                        return
             except FileNotFoundError:
                 pass
-
-            _atomic_write(new_data)
-            if on_updated:
-                GLib.idle_add(on_updated)
+            _write_cache(data)
+            GLib.idle_add(on_updated)
         except Exception:
             pass
 
-    threading.Thread(target=_run, daemon=True).start()
+    threading.Thread(target=run, daemon=True).start()
 
 
-def _load_emojis() -> list[tuple[str, str, str]]:
-    """Returns list of (char, name, group) from cache."""
+def _load() -> list[tuple[str, str, str]]:
+    """Cached emoji as (char, name, group)."""
     try:
         with open(CACHE_FILE, encoding="utf-8") as f:
             data = json.load(f)
-        return [
-            (char, info["name"], info.get("group", ""))
-            for char, info in data.items()
-        ]
     except Exception:
         return []
+    return [(char, info["name"], info.get("group", "")) for char, info in data.items()]
 
 
-# ── picker window ──────────────────────────────────────────────────────────────
+# ── picker ─────────────────────────────────────────────────────────────────────
 
-class EmojiPicker(Window):
-    def __init__(self, daemon_mode: bool = False, **kwargs):
+class EmojiPicker(Panel):
+    def __init__(self):
         super().__init__(
             title="fabric-emoji",
-            layer="top",
-            anchor="top",
-            margin="18px 0px 0px 0px",
-            exclusivity="none",
-            keyboard_mode="on-demand",
-            visible=False,
-            **kwargs,
-        )
-        self._daemon_mode = daemon_mode
-        self._dismiss_timer_id: int | None = None
-        self.add_style_class("window")
-        self.set_default_size(WINDOW_WIDTH, WINDOW_HEIGHT)
-        self.set_size_request(WINDOW_WIDTH, WINDOW_HEIGHT)
-        self.set_resizable(False)
-
-        self._emoji_counts = _load_emoji_counts()
-        raw_emojis = _load_emojis()
-        self._all_emojis: list[tuple[str, str, str]] = sorted(
-            raw_emojis,
-            key=lambda e: (-self._emoji_counts.get(e[0], 0), e[1]),
-        )
-        self._all_buttons: list[Button] = []
-        self._visible_items: list[Button] = []
-        self._selected_index: int | None = None
-        self._current_query: str = ""
-        self._current_group: str = "All"
-
-        # derive ordered group list from data
-        seen: dict[str, None] = {}
-        for _, _, g in self._all_emojis:
-            if g and g not in seen:
-                seen[g] = None
-        self._groups: list[str] = ["All"] + list(seen.keys())
-        self._group_buttons: dict[str, Button] = {}
-
-        self._search_entry = Entry(
+            width=WIDTH,
+            height=HEIGHT,
+            icon=Label(label="😀", style_classes="emoji-search-icon"),
             placeholder="Search emoji…",
-            h_expand=True,
-            style_classes="search-entry",
         )
-        self._search_entry.set_can_focus(True)
-        self._search_entry.connect("changed", self._on_search_changed)
+        _ensure_cache()
+        self._counts = UsageCounts(COUNTS_PATH)
+        self._emojis = self._sorted_emojis()
+        self._cells: list[Button] = []
+        self._rail_buttons: dict[str, Button] = {}
+        self._query = ""
+        self._group = "All"
 
-        self._flowbox = FlowBox(
+        self._grid = FlowBox(
             row_spacing=2,
             column_spacing=2,
             orientation="horizontal",
@@ -183,327 +129,165 @@ class EmojiPicker(Window):
             h_expand=False,
             v_expand=False,
         )
-        self._flowbox.set_max_children_per_line(COLUMNS)
-        self._flowbox.set_min_children_per_line(COLUMNS)
-        self._flowbox.set_homogeneous(True)
-        self._flowbox.set_size_request(GRID_WIDTH, -1)
-        self._flowbox.set_filter_func(self._filter_func)
+        self._grid.set_max_children_per_line(COLUMNS)
+        self._grid.set_min_children_per_line(COLUMNS)
+        self._grid.set_homogeneous(True)
+        self._grid.set_size_request(GRID_WIDTH, -1)
+        self._grid.set_filter_func(lambda child: self._matches(child.get_child()))
 
-        self._scroller = ScrolledWindow(
-            v_scrollbar_policy="always",
-            h_scrollbar_policy="never",
-            child=self._flowbox,
-            overlay_scroll=True,
-            min_content_size=(GRID_WIDTH, WINDOW_HEIGHT - 60),
-            max_content_size=(GRID_WIDTH, WINDOW_HEIGHT - 60),
-            style_classes="app-scroll",
-            h_align="fill",
-            v_align="start",
-            h_expand=True,
+        scroller = make_scroller(self._grid, GRID_WIDTH, HEIGHT - 60)
+        # every cell is wrapped in a FlowBoxChild — that wrapper carries the
+        # allocation the scroll maths needs, not the button
+        self._selection = Selection(
+            scroller, "emoji-selected", target=lambda cell: cell.get_parent()
         )
 
-        search_row = Box(
-            spacing=10,
-            orientation="horizontal",
-            style_classes="search-row",
-            children=[
-                Label(label="😀", style_classes="emoji-search-icon"),
-                self._search_entry,
-            ],
-            h_expand=True,
+        self._section = Label(
+            label="ALL", h_align="start", style_classes="section-label"
         )
-
-        self._section_label = Label(
-            label="ALL",
-            h_align="start",
-            style_classes="section-label",
+        grid_column = Box(
+            orientation="vertical", spacing=0, children=[self._section, scroller]
         )
-        grid_col = Box(
-            orientation="vertical",
-            spacing=0,
-            children=[self._section_label, self._scroller],
-        )
-
-        content_row = Box(
+        content = Box(
             orientation="horizontal",
             spacing=6,
             h_expand=True,
             v_expand=True,
-            children=[grid_col, self._build_group_col()],
+            children=[grid_column, self._build_rail()],
         )
 
-        self.children = Box(
-            orientation="vertical",
-            spacing=0,
-            style_classes="launcher-root",
-            children=[search_row, content_row],
-            h_expand=True,
-            v_expand=True,
-            v_align="start",
-        )
-
-        self.connect("key-press-event", self._on_key_press)
-        self._populate_grid()
+        self.set_body(content)
+        self._populate()
         self._apply_filter()
         self.show_all()
-        if self._daemon_mode:
-            self.hide()
-        else:
-            self._search_entry.grab_focus()
+        self.hide()
 
-    # ── group bar ──────────────────────────────────────────────────────────
+        _refresh_cache(self._reload)
 
-    def _build_group_col(self) -> ScrolledWindow:
-        children = []
-        for group in self._groups:
-            icon = GROUP_ICONS.get(group, group[:1])
-            btn = Button(
-                label=icon,
-                style_classes="group-button group-active" if group == "All" else "group-button",
+    def _sorted_emojis(self) -> list[tuple[str, str, str]]:
+        return sorted(_load(), key=lambda e: (self._counts.rank(e[0]), e[1]))
+
+    # ── group rail ──────────────────────────────────────────────────────────
+
+    def _build_rail(self) -> ScrolledWindow:
+        groups = ["All"] + list(dict.fromkeys(g for _, _, g in self._emojis if g))
+        for group in groups:
+            button = Button(
+                label=GROUP_ICONS.get(group, group[:1]),
+                style_classes="group-button group-active"
+                if group == "All"
+                else "group-button",
             )
-            btn.set_tooltip_text(group)
-            btn.connect("clicked", lambda _, g=group: self._set_group(g))
-            self._group_buttons[group] = btn
-            children.append(btn)
+            button.set_tooltip_text(group)
+            button.connect("clicked", lambda _, g=group: self._set_group(g))
+            self._rail_buttons[group] = button
 
-        inner = Box(
-            orientation="vertical",
-            spacing=4,
-            style_classes="group-inner",
-            children=children,
-            v_align="start",
-        )
         return ScrolledWindow(
+            child=Box(
+                orientation="vertical",
+                spacing=4,
+                style_classes="group-inner",
+                children=list(self._rail_buttons.values()),
+                v_align="start",
+            ),
             v_scrollbar_policy="always",
             h_scrollbar_policy="never",
-            child=inner,
             overlay_scroll=True,
             style_classes="group-scroll",
             v_expand=True,
-            min_content_size=(GROUP_COL_WIDTH, WINDOW_HEIGHT - 60),
-            max_content_size=(GROUP_COL_WIDTH, WINDOW_HEIGHT - 60),
+            min_content_size=(RAIL_WIDTH, HEIGHT - 60),
+            max_content_size=(RAIL_WIDTH, HEIGHT - 60),
         )
 
-    # ── grid population ────────────────────────────────────────────────────
+    def _set_group(self, group: str) -> None:
+        if previous := self._rail_buttons.get(self._group):
+            previous.remove_style_class("group-active")
+        self._group = group
+        if button := self._rail_buttons.get(group):
+            button.add_style_class("group-active")
+        self._section.set_label(group.split(" & ")[0].upper())
+        self._apply_filter()
 
-    def _populate_grid(self):
-        for char, name, group in self._all_emojis:
-            cell = Label(
-                label=char,
-                h_align="center",
-                v_align="center",
-                style_classes="emoji-char",
-            )
-            btn = Button(
-                child=cell,
+    # ── grid ────────────────────────────────────────────────────────────────
+
+    def _populate(self) -> None:
+        for char, name, group in self._emojis:
+            cell = Button(
+                child=Label(
+                    label=char,
+                    h_align="center",
+                    v_align="center",
+                    style_classes="emoji-char",
+                ),
                 style_classes="emoji-button",
                 h_expand=False,
                 v_expand=False,
             )
-            btn.set_tooltip_text(name)
-            btn._data = {"char": char, "name": name, "group": group}  # type: ignore[attr-defined]
-            btn.connect("clicked", lambda _, b=btn: self._copy_and_close(b._data["char"]))
-            self._all_buttons.append(btn)
-            self._flowbox.add(btn)
+            cell.set_tooltip_text(name)
+            cell.char = char  # type: ignore[attr-defined]
+            cell.term = name.casefold()  # type: ignore[attr-defined]
+            cell.group = group  # type: ignore[attr-defined]
+            cell.connect("clicked", lambda _, c=cell: self._pick(c))
+            self._cells.append(cell)
+            self._grid.add(cell)
+        self._grid.show_all()
 
-        self._flowbox.show_all()
-
-    def reload_emojis(self):
-        """Called via GLib.idle_add after background cache update."""
-        new_emojis = _load_emojis()
-        if len(new_emojis) == len(self._all_emojis):
+    def _reload(self) -> None:
+        """Runs on the main loop once a background cache refresh has landed."""
+        emojis = self._sorted_emojis()
+        if len(emojis) == len(self._emojis):
             return  # same size — treat as no meaningful change
-        for child in self._flowbox.get_children():
-            self._flowbox.remove(child)
-        self._all_buttons.clear()
-        self._all_emojis = new_emojis
-        self._populate_grid()
+        for child in self._grid.get_children():
+            self._grid.remove(child)
+        self._cells.clear()
+        self._emojis = emojis
+        self._populate()
         self._apply_filter()
 
-    # ── filtering ──────────────────────────────────────────────────────────
+    def _matches(self, cell) -> bool:
+        return (not self._query or self._query in cell.term) and (
+            self._group == "All" or self._group == cell.group
+        )
 
-    def _filter_func(self, flowbox_child) -> bool:
-        btn = flowbox_child.get_child()
-        d = getattr(btn, "_data", {})
-        return self._matches(d.get("name", ""), d.get("group", ""))
+    def _apply_filter(self) -> None:
+        self._grid.invalidate_filter()
+        self._selection.reset(cell for cell in self._cells if self._matches(cell))
 
-    def _matches(self, name: str, group: str) -> bool:
-        q = self._current_query
-        g = self._current_group
-        return (not q or q in name) and (g == "All" or g == group)
-
-    def _apply_filter(self):
-        for btn in self._all_buttons:
-            btn.remove_style_class("emoji-selected")
-        self._selected_index = None
-
-        self._flowbox.invalidate_filter()
-        self._visible_items = [
-            btn for btn in self._all_buttons
-            if self._matches(btn._data["name"], btn._data["group"])
-        ]
-
-    def _on_search_changed(self, *_):
-        self._current_query = self._search_entry.get_text().strip().casefold()
+    def on_search(self, query: str) -> None:
+        self._query = query.strip().casefold()
         self._apply_filter()
 
-    def _set_group(self, group: str):
-        if old := self._group_buttons.get(self._current_group):
-            old.remove_style_class("group-active")
-        self._current_group = group
-        if btn := self._group_buttons.get(group):
-            btn.add_style_class("group-active")
-        self._section_label.set_label(group.split(" & ")[0].upper())
-        self._apply_filter()
+    # ── activation ──────────────────────────────────────────────────────────
 
-    # ── keyboard navigation ────────────────────────────────────────────────
+    def on_key(self, event) -> bool:
+        # up/down step a whole row, left/right step one cell
+        moves = {
+            Gdk.KEY_Up: -COLUMNS,
+            Gdk.KEY_Down: COLUMNS,
+            Gdk.KEY_Left: -1,
+            Gdk.KEY_Right: 1,
+        }
+        if event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+            self._pick(self._selection.current)
+        elif event.keyval in moves:
+            self._selection.move(moves[event.keyval])
+        else:
+            return False
+        return True
 
-    def _on_key_press(self, _widget, event):
-        keyval = event.keyval
-
-        if keyval == 65307:  # Escape
-            self._quit()
-            return True
-        if keyval in (65293, 65421):  # Return / KP_Enter
-            self._activate_selected()
-            return True
-        if keyval == 65362:  # Up
-            self._move_selection(-COLUMNS)
-            return True
-        if keyval == 65364:  # Down
-            self._move_selection(COLUMNS)
-            return True
-        if keyval == 65361:  # Left
-            self._move_selection(-1)
-            return True
-        if keyval == 65363:  # Right
-            self._move_selection(1)
-            return True
-
-        return False
-
-    def _move_selection(self, delta: int):
-        if not self._visible_items:
+    def _pick(self, cell) -> None:
+        if cell is None:
             return
-        if self._selected_index is None:
-            self._select_index(0)
-            return
-        self._select_index(self._selected_index + delta)
+        self._counts.bump(cell.char)
+        subprocess.run(["wl-copy"], input=cell.char.encode("utf-8"), check=False)
+        self.dismiss()
 
-    def _select_index(self, index: int):
-        index = max(0, min(index, len(self._visible_items) - 1))
-        if self._selected_index is not None:
-            self._visible_items[self._selected_index].remove_style_class("emoji-selected")
-        self._selected_index = index
-        btn = self._visible_items[index]
-        btn.add_style_class("emoji-selected")
-        self._scroll_to_button(btn)
+    # ── panel hooks ─────────────────────────────────────────────────────────
 
-    def _scroll_to_button(self, btn: Button):
-        fbc = btn.get_parent()  # FlowBoxChild wrapper
-        if fbc is None:
-            return
-        adj = self._scroller.get_vadjustment()
-        alloc = fbc.get_allocation()
-        item_top = alloc.y
-        item_bottom = alloc.y + alloc.height
-        view_top = adj.get_value()
-        view_bottom = view_top + adj.get_page_size()
-        if item_top < view_top:
-            adj.set_value(item_top)
-        elif item_bottom > view_bottom:
-            adj.set_value(item_bottom - adj.get_page_size())
-
-    # ── actions ────────────────────────────────────────────────────────────
-
-    def _activate_selected(self):
-        # No visual preselection on open — Enter falls back to the first match
-        index = self._selected_index if self._selected_index is not None else 0
-        if not self._visible_items:
-            return
-        char = self._visible_items[index]._data["char"]
-        self._copy_and_close(char)
-
-    def _copy_and_close(self, char: str):
-        self._emoji_counts[char] = self._emoji_counts.get(char, 0) + 1
-        _save_emoji_counts(self._emoji_counts)
-        subprocess.run(["wl-copy"], input=char.encode("utf-8"), check=False)
-        self._quit()
-
-    # ── daemon support ─────────────────────────────────────────────────────────
-
-    def dismiss(self) -> None:
-        if self._dismiss_timer_id is not None:
-            GLib.source_remove(self._dismiss_timer_id)
-        self.add_style_class("anim-out")
-        self._dismiss_timer_id = GLib.timeout_add(220, self._finish_dismiss)
-
-    def _finish_dismiss(self) -> bool:
-        self._dismiss_timer_id = None
-        self.hide()
-        return False
-
-    def reveal(self) -> None:
-        if self._dismiss_timer_id is not None:
-            GLib.source_remove(self._dismiss_timer_id)
-            self._dismiss_timer_id = None
-        self._emoji_counts = _load_emoji_counts()
-        self._search_entry.set_text("")
-        self._current_query = ""
-        if self._current_group != "All":
+    def on_reveal(self) -> None:
+        self._counts.reload()
+        self._query = ""
+        if self._group != "All":
             self._set_group("All")
         else:
             self._apply_filter()
-        self.add_style_class("anim-out")
-        self.show()
-        GLib.timeout_add(16, self._finish_reveal)
-        self._search_entry.grab_focus()
-
-    def _finish_reveal(self) -> bool:
-        self.remove_style_class("anim-out")
-        return False
-
-    def _quit(self) -> None:
-        if self._daemon_mode:
-            self.dismiss()
-        else:
-            app = getattr(self, "_app_ref", None) or self.get_application()
-            if app is not None:
-                app.quit()
-            else:
-                os._exit(0)
-
-
-# ── css + entry point ──────────────────────────────────────────────────────────
-
-def load_css(app: Application) -> None:
-    try:
-        with open(os.path.join(CSS_DIR, "colors-fabric.css")) as f:
-            color_css = "\n".join(
-                line for line in f.read().splitlines() if "url(" not in line
-            )
-    except FileNotFoundError:
-        color_css = ""
-
-    with open(os.path.join(CSS_DIR, "emoji.css")) as f:
-        emoji_css = f.read()
-
-    app.set_stylesheet_from_string(color_css + "\n" + emoji_css, base_path=CSS_DIR)
-
-
-if __name__ == "__main__":
-    _ensure_cache()
-
-    picker = EmojiPicker()
-    app = Application("emoji-picker", picker)
-    picker._app_ref = app
-
-    _check_and_update_cache(on_updated=picker.reload_emojis)
-
-    load_css(app)
-    monitor_file(
-        os.path.join(CSS_DIR, "colors-fabric.css"),
-        lambda *_: load_css(app),
-    )
-
-    app.run()

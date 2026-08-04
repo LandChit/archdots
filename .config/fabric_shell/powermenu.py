@@ -1,77 +1,54 @@
-import os
+"""Power menu — full-screen scrim with lock / logout / restart / shutdown cards."""
+
 import subprocess
 
-from fabric import Application
-from fabric.widgets.wayland import WaylandWindow as Window
-
-# fabric locks in the GtkLayerShell version when wayland is imported above
-from gi.repository import GtkLayerShell  # type: ignore
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.label import Label
-from fabric.utils.helpers import monitor_file
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CSS_DIR = os.path.join(BASE_DIR, "css")
+# importing common pulls in fabric's wayland widget, which pins the
+# GtkLayerShell version — so it has to come before the gi import below
+from common import Overlay
 
+from gi.repository import Gdk, GtkLayerShell  # type: ignore
+
+# label, glyph, command, extra style class
 ACTIONS = [
-    {"label": "Lock", "icon": "󰍁", "cmd": ["loginctl", "lock-session"], "style": ""},
-    {
-        "label": "Logout",
-        "icon": "󰍃",
-        "cmd": 'hyprctl dispatch "hl.dsp.exit()"',
-        "style": "",
-    },
-    {"label": "Restart", "icon": "󰑙", "cmd": ["systemctl", "reboot"], "style": ""},
-    {
-        "label": "Shutdown",
-        "icon": "󰐥",
-        "cmd": ["systemctl", "poweroff"],
-        "style": "shutdown",
-    },
+    ("Lock", "󰍁", ["loginctl", "lock-session"], ""),
+    ("Logout", "󰍃", 'hyprctl dispatch "hl.dsp.exit()"', ""),
+    ("Restart", "󰑙", ["systemctl", "reboot"], ""),
+    ("Shutdown", "󰐥", ["systemctl", "poweroff"], "shutdown"),
 ]
 
 
-class PowerMenu(Window):
-    def __init__(self, daemon_mode: bool = False, **kwargs):
-        # Anchor all four edges so the window (and its scrim background)
-        # covers the entire screen instead of shrinking to content size
+class PowerMenu(Overlay):
+    def __init__(self):
+        # anchored on all four edges so the scrim covers the whole screen
+        # instead of shrinking to the size of the cards
         super().__init__(
             title="fabric-powermenu",
             layer="overlay",
             anchor="left top right bottom",
-            exclusivity="none",
             keyboard_mode="exclusive",
-            visible=False,
-            **kwargs,
         )
-        self._daemon_mode = daemon_mode
-        # -1 = ignore other windows' exclusive zones so the scrim also
-        # covers the bar (fabric's exclusivity="none" maps to zone 0,
-        # which still leaves the bar's reserved strip uncovered)
+        # -1 ignores other windows' exclusive zones so the scrim also covers
+        # the bar; fabric's exclusivity="none" maps to zone 0, which leaves
+        # the bar's reserved strip uncovered
         GtkLayerShell.set_exclusive_zone(self, -1)
         self.add_style_class("powermenu-window")
 
-        self._buttons: list[Button] = []
+        self._cards: list[Box] = []
         self._selected: int | None = None
 
-        buttons_row = Box(
+        row = Box(
             orientation="horizontal",
             spacing=16,
             h_align="center",
             v_align="center",
             style_classes="powermenu-row",
-        )
-
-        for action in ACTIONS:
-            btn = self._build_button(action)
-            self._buttons.append(btn)
-            buttons_row.add(btn)
-
-        hint = Label(
-            label="↑↓←→ navigate · ↵ confirm · esc cancel",
-            style_classes="powermenu-hint",
-            h_align="center",
+            children=[
+                self._build(index, *action) for index, action in enumerate(ACTIONS)
+            ],
         )
 
         self.children = Box(
@@ -82,130 +59,72 @@ class PowerMenu(Window):
             h_expand=True,
             v_expand=True,
             style_classes="powermenu-root",
-            children=[buttons_row, hint],
+            children=[
+                row,
+                Label(
+                    label="↑↓←→ navigate · ↵ confirm · esc cancel",
+                    style_classes="powermenu-hint",
+                    h_align="center",
+                ),
+            ],
         )
-
-        self.connect("key-press-event", self._on_key_press)
         self.show_all()
-        if self._daemon_mode:
-            self.hide()
+        self.hide()
 
-    def _clear_selection(self):
-        for btn in self._buttons:
-            btn.get_child().remove_style_class("powermenu-selected")
-        self._selected = None
-
-    def _build_button(self, action: dict) -> Button:
-        icon = Label(
-            label=action["icon"],
-            style_classes="powermenu-icon",
-            h_align="center",
-        )
-        text = Label(
-            label=action["label"],
-            style_classes="powermenu-label",
-            h_align="center",
-        )
+    def _build(self, index: int, label: str, icon: str, _cmd, extra: str) -> Button:
         card = Box(
             orientation="vertical",
             spacing=10,
             h_align="center",
             v_align="center",
-            style_classes=f"powermenu-card {action['style']}".strip(),
-            children=[icon, text],
+            style_classes=f"powermenu-card {extra}".strip(),
+            children=[
+                Label(label=icon, style_classes="powermenu-icon", h_align="center"),
+                Label(label=label, style_classes="powermenu-label", h_align="center"),
+            ],
         )
-        btn = Button(child=card, style_classes="powermenu-btn")
-        btn._action = action  # type: ignore[attr-defined]
-        btn.connect("clicked", lambda _, a=action: self._execute(a))
-        return btn
+        self._cards.append(card)
+        button = Button(child=card, style_classes="powermenu-btn")
+        button.connect("clicked", lambda *_: self._run(index))
+        return button
 
-    def _highlight(self, index: int):
-        for i, btn in enumerate(self._buttons):
-            card = btn.get_child()
-            if i == index:
+    # ── selection ───────────────────────────────────────────────────────────
+
+    def _highlight(self, index: int | None) -> None:
+        for position, card in enumerate(self._cards):
+            if position == index:
                 card.add_style_class("powermenu-selected")
             else:
                 card.remove_style_class("powermenu-selected")
         self._selected = index
 
-    def _on_key_press(self, _widget, event):
-        keyval = event.keyval
-        if keyval == 65307:  # Escape
-            self._quit()
-            return True
-        if keyval in (65293, 65421):  # Return / KP_Enter
-            # Only fire on an explicit selection — never guess a power action
+    def _step(self, delta: int) -> None:
+        self._highlight(
+            0
+            if self._selected is None
+            else (self._selected + delta) % len(self._cards)
+        )
+
+    def on_key(self, event) -> bool:
+        if event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+            # only ever fire on an explicit selection — never guess a power action
             if self._selected is not None:
-                self._execute(ACTIONS[self._selected])
-            return True
-        if keyval in (65361, 65362):  # Left / Up
-            self._highlight(
-                0 if self._selected is None
-                else (self._selected - 1) % len(self._buttons)
-            )
-            return True
-        if keyval in (65363, 65364):  # Right / Down
-            self._highlight(
-                0 if self._selected is None
-                else (self._selected + 1) % len(self._buttons)
-            )
-            return True
-        return False
-
-    def _execute(self, action: dict):
-        self._quit()
-        cmd = action["cmd"]
-        if isinstance(cmd, str):
-            subprocess.Popen(cmd, shell=True)
+                self._run(self._selected)
+        elif event.keyval in (Gdk.KEY_Left, Gdk.KEY_Up):
+            self._step(-1)
+        elif event.keyval in (Gdk.KEY_Right, Gdk.KEY_Down):
+            self._step(1)
         else:
-            subprocess.Popen(cmd)
+            return False
+        return True
 
-    # ── daemon support ─────────────────────────────────────────────────────────
+    # ── actions ─────────────────────────────────────────────────────────────
 
-    def dismiss(self) -> None:
-        """Hide the window without quitting the process (daemon mode)."""
-        self.hide()
+    def _run(self, index: int) -> None:
+        cmd = ACTIONS[index][2]
+        self.dismiss()
+        subprocess.Popen(cmd, shell=isinstance(cmd, str))
 
     def reveal(self) -> None:
-        """Show the window with nothing preselected."""
-        self._clear_selection()
+        self._highlight(None)  # open with nothing preselected
         self.show()
-
-    def _quit(self) -> None:
-        if self._daemon_mode:
-            self.dismiss()
-        else:
-            app = getattr(self, "_app_ref", None) or self.get_application()
-            if app is not None:
-                app.quit()
-            else:
-                os._exit(0)
-
-
-def load_css(app: Application) -> None:
-    try:
-        with open(os.path.join(CSS_DIR, "colors-fabric.css")) as f:
-            color_css = "\n".join(
-                line for line in f.read().splitlines() if "url(" not in line
-            )
-    except FileNotFoundError:
-        color_css = ""
-
-    with open(os.path.join(CSS_DIR, "powermenu.css")) as f:
-        pm_css = f.read()
-
-    app.set_stylesheet_from_string(color_css + "\n" + pm_css, base_path=CSS_DIR)
-
-
-if __name__ == "__main__":
-    menu = PowerMenu()
-    app = Application("powermenu", menu)
-    menu._app_ref = app
-    load_css(app)
-
-    monitor_file(
-        os.path.join(CSS_DIR, "colors-fabric.css"),
-        lambda *_: load_css(app),
-    )
-
-    app.run()

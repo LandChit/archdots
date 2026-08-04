@@ -17,19 +17,14 @@ hl.bind("CONTROL + SHIFT + ESCAPE", hl.dsp.exec_cmd(processManager))
 
 -- ScreenShot
 local region_ss =
-"sh -c 'REGION=$(slurp) || exit; grim -g \"$REGION\" - | wl-copy &&  wl-paste > ~/Pictures/screenshots/Screenshot-$(date +%F_%T).png && dunstify \"Screenshot of the region taken\" -t 2000'"
+"sh -c 'REGION=$(slurp) || exit; grim -g \"$REGION\" - | wl-copy &&  wl-paste > ~/Pictures/screenshots/Screenshot-$(date +%F_%T).png && notify-send -t 2000 \"Screenshot of the region taken\"'"
 hl.bind(mainMod .. "+ SHIFT + S", hl.dsp.exec_cmd(region_ss))
 hl.bind("PRINT", hl.dsp.exec_cmd(region_ss))
 hl.bind("SHIFT + PRINT",
     hl.dsp.exec_cmd(
-        "grim - | wl-copy && wl-paste > ~/Pictures/screenshots/Screenshot-$(date +%F_%T).png && dunstify \"Screenshot of the whole screen taken\" -t 2000"))
+        "grim - | wl-copy && wl-paste > ~/Pictures/screenshots/Screenshot-$(date +%F_%T).png && notify-send -t 2000 \"Screenshot of the whole screen taken\""))
 
 -- Launcher and tools
--- hl.bind(mainMod .. "+ SPACE", hl.dsp.exec_cmd("echo launcher  > /tmp/qs-ipc"))
--- hl.bind(mainMod .. "+ PERIOD", hl.dsp.exec_cmd("echo emoji     > /tmp/qs-ipc"))
--- hl.bind(mainMod .. "+ V", hl.dsp.exec_cmd("echo clipboard > /tmp/qs-ipc"))
--- hl.bind(mainMod .. "+ ESCAPE", hl.dsp.exec_cmd("echo powermenu > /tmp/qs-ipc"))
-
 hl.bind(mainMod .. "+ SPACE", shell.toggle("launcher"))
 hl.bind(mainMod .. "+ PERIOD", shell.toggle("emoji"))
 hl.bind(mainMod .. "+ V", shell.toggle("clipboard"))

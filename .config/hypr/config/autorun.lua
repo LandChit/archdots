@@ -5,7 +5,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("sleep 1; /usr/lib/pam_kwallet_init --no-startup-id")
     hl.exec_cmd("sleep 5; killall kwalletmanager5")
 
-    -- hl.exec_cmd("wal -R && cp ~/.cache/wal/dunstrc ~/.config/dunst/dunstrc && dunst &")
     shell.restart()
 
 

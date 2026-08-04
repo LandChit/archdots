@@ -26,8 +26,9 @@ installscript.sh
 
 .config/fabric_shell/design_handoff_hyprland_suite
 
-.omc/*
+.omc
 
 # python
 __pycache__/
 *.py[cod]
+.venv/

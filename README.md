@@ -107,6 +107,13 @@ Media, volume and brightness keys work as expected, and show a little popup.
 
 ## Install
 
+> [!WARNING]
+> **The installer is new and has not yet been proven on real hardware.** It has
+> been tested end to end in a container — packages, linking, the shell build,
+> the login theme — but nobody has run it on a fresh machine and logged in yet.
+> Expect to fix something. Read it before you run it, and prefer a spare machine
+> or a VM over the laptop you need tomorrow.
+
 You need Arch Linux with **NetworkManager** and **Pipewire** (both are options
 in `archinstall`). Then, as your normal user — not as root:
 
@@ -184,18 +191,27 @@ hl.bind("SUPER + G", hl.dsp.exec_cmd("gimp"), { desc = "Launch: GIMP" })
 
 ## Packages
 
+These are what `install.sh` installs. Core is what the desktop cannot start
+without; everything below it is optional and can be declined.
+
 ### Core
 
 ```
 hyprland hyprpaper hyprlock hyprpolkitagent xdg-desktop-portal-hyprland
-xdg-desktop-portal-gtk uwsm sddm alacritty foot dolphin ark kfind
-python-pywal python-gobject gtk-layer-shell python-pip
+xdg-desktop-portal-gtk uwsm sddm alacritty dolphin
+python-pywal python-gobject gtk3 gtk-layer-shell libdbusmenu-gtk3 python-pip
 cliphist wl-clipboard grim slurp brightnessctl playerctl libnotify
-pipewire pipewire-alsa pipewire-jack pipewire-pulse wireplumber pavucontrol
-networkmanager network-manager-applet bluez bluez-utils blueman
-qt6ct kvantum qt5-wayland qt6-wayland
-zsh stow git
+pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol
+networkmanager bluez bluez-utils blueman
+qt6ct kvantum qt5-wayland qt6-wayland breeze-icons adwaita-fonts
+zsh stow git zoxide fzf eza bat kwallet-pam kwalletmanager
+base-devel cairo gobject-introspection pkgconf
 ```
+
+`zoxide`, `fzf`, `eza` and `bat` are core rather than optional because `.zshrc`
+calls all four on every login — `alias cd="z"` means a missing zoxide breaks
+`cd` itself. `base-devel`, `cairo`, `gobject-introspection` and `pkgconf` are
+there because pip compiles pycairo and PyGObject from source.
 
 ### Fonts
 
@@ -207,31 +223,33 @@ noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra
 JetBrainsMono Nerd Font is required — without it the icons in the bar show as
 empty boxes.
 
-### Utilities
+### Utilities — optional
 
 ```
-tlp zoxide eza fzf fd bat htop nvtop fastfetch tmux unzip wget
-solaar smartmontools kwallet-pam kwalletmanager flatpak
+tlp fd htop nvtop fastfetch tmux unzip wget curl smartmontools ark
 ```
 
-### AUR
+### AUR — optional
 
 ```
-paru zen-browser-bin visual-studio-code-bin sddm-silent-theme
-hyprls-git downgrade qt5-websockets snapd
+paru zen-browser-bin visual-studio-code-bin hyprls-git xwaylandvideobridge
+sddm-silent-theme
 ```
 
-### Flatpak
+`paru` is built from source rather than `paru-bin`: the prebuilt binary is
+linked against one libalpm version and stops working the moment pacman bumps
+it. `sddm-silent-theme` is pinned to a specific version and added to `IgnorePkg`,
+because a theme upgrade replaces the login screen's config.
+
+### Flatpak — optional, off by default
+
+Tools only. Pass `--flatpak` to install them.
 
 ```
-com.github.tchx84.Flatseal        io.missioncenter.MissionCenter
-com.interversehq.qView            org.videolan.VLC
-com.obsproject.Studio             org.kde.kdenlive
-com.usebottles.bottles            org.prismlauncher.PrismLauncher
-org.onlyoffice.desktopeditors     org.remmina.Remmina
-org.gnome.TextEditor              org.gnome.Snapshot
-io.github.nozwock.Packet          io.github.kukuruzka165.materialgram
-moe.launcher.an-anime-game-launcher
+com.github.tchx84.Flatseal    io.missioncenter.MissionCenter
+org.videolan.VLC              com.obsproject.Studio
+io.github.nozwock.Packet      org.gnome.Snapshot
+org.gnome.TextEditor
 ```
 
 <hr>

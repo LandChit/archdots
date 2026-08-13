@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """fabric-shell control client — sends one command to the running daemon.
 
-    ctl.py toggle|show|hide  launcher|powermenu|clipboard|emoji
+    ctl.py toggle|show|hide  <window> [argument]
+
+Windows are listed in windows.py; the few that take an argument are listed
+there too — `ctl.py show osd volume`.
 """
 
-import socket
 import sys
 
-SOCKET_PATH = "/tmp/fabric-shell.sock"
+from windows import WINDOWS, WINDOW_ARGS, send
+
 ACTIONS = ("toggle", "show", "hide")
-WINDOWS = ("launcher", "powermenu", "clipboard", "emoji")
 
 
 def fail(message: str) -> None:
@@ -18,24 +20,27 @@ def fail(message: str) -> None:
 
 
 def main() -> None:
-    if len(sys.argv) != 3:
-        fail(f"usage: {sys.argv[0]} {'|'.join(ACTIONS)} {'|'.join(WINDOWS)}")
+    if not 3 <= len(sys.argv) <= 4:
+        fail(f"usage: {sys.argv[0]} {'|'.join(ACTIONS)} {'|'.join(WINDOWS)} [argument]")
 
     action, window = sys.argv[1], sys.argv[2]
+    argument = sys.argv[3] if len(sys.argv) == 4 else None
     if action not in ACTIONS:
         fail(f"unknown action {action!r} (choose: {', '.join(ACTIONS)})")
     if window not in WINDOWS:
         fail(f"unknown window {window!r} (choose: {', '.join(WINDOWS)})")
 
-    try:
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
-            client.settimeout(2)
-            client.connect(SOCKET_PATH)
-            client.sendall(f"{action} {window}".encode())
-    except FileNotFoundError:
-        fail(f"daemon not running (no socket at {SOCKET_PATH})")
-    except Exception as e:
-        fail(f"failed: {e}")
+    # catch a typo here rather than letting the daemon quietly do nothing
+    allowed = WINDOW_ARGS.get(window)
+    if argument is not None:
+        if allowed is None:
+            fail(f"{window!r} takes no argument")
+        if argument not in allowed:
+            fail(f"unknown {window} argument {argument!r} (choose: {', '.join(allowed)})")
+
+    error = send(action, window, argument)
+    if error is not None:
+        fail(error)
 
 
 if __name__ == "__main__":

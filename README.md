@@ -1,123 +1,86 @@
 # archdots
 
-My personal Arch + Hyprland dotfiles, managed with GNU stow.
+My personal Arch + Hyprland desktop — the whole thing, ready to install.
 
-I made this repo because I'm both lazy and too incompetent to create my own install script. I am also too lazy to create my own ISO. I will create an install script for the dotfiles when it's polished...
+Everything you see is themed from your wallpaper. Pick a new picture and the
+bar, menus, borders and terminal all recolour to match, instantly.
+
+<hr>
+
+## What you get
+
+A desktop built around one idea: **everything is one keypress away, and it all
+looks like it belongs together.**
+
+- **A bar** across the top with your workspaces, the current window, what's
+  playing, volume, temperature, battery and a clock. The volume can be scrolled
+  to change it, the battery tells you how long you have left, and the clock
+  drops down a calendar.
+- **An app launcher** (<kbd>SUPER</kbd> <kbd>Space</kbd>) that learns what you
+  open most and puts it first. Type `?` and it searches the web instead.
+- **A control centre** (<kbd>SUPER</kbd> <kbd>C</kbd>) for Wi-Fi, Bluetooth,
+  volume, brightness, whatever's playing, and your tray icons — one panel
+  instead of five apps.
+- **Notifications** with a history you can scroll back through
+  (<kbd>SUPER</kbd> <kbd>N</kbd>), and a do-not-disturb switch that silences
+  popups while still keeping a record.
+- **A wallpaper picker** (<kbd>SUPER</kbd> <kbd>W</kbd>) that changes the
+  wallpaper *and* re-themes the entire desktop, without restarting anything.
+- **A screenshot menu** (<kbd>SUPER</kbd> <kbd>PrtSc</kbd>) — region, window,
+  whole screen, or a 5-second delay. Every shot is saved *and* copied to the
+  clipboard.
+- **Clipboard history** (<kbd>SUPER</kbd> <kbd>V</kbd>) and an **emoji picker**
+  (<kbd>SUPER</kbd> <kbd>.</kbd>), both searchable.
+- **A keybind cheatsheet** (<kbd>SUPER</kbd> <kbd>/</kbd>) that reads your
+  actual keybinds — so it's never out of date, even after you change them.
+- **On-screen display** for volume and brightness, and a warning when the
+  battery gets low.
+
+<hr>
 
 ## At a glance
 
 | | |
 |---|---|
-| **Compositor** | Hyprland 0.56 — configured in **Lua**, not hyprlang |
-| **Session** | uwsm (`hyprland-uwsm`) |
-| **Desktop shell** | `fabric_shell` — my own bar / launcher / notifications, in this repo |
+| **Compositor** | Hyprland — configured in Lua |
+| **Desktop shell** | `fabric_shell` — the bar, menus and notifications, written for this repo |
 | **Terminal** | alacritty |
-| **File manager** | dolphin (+ ark, kfind) |
+| **File manager** | dolphin |
 | **Browser** | zen-browser |
-| **Login manager** | SDDM, `silent` theme |
-| **Login shell** | zsh + oh-my-zsh, custom `chit` theme |
+| **Login screen** | SDDM, `silent` theme |
+| **Shell** | zsh + oh-my-zsh |
 | **Colors** | pywal — everything follows the wallpaper |
-| **GTK theme** | `catppuccin-mocha-pink-standard+default` (modified for transparency) |
-| **Qt theme** | Kvantum `KvGlass`, via qt6ct |
-| **Icons** | breeze-dark |
-
-<hr>
-
-## Repo layout
-
-```
-.config/
-  hypr/            Hyprland — hyprland.lua + config/*.lua, hyprlock, hyprpaper
-  fabric_shell/    the desktop shell (Python + GTK3 layer-shell)
-  wal/templates/   pywal templates — the source of all theming
-  alacritty/ eza/ fastfetch/ cliphist/ fontconfig/
-  Kvantum/ qt6ct/ kdeglobals    Qt theming
-  uwsm/            session env (forces Hyprland onto the iGPU)
-.themes/           GTK theme
-.themes_sddm/      SDDM theme
-.ohmyzsh_custom/   zsh theme + plugins (git submodules)
-wallpapers/
-.zshrc
-```
-
-Everything except `README.md` and `installscript.sh` is stowed into `$HOME`
-(see `.stow-local-ignore`).
-
-<hr>
-
-## Theming
-
-There is no hardcoded palette. **pywal** generates colors from the current
-wallpaper, and templates in `.config/wal/templates/` push them everywhere:
-
-| Template | Feeds | How |
-|---|---|---|
-| `colors-hyprland.lua` | borders, shadows | `theme.lua` does `dofile` on `~/.cache/wal/colors-hyprland.lua` |
-| `colors-fabric.css` | the whole shell | copied into `fabric_shell/css/`, live-reloaded on change |
-| `colors-alacritty.toml` | terminal | imported by the alacritty config |
-
-`color4` is the accent throughout — it is the workspace highlight, the selected
-row glow, the search caret and the window border gradient. Each config falls
-back to a dark neutral palette if `~/.cache/wal/` is missing, so nothing breaks
-on a fresh install before the first `wal` run.
-
-To re-theme: set a wallpaper with `wal`, then hit the restart-shell keybind
-(below), which re-runs `wal -R`, re-copies the palette and restarts the shell.
-
-<hr>
-
-## fabric_shell
-
-A small desktop shell written with [Fabric](https://github.com/Fabric-Development/fabric)
-(Python + GTK3 + layer-shell). It replaces waybar, rofi, dunst and nwg-bar.
-
-**Three long-lived processes:**
-
-| Process | Role |
-|---|---|
-| `bar.py` | one bar per monitor — window title, workspaces, tray, volume/temp/battery, clock |
-| `notifications.py` | notification daemon (cards, actions, critical never auto-expires) |
-| `daemon.py` | hosts the four overlays and listens on `/tmp/fabric-shell.sock` |
-
-**Four overlays**, kept alive in the background and shown on demand — the launcher
-opens instantly because it is never respawned:
-
-- **launcher** — app search with frequency ranking, `?` prefix for a web search
-- **clipboard** — `cliphist` history with image thumbnails
-- **emoji** — searchable grid with a category rail, remembers your most used
-- **powermenu** — full-screen scrim: lock / logout / restart / shutdown
-
-`ctl.py toggle|show|hide <window>` sends one line to the daemon's socket; that's
-what the keybinds call. Shared window, animation, keyboard and stylesheet logic
-lives in `common.py`.
-
-> Fabric isn't packaged for Arch, so it lives in a venv at
-> `.config/fabric_shell/.venv` (see [Install](#install)).
 
 <hr>
 
 ## Keybinds
 
-`SUPER` is the mod key.
+`SUPER` is the Windows/Command key.
 
-### Launching
+Press <kbd>SUPER</kbd> <kbd>/</kbd> at any time for a cheatsheet of every
+keybind, generated from your own config.
 
-| Keys | Action |
-|---|---|
-| <kbd>SUPER</kbd> <kbd>Return</kbd> | Terminal (alacritty) |
-| <kbd>SUPER</kbd> <kbd>E</kbd> | File manager (dolphin) |
-| <kbd>SUPER</kbd> <kbd>B</kbd> | Browser (zen-browser) |
-| <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Esc</kbd> | Mission Center |
-
-### Shell
+### Apps
 
 | Keys | Action |
 |---|---|
+| <kbd>SUPER</kbd> <kbd>Return</kbd> | Terminal |
+| <kbd>SUPER</kbd> <kbd>E</kbd> | File manager |
+| <kbd>SUPER</kbd> <kbd>B</kbd> | Browser |
 | <kbd>SUPER</kbd> <kbd>Space</kbd> | App launcher |
-| <kbd>SUPER</kbd> <kbd>.</kbd> | Emoji picker |
+
+### The desktop
+
+| Keys | Action |
+|---|---|
+| <kbd>SUPER</kbd> <kbd>C</kbd> | Control centre |
+| <kbd>SUPER</kbd> <kbd>N</kbd> | Notifications |
 | <kbd>SUPER</kbd> <kbd>V</kbd> | Clipboard history |
+| <kbd>SUPER</kbd> <kbd>.</kbd> | Emoji picker |
+| <kbd>SUPER</kbd> <kbd>W</kbd> | Wallpaper picker |
+| <kbd>SUPER</kbd> <kbd>/</kbd> | Keybind cheatsheet |
+| <kbd>SUPER</kbd> <kbd>PrtSc</kbd> | Screenshot menu |
 | <kbd>SUPER</kbd> <kbd>Esc</kbd> | Power menu |
-| <kbd>SUPER</kbd> <kbd>Shift</kbd> <kbd>Ctrl</kbd> <kbd>Alt</kbd> <kbd>R</kbd> | Restart the shell (re-syncs pywal colors) |
 
 ### Windows
 
@@ -125,78 +88,103 @@ lives in `common.py`.
 |---|---|
 | <kbd>SUPER</kbd> <kbd>Shift</kbd> <kbd>Q</kbd> | Close window |
 | <kbd>SUPER</kbd> <kbd>←↑↓→</kbd> | Move focus |
-| <kbd>SUPER</kbd> <kbd>Shift</kbd> <kbd>←↑↓→</kbd> | Move window |
-| <kbd>SUPER</kbd> <kbd>U</kbd> / <kbd>P</kbd> | Resize narrower / wider |
-| <kbd>SUPER</kbd> <kbd>I</kbd> / <kbd>O</kbd> | Resize shorter / taller |
-| <kbd>SUPER</kbd> <kbd>T</kbd> | Toggle floating |
+| <kbd>SUPER</kbd> <kbd>Shift</kbd> <kbd>←↑↓→</kbd> | Move the window |
+| <kbd>SUPER</kbd> <kbd>U</kbd> <kbd>P</kbd> <kbd>I</kbd> <kbd>O</kbd> | Resize |
+| <kbd>SUPER</kbd> <kbd>T</kbd> | Float / untile |
 | <kbd>SUPER</kbd> <kbd>F</kbd> | Fullscreen |
-| <kbd>SUPER</kbd> + drag <kbd>LMB</kbd> / <kbd>RMB</kbd> | Move / resize with mouse |
+| <kbd>SUPER</kbd> + drag mouse | Move or resize with the mouse |
 
 ### Workspaces
 
 | Keys | Action |
 |---|---|
-| <kbd>SUPER</kbd> <kbd>1</kbd>–<kbd>0</kbd> | Switch to workspace 1–10 |
-| <kbd>SUPER</kbd> <kbd>Shift</kbd> <kbd>1</kbd>–<kbd>0</kbd> | Move window to workspace |
+| <kbd>SUPER</kbd> <kbd>1</kbd>–<kbd>0</kbd> | Go to workspace |
+| <kbd>SUPER</kbd> <kbd>Shift</kbd> <kbd>1</kbd>–<kbd>0</kbd> | Send window to workspace |
 
-Odd workspaces live on the external monitor, even ones on the laptop screen
-(`config/monitor.lua`).
-
-### Screenshots & media
-
-| Keys | Action |
-|---|---|
-| <kbd>SUPER</kbd> <kbd>Shift</kbd> <kbd>S</kbd> or <kbd>PrtSc</kbd> | Region → clipboard + `~/Pictures/screenshots/` |
-| <kbd>Shift</kbd> <kbd>PrtSc</kbd> | Whole screen → same |
-| Volume / mute / mic-mute keys | wpctl |
-| Brightness keys | brightnessctl |
-| Play / pause / next / prev | playerctl |
+Media, volume and brightness keys work as expected, and show a little popup.
 
 <hr>
 
 ## Install
 
-### 1. Base system
-
-Install Arch with `archinstall`, selecting:
-
-- **NetworkManager** — network
-- **Pipewire** — audio
-
-### 2. Packages
-
-See [Packages](#packages) below.
-
-### 3. Dotfiles
+You need Arch Linux with **NetworkManager** and **Pipewire** (both are options
+in `archinstall`). Then, as your normal user — not as root:
 
 ```bash
-git clone --recurse-submodules <this repo> ~/archdots
-cd ~/archdots
-stow .
+curl -fsSL https://raw.githubusercontent.com/LandChit/archdots/main/install.sh | bash
 ```
 
-### 4. Shell venv
+That's it. The installer clones the repo, installs everything, links the config
+into your home folder, builds the shell, and sets up the parts that depend on
+*your* machine — which graphics card to use, your monitor layout, your wallpaper
+paths. It shows you each of those before writing it.
 
-Fabric is not in the repos, so the shell brings its own environment:
+It asks before each optional group, so you can skip the ones you don't want.
+Run it with `--yes` to accept every default instead, or `--help` for the full
+list of options. Flatpaks are off unless you pass `--flatpak`.
+
+Already have the repo cloned? `./install.sh` from inside it does the same thing
+and skips the clone. It's safe to run again — a second run updates rather than
+duplicates.
+
+**When it finishes, log out and pick Hyprland at the login screen.** The desktop
+starts itself. Press <kbd>SUPER</kbd> <kbd>/</kbd> for the cheatsheet.
+
+> **One warning:** don't install dunst, mako or swaync. This desktop draws its
+> own notifications, and those would silently take over and leave you with none.
+> The installer offers to remove them if it finds them.
+
+<details>
+<summary>Prefer to do it by hand?</summary>
 
 ```bash
+# 1. install the packages listed below, then:
+git clone --recurse-submodules https://github.com/LandChit/archdots ~/archdots
+cd ~/archdots && stow .
+
+# 2. build the desktop shell
 python -m venv ~/.config/fabric_shell/.venv
-~/.config/fabric_shell/.venv/bin/pip install fabric pycairo PyGObject loguru click
+~/.config/fabric_shell/.venv/bin/pip install -r ~/.config/fabric_shell/requirements.txt
+
+# 3. wallpapers live here — the picker reads this folder
+mkdir -p ~/Pictures/wallpapers && cp ~/archdots/wallpapers/* ~/Pictures/wallpapers/
+wal -i ~/Pictures/wallpapers/<pick-one>
+cp ~/.cache/wal/colors-fabric.css ~/.config/fabric_shell/css/
 ```
 
-### 5. First colors
+You'll also need to edit `.config/hypr/hyprpaper.conf` and
+`.config/uwsm/env-hyprland` for your own monitors and graphics card, and apply
+the settings in
+[DEVELOPMENT.md](DEVELOPMENT.md#settings-that-cannot-be-stowed) that can't be
+stowed.
 
-```bash
-wal -i ~/archdots/wallpapers/<pick-one>
+</details>
+
+<hr>
+
+## Making it yours
+
+**Change the wallpaper and colors:** <kbd>SUPER</kbd> <kbd>W</kbd>.
+
+**Change settings for your machine** — your monitors, your mouse, your
+graphics card — without touching the originals: put them in
+`.config/hypr/config/custom/`. There's a file in there for each part of the
+config, they're loaded after the defaults, and whatever you write wins. They're
+also kept out of git, so your changes stay yours.
+[More detail here](DEVELOPMENT.md#per-machine-config).
+
+**Add a keybind:** edit `.config/hypr/config/custom/keybind.lua` and give it a
+`desc` so it shows up on the cheatsheet:
+
+```lua
+hl.bind("SUPER + G", hl.dsp.exec_cmd("gimp"), { desc = "Launch: GIMP" })
 ```
-
-Then log into Hyprland — `autorun.lua` starts the shell for you.
 
 <hr>
 
 ## Packages
 
-### Core — needed for these dotfiles
+### Core
 
 ```
 hyprland hyprpaper hyprlock hyprpolkitagent xdg-desktop-portal-hyprland
@@ -204,21 +192,9 @@ xdg-desktop-portal-gtk uwsm sddm alacritty foot dolphin ark kfind
 python-pywal python-gobject gtk-layer-shell python-pip
 cliphist wl-clipboard grim slurp brightnessctl playerctl libnotify
 pipewire pipewire-alsa pipewire-jack pipewire-pulse wireplumber pavucontrol
-networkmanager network-manager-applet blueman
+networkmanager network-manager-applet bluez bluez-utils blueman
 qt6ct kvantum qt5-wayland qt6-wayland
 zsh stow git
-```
-
-`foot` is only used by the launcher to run terminal apps; alacritty is the
-interactive terminal. `libnotify` provides `notify-send`, which the screenshot
-keybinds use to report themselves — the card is drawn by the shell's own
-notification daemon.
-
-### Utilities
-
-```
-tlp zoxide eza fzf fd bat htop nvtop fastfetch tmux unzip wget
-solaar smartmontools kwallet-pam kwalletmanager flatpak
 ```
 
 ### Fonts
@@ -228,8 +204,15 @@ ttf-jetbrains-mono-nerd ttf-dejavu ttf-roboto
 noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra
 ```
 
-JetBrainsMono Nerd Font is the shell's font — without it every glyph in the bar
-renders as a box.
+JetBrainsMono Nerd Font is required — without it the icons in the bar show as
+empty boxes.
+
+### Utilities
+
+```
+tlp zoxide eza fzf fd bat htop nvtop fastfetch tmux unzip wget
+solaar smartmontools kwallet-pam kwalletmanager flatpak
+```
 
 ### AUR
 
@@ -251,35 +234,24 @@ io.github.nozwock.Packet          io.github.kukuruzka165.materialgram
 moe.launcher.an-anime-game-launcher
 ```
 
-### Regenerating these lists
+<hr>
 
-The lists above are curated — they cover the desktop, not every package on the machine. For everything actually installed:
+## Good to know
 
-```bash
-pacman -Qqen          # explicit, from the official repos
-pacman -Qqem          # foreign / AUR
-flatpak list --app --columns=application
-```
+- The theme is hand-modified for transparency, so a few GTK apps look off in
+  places.
+- Dolphin's list view is broken with this Qt theme — use icon view.
+- Some tray icons show a generic placeholder if the app ships an icon the theme
+  doesn't have.
+- Bluetooth pairing still needs `bluetoothctl` in a terminal; connecting to an
+  already-paired device is one click in the control centre.
+- The installer's monitor layout is a left-to-right guess. If your screens sit
+  differently, edit `~/.config/hypr/config/custom/monitor.lua` — it's yours and
+  it's not tracked by git.
 
 <hr>
 
-## Known rough edges
+## For developers
 
-- **GTK transparency is not uniform.** The catppuccin theme was hand-modified to
-  be transparent, so it is definitely broken in places.
-- **Dolphin's list view is broken** under Kvantum `KvGlass`. Use icon view.
-- **Machine-specific config is not separated yet.** `config/monitor.lua` hardcodes
-  my exact monitor layout (eDP-1 + HDMI-A-1 + DP-1, with transforms), and
-  `uwsm/env-hyprland` pins specific DRM device paths. Both need editing on any
-  other machine.
-- **No install script yet.** The steps above are manual.
-
-<hr>
-
-## TODO
-
-- [ ] Create a keybinds graphic
-- [ ] Create a custom uniform theme
-- [ ] Create an install script
-- [ ] Separate machine-specific config (per-program configs, and screen configs)
-- [x] Drop the unused waybar / rofi / dunst leftovers
+How it all works, why certain decisions were made, and what's still to do:
+**[DEVELOPMENT.md](DEVELOPMENT.md)**.

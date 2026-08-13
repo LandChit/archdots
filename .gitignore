@@ -22,13 +22,14 @@ rad.json
 TestResults.xml
 .directory
 
-installscript.sh
-
-.config/fabric_shell/design_handoff_hyprland_suite
-
 .omc
 
 # python
 __pycache__/
 *.py[cod]
 .venv/
+
+# Per-machine Hyprland overrides. config/ holds the committed defaults; these
+# are loaded after them and are meant to differ on every machine, so they are
+# never committed. The folder's README.md is tracked on purpose.
+.config/hypr/config/custom/*.lua

@@ -15,7 +15,12 @@ from fabric.widgets.box import Box
 from fabric.widgets.entry import Entry
 from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.wayland import WaylandWindow as Window
-from fabric.utils.helpers import compile_css, monitor_file
+from fabric.utils.helpers import (
+    compile_css,
+    exec_shell_command,
+    exec_shell_command_async,
+    monitor_file,
+)
 
 from gi.repository import Gdk, GLib, Gtk  # type: ignore
 
@@ -44,13 +49,25 @@ def build_css(*sheets: str) -> str:
     return "\n".join([colors, _read("style.css"), *(_read(s) for s in sheets)])
 
 
+# A Gio.FileMonitor stops watching the moment it is garbage collected, and
+# monitor_file() hands its monitor back with nobody holding it. Dropping that
+# return value is why a wallpaper change only recoloured the shell after a
+# restart: the watch was collected almost immediately. These live for the
+# lifetime of the process.
+_MONITORS: list = []
+
+
+def _watch_palette(refresh) -> None:
+    _MONITORS.append(monitor_file(os.path.join(CSS_DIR, COLORS_CSS), refresh))
+
+
 def style_application(app: Application, *sheets: str) -> None:
     """Style `app` from `sheets`, restyling whenever pywal rewrites the palette."""
     def refresh(*_):
         app.set_stylesheet_from_string(build_css(*sheets), base_path=CSS_DIR)
 
     refresh()
-    monitor_file(os.path.join(CSS_DIR, COLORS_CSS), refresh)
+    _watch_palette(refresh)
 
 
 def style_screen(*sheets: str) -> None:
@@ -71,7 +88,136 @@ def style_screen(*sheets: str) -> None:
         )
 
     refresh()
-    monitor_file(os.path.join(CSS_DIR, COLORS_CSS), refresh)
+    _watch_palette(refresh)
+
+
+# ── battery ────────────────────────────────────────────────────────────────────
+
+def find_battery() -> str | None:
+    """Sysfs path of the first battery present, or None on a desktop."""
+    for index in range(5):
+        path = f"/sys/class/power_supply/BAT{index}"
+        if os.path.exists(path):
+            return path
+    return None
+
+
+def _read_battery(path: str, name: str) -> str | None:
+    try:
+        with open(os.path.join(path, name), encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return None
+
+
+def battery_state(path: str) -> tuple[int, str] | None:
+    """(percent, lowercased status) for the battery at `path`, None if unreadable."""
+    capacity = _read_battery(path, "capacity")
+    status = _read_battery(path, "status")
+    if capacity is None or not capacity.isdigit() or status is None:
+        return None
+    return int(capacity), status.lower()
+
+
+def battery_time(path: str) -> str | None:
+    """How long until the battery at `path` is empty (or full), as `3h 12m`.
+
+    sysfs reports energy in µWh and draw in µW, so the division is just hours.
+    Returns None while idle, on a full battery, or on hardware that reports
+    charge/current instead — a missing estimate is a normal state, not an error.
+    """
+    status = _read_battery(path, "status")
+    energy = _read_battery(path, "energy_now")
+    power = _read_battery(path, "power_now")
+    if status is None or energy is None or power is None:
+        return None
+    if not energy.isdigit() or not power.isdigit() or int(power) == 0:
+        return None
+
+    status = status.lower()
+    if status == "charging":
+        full = _read_battery(path, "energy_full")
+        if full is None or not full.isdigit():
+            return None
+        remaining = int(full) - int(energy)
+    elif status == "discharging":
+        remaining = int(energy)
+    else:
+        return None  # full, or idle on mains — nothing to count down to
+
+    minutes = round(remaining / int(power) * 60)
+    if minutes <= 0:
+        return None
+    return f"{minutes // 60}h {minutes % 60:02d}m" if minutes >= 60 else f"{minutes}m"
+
+
+# ── audio & backlight ──────────────────────────────────────────────────────────
+
+SINK = "@DEFAULT_AUDIO_SINK@"
+SOURCE = "@DEFAULT_AUDIO_SOURCE@"
+
+# how long to wait for the burst of pactl events one change produces to settle
+AUDIO_DEBOUNCE_MS = 60
+
+
+def audio_state(node: str = SINK) -> tuple[int, bool] | None:
+    """(percent, muted) for a wpctl node, or None if wpctl cannot be reached.
+
+    wpctl prints `Volume: 0.45` — or `Volume: 0.45 [MUTED]` — as a 0–1 fraction
+    that can exceed 1.0 when the sink is boosted past 100%.
+    """
+    out = exec_shell_command(f"wpctl get-volume {node}")
+    if out is False:
+        return None
+    try:
+        percent = round(float(out.split()[1]) * 100)
+    except (IndexError, ValueError):
+        return None
+    return percent, "[MUTED]" in out
+
+
+def watch_audio(callback) -> object:
+    """Call `callback` when PipeWire reports a sink or source change.
+
+    `pactl subscribe` prints one line per event and a single key press produces
+    several, so the calls are coalesced into one after a short quiet period.
+
+    Returns the subprocess — the caller has to keep a reference to it, or it is
+    collected and the subscription dies with it.
+    """
+    pending: list[int] = []
+
+    def fire() -> bool:
+        pending.clear()
+        callback()
+        return False
+
+    def on_line(line: str) -> None:
+        # every line reads `Event 'change' on sink #52`; server events cover the
+        # default sink being switched, which changes what the bar should show
+        if not any(word in line for word in ("sink", "source", "server")):
+            return
+        if pending:
+            GLib.source_remove(pending.pop())
+        pending.append(GLib.timeout_add(AUDIO_DEBOUNCE_MS, fire))
+
+    process, _stdout = exec_shell_command_async("pactl subscribe", on_line)
+    return process
+
+
+def backlight_state() -> int | None:
+    """Backlight brightness as a percent, or None without a backlight device.
+
+    `brightnessctl -m` prints one machine-readable line:
+    `amdgpu_bl1,backlight,128,50%,255`.
+    """
+    out = exec_shell_command("brightnessctl -m")
+    if out is False:
+        return None
+    fields = out.strip().split(",")
+    if len(fields) < 4 or not fields[3].rstrip("%").isdigit():
+        return None
+    return int(fields[3].rstrip("%"))
 
 
 # ── usage counters ─────────────────────────────────────────────────────────────
@@ -165,6 +311,10 @@ class Selection:
 
 class Overlay(Window):
     """Layer-shell window the daemon reveals and dismisses over the socket."""
+
+    # exclusive windows are modes: opening one closes every other exclusive
+    # window. Notifications set this False so they survive a launcher opening.
+    exclusive = True
 
     def __init__(self, **kwargs):
         super().__init__(exclusivity="none", visible=False, **kwargs)

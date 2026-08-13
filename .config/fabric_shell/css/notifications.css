@@ -123,3 +123,108 @@
     outline: none;
     box-shadow: none;
 }
+
+/* ── Notification centre ─────────────────────────────────────── */
+/* Same card surface as calendar.css, and the same position under the bar. */
+.notif-center-window,
+.notif-center-root {
+    background-color: transparent;
+}
+
+.notif-center-card {
+    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.94);
+    border-radius: 18px;
+    border: 1px solid alpha(var(--color4), 0.28);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    padding: 14px 16px;
+    opacity: 1;
+    margin-top: 0;
+    transition: opacity 180ms ease, margin-top 180ms ease;
+}
+
+.notif-center-window.anim-out .notif-center-card {
+    opacity: 0;
+    margin-top: -12px;
+}
+
+.notif-center-title {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--foreground);
+    padding-right: 6px;
+}
+
+/* ── Header buttons ──────────────────────────────────────────── */
+.notif-center-toggle,
+.notif-center-btn {
+    background-color: alpha(var(--color4), 0.12);
+    border: 1px solid alpha(var(--color4), 0.30);
+    border-radius: 11px;
+    box-shadow: none;
+    padding: 4px 12px;
+    font-size: 10.5px;
+    color: var(--foreground);
+    min-height: 0;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.notif-center-toggle:hover,
+.notif-center-btn:hover {
+    background-color: alpha(var(--color4), 0.22);
+    border-color: alpha(var(--color4), 0.50);
+}
+
+.notif-center-toggle:focus,
+.notif-center-toggle:active,
+.notif-center-btn:focus,
+.notif-center-btn:active {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Silenced is a state worth seeing at a glance, so it gets the accent fill */
+.notif-center-toggle.active {
+    background-color: alpha(var(--color4), 0.30);
+    border-color: alpha(var(--color4), 0.60);
+    color: var(--color7);
+}
+
+.notif-center-btn-label {
+    font-size: 10.5px;
+    color: var(--foreground);
+}
+
+/* ── History rows ────────────────────────────────────────────── */
+.notif-history-row {
+    background-color: alpha(var(--color4), 0.08);
+    border: 1px solid alpha(var(--color4), 0.18);
+    border-radius: 12px;
+    padding: 9px 11px;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.notif-history-row:hover {
+    background-color: alpha(var(--color4), 0.14);
+    border-color: alpha(var(--color4), 0.34);
+}
+
+/* Same warm red the rest of the shell reserves for danger */
+.notif-history-row.notif-critical {
+    border-color: rgba(224, 96, 78, 0.45);
+}
+
+.notif-history-row.notif-low {
+    background-color: alpha(var(--color4), 0.05);
+}
+
+.notif-history-time {
+    font-size: 10px;
+    color: alpha(var(--foreground), 0.45);
+}
+
+.notif-empty {
+    font-size: 11.5px;
+    color: alpha(var(--foreground), 0.40);
+    padding: 28px 0;
+}

@@ -1,0 +1,310 @@
+/* Control centre. Same card as calendar.css and the notification centre,
+   sharing their position under the bar. */
+
+/* ── No scrim — only the card is painted ─────────────────────── */
+.control-window,
+.control-root {
+    background-color: transparent;
+}
+
+/* ── Card ────────────────────────────────────────────────────── */
+.control-card {
+    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.94);
+    border-radius: 18px;
+    border: 1px solid alpha(var(--color4), 0.28);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    padding: 16px 18px;
+    min-width: 340px;
+    opacity: 1;
+    margin-top: 0;
+    transition: opacity 180ms ease, margin-top 180ms ease;
+}
+
+.control-window.anim-out .control-card {
+    opacity: 0;
+    margin-top: -12px;
+}
+
+/* ── Headings ────────────────────────────────────────────────── */
+.control-title {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--foreground);
+}
+
+.control-section {
+    font-size: 10.5px;
+    color: var(--color4);
+    letter-spacing: 0.4px;
+}
+
+/* ── Toggle tiles ────────────────────────────────────────────── */
+.control-toggle {
+    background-color: alpha(var(--color4), 0.10);
+    border: 1px solid alpha(var(--color4), 0.24);
+    border-radius: 13px;
+    box-shadow: none;
+    padding: 9px 6px;
+    min-height: 0;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.control-toggle:hover {
+    background-color: alpha(var(--color4), 0.18);
+    border-color: alpha(var(--color4), 0.42);
+}
+
+.control-toggle:focus,
+.control-toggle:active {
+    outline: none;
+    box-shadow: none;
+}
+
+/* On is the state worth spotting instantly, so it carries the accent fill */
+.control-toggle.active {
+    background-color: alpha(var(--color4), 0.30);
+    border-color: alpha(var(--color4), 0.60);
+}
+
+.control-toggle:disabled {
+    opacity: 0.4;
+}
+
+.control-toggle-icon {
+    font-size: 17px;
+    color: alpha(var(--foreground), 0.72);
+}
+
+.control-toggle.active .control-toggle-icon {
+    color: var(--color7);
+}
+
+.control-toggle-label {
+    font-size: 10px;
+    color: alpha(var(--foreground), 0.62);
+}
+
+.control-toggle.active .control-toggle-label {
+    color: var(--foreground);
+}
+
+/* ── Sliders ─────────────────────────────────────────────────── */
+.control-slider-icon {
+    font-size: 15px;
+    color: var(--color4);
+    min-width: 20px;
+}
+
+.control-value {
+    font-size: 10.5px;
+    color: alpha(var(--foreground), 0.62);
+    min-width: 42px;
+}
+
+/* GTK3 draws a scale as trough > highlight + slider; all three need sizing or
+   the theme's default chunky handle comes through.
+   `background-image: none` is load-bearing: the GTK theme paints the filled
+   part with a gradient, and a background-color alone never shows through it —
+   which is why the fill rendered in the theme's pink instead of the accent. */
+.control-slider trough {
+    background-color: alpha(var(--color4), 0.16);
+    background-image: none;
+    border: none;
+    border-radius: 999px;
+    min-height: 5px;
+}
+
+.control-slider highlight,
+.control-slider trough highlight {
+    background-color: var(--color4);
+    background-image: none;
+    border: none;
+    border-radius: 999px;
+    min-height: 5px;
+}
+
+.control-slider slider {
+    background-color: var(--color7);
+    background-image: none;
+    border: none;
+    border-radius: 999px;
+    min-width: 13px;
+    min-height: 13px;
+    margin: -5px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+    transition: background-color 140ms ease;
+}
+
+.control-slider:hover slider {
+    background-color: var(--foreground);
+    background-image: none;
+}
+
+/* ── Player row ──────────────────────────────────────────────── */
+/* Stays in place when idle, so the panel keeps its height. */
+.control-player {
+    background-color: alpha(var(--color4), 0.08);
+    border: 1px solid alpha(var(--color4), 0.20);
+    border-radius: 12px;
+    padding: 7px 10px;
+}
+
+.control-player .media-btn {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0 4px;
+    min-height: 0;
+    min-width: 0;
+}
+
+.control-player .media-btn:focus,
+.control-player .media-btn:active {
+    outline: none;
+    box-shadow: none;
+}
+
+.control-player .media-icon {
+    font-size: 15px;
+    color: alpha(var(--foreground), 0.72);
+    transition: color 140ms ease;
+}
+
+.control-player .media-btn:hover .media-icon {
+    color: var(--color4);
+}
+
+.control-player .media-title {
+    font-size: 11px;
+    color: alpha(var(--foreground), 0.80);
+    padding-left: 6px;
+}
+
+/* ── Network rows ────────────────────────────────────────────── */
+.control-network-btn {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+.control-network-btn:focus,
+.control-network-btn:active {
+    outline: none;
+    box-shadow: none;
+}
+
+.control-network {
+    background-color: alpha(var(--color4), 0.07);
+    border: 1px solid transparent;
+    border-radius: 11px;
+    padding: 7px 10px;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.control-network-btn:hover .control-network {
+    background-color: alpha(var(--color4), 0.16);
+    border-color: alpha(var(--color4), 0.36);
+}
+
+/* The one you are on — same accent treatment the lists use for selection */
+.control-network.connected {
+    background-color: alpha(var(--color4), 0.20);
+    border-color: alpha(var(--color4), 0.50);
+}
+
+.control-network-icon {
+    font-size: 13px;
+    color: var(--color4);
+}
+
+.control-network-name {
+    font-size: 11.5px;
+    color: var(--foreground);
+}
+
+.control-network-lock,
+.control-network-signal {
+    font-size: 10px;
+    color: alpha(var(--foreground), 0.45);
+}
+
+/* ── Tabs ────────────────────────────────────────────────────── */
+/* Networks / Bluetooth / Tray share one scroll area below these. */
+.control-tab {
+    background-color: alpha(var(--color4), 0.08);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    box-shadow: none;
+    padding: 5px 8px;
+    min-height: 0;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.control-tab:hover {
+    background-color: alpha(var(--color4), 0.16);
+}
+
+.control-tab:focus,
+.control-tab:active {
+    outline: none;
+    box-shadow: none;
+}
+
+.control-tab.active {
+    background-color: alpha(var(--color4), 0.28);
+    border-color: alpha(var(--color4), 0.55);
+}
+
+.control-tab-label {
+    font-size: 10.5px;
+    color: alpha(var(--foreground), 0.62);
+}
+
+.control-tab.active .control-tab-label {
+    color: var(--foreground);
+}
+
+/* ── System tray ─────────────────────────────────────────────── */
+/* Moved here from the bar. Some apps ship icon names the GTK theme has
+   never heard of, so this stays forgiving about what it is given.
+   No card chrome: it sits inside the shared page scroller now. */
+.control-tray {
+    background-color: transparent;
+    padding: 6px 2px;
+    min-height: 20px;
+}
+
+.control-tray button {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0 5px;
+    min-height: 0;
+    min-width: 0;
+}
+
+.control-tray button:hover {
+    background-color: alpha(var(--color4), 0.18);
+    border-radius: 8px;
+}
+
+.control-tray button:focus,
+.control-tray button:active {
+    outline: none;
+    box-shadow: none;
+}
+
+/* ── Status line ─────────────────────────────────────────────── */
+.control-status {
+    font-size: 10.5px;
+    color: alpha(var(--foreground), 0.55);
+    padding-top: 2px;
+}
+
+.control-empty {
+    font-size: 11px;
+    color: alpha(var(--foreground), 0.40);
+    padding: 18px 0;
+}

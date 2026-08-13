@@ -90,15 +90,7 @@
     color: var(--color7);
 }
 
-/* ── Right: tray island ──────────────────────────────────────── */
-.tray-island {
-    padding: 0 8px;
-}
-
-.tray-island > * {
-    padding: 0;
-    margin: 2px;
-}
+/* The tray island moved to the control centre — see controlcenter.css */
 
 /* ── Right: resources island (vol · cpu · bat) ───────────────── */
 .resources-island {
@@ -121,6 +113,57 @@
     min-width: 4px;
 }
 
+/* ── Media island ────────────────────────────────────────────── */
+/* Only present while something is playing, so it can afford the accent. */
+.media-island {
+    padding: 0 10px;
+}
+
+.media-island .media-btn {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0 3px;
+    min-height: 0;
+    min-width: 0;
+}
+
+.media-island .media-btn:focus,
+.media-island .media-btn:active {
+    outline: none;
+    box-shadow: none;
+}
+
+.media-island .media-icon {
+    font-size: 13px;
+    color: alpha(var(--foreground), 0.70);
+    padding: 0;
+    transition: color 140ms ease;
+}
+
+.media-island .media-btn:hover .media-icon {
+    color: var(--color4);
+}
+
+.media-island .media-title {
+    font-size: 11.5px;
+    color: var(--foreground);
+    padding: 0 4px 0 6px;
+}
+
+/* ── Interactive meters ──────────────────────────────────────── */
+/* The EventBox wrapper owns the pointer events, so it — not the label —
+   is what GTK marks as hovered. */
+.island-hot {
+    background-color: transparent;
+    border-radius: 9px;
+    transition: background-color 140ms ease;
+}
+
+.resources-island .island-hot:hover {
+    background-color: alpha(var(--color4), 0.14);
+}
+
 /* ── Right: clock island (accent-tinted anchor) ──────────────── */
 /* Accent mixed over the dark island base so text stays readable on
    any wallpaper — pure alpha-accent washed out over light walls. */
@@ -138,6 +181,8 @@
     padding: 0;
 }
 
-.clock-island:hover {
+/* Hovering lands on the EventBox wrapper, so the tint is driven from there */
+.clock-island:hover,
+.island-hot:hover .clock-island {
     background-color: alpha(mix(var(--background), var(--color4), 0.50), 0.94);
 }

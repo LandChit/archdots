@@ -5,6 +5,7 @@ pywal, persisted usage counters, and the overlay/panel base classes the
 launcher, clipboard, emoji picker and power menu are built on.
 """
 
+import glob
 import json
 import os
 
@@ -91,14 +92,92 @@ def style_screen(*sheets: str) -> None:
     _watch_palette(refresh)
 
 
+# ── cpu temperature ────────────────────────────────────────────────────────────
+
+# hwmon drivers that read the CPU die directly, best first. Everything else on a
+# machine — nvme, wifi, the battery, the charger — also registers as an hwmon,
+# so the driver name is the only thing that identifies the right one.
+_HWMON_CPU = ("coretemp", "k10temp", "zenpower", "cpu_thermal")
+
+# Fallback: thermal zones, by `type`. x86_pkg_temp is the package sensor;
+# cpu-thermal and soc_thermal are what ARM boards call it; acpitz is a generic
+# chassis probe that is merely better than nothing.
+_ZONE_TYPES = ("x86_pkg_temp", "cpu-thermal", "soc_thermal", "acpitz")
+
+
+def find_cpu_temp() -> str | None:
+    """Sysfs file holding the CPU temperature in millidegrees, or None.
+
+    thermal_zone0 is *not* portable, which was the original bug here: on this
+    laptop zone0 is `acpitz` (a chassis probe) while the CPU package is zone3,
+    and elsewhere zone0 is `INT3400`, which reports a constant 20°C. Pick by
+    driver name and zone type rather than by index.
+    """
+    for wanted in _HWMON_CPU:
+        for hwmon in sorted(glob.glob("/sys/class/hwmon/hwmon*")):
+            try:
+                with open(os.path.join(hwmon, "name"), encoding="utf-8") as f:
+                    if f.read().strip() != wanted:
+                        continue
+            except OSError:
+                continue
+            # temp1_input is the package sensor on coretemp; the per-core ones
+            # that follow it would each report a different number.
+            for entry in ("temp1_input", "temp2_input"):
+                path = os.path.join(hwmon, entry)
+                if os.path.exists(path):
+                    return path
+
+    for wanted in _ZONE_TYPES:
+        for zone in sorted(glob.glob("/sys/class/thermal/thermal_zone*")):
+            try:
+                with open(os.path.join(zone, "type"), encoding="utf-8") as f:
+                    if f.read().strip() != wanted:
+                        continue
+            except OSError:
+                continue
+            path = os.path.join(zone, "temp")
+            if os.path.exists(path):
+                return path
+
+    return None
+
+
+def cpu_temp(path: str) -> int | None:
+    """Whole degrees Celsius from `path`, or None if it cannot be read."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return round(int(f.read().strip()) / 1000)
+    except (OSError, ValueError):
+        return None
+
+
 # ── battery ────────────────────────────────────────────────────────────────────
 
 def find_battery() -> str | None:
-    """Sysfs path of the first battery present, or None on a desktop."""
-    for index in range(5):
-        path = f"/sys/class/power_supply/BAT{index}"
-        if os.path.exists(path):
-            return path
+    """Sysfs path of the first battery present, or None on a desktop.
+
+    Matched on `type`, not on the name: BAT0/BAT1 is the usual ACPI naming but
+    not a rule — some boards expose CMB0, and the same directory also holds the
+    AC adapter and any wireless peripheral that reports a charge level, which a
+    name-agnostic glob would otherwise pick up.
+    """
+    for path in sorted(glob.glob("/sys/class/power_supply/*")):
+        try:
+            with open(os.path.join(path, "type"), encoding="utf-8") as f:
+                if f.read().strip() != "Battery":
+                    continue
+        except OSError:
+            continue
+        # Peripherals (mice, headsets) are Batteries too, but carry a scope of
+        # Device; the system battery either says System or omits the file.
+        try:
+            with open(os.path.join(path, "scope"), encoding="utf-8") as f:
+                if f.read().strip() == "Device":
+                    continue
+        except OSError:
+            pass
+        return path
     return None
 
 

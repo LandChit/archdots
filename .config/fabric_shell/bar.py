@@ -13,7 +13,6 @@ from fabric.hyprland.widgets import HyprlandWorkspaces, HyprlandActiveWindow
 from fabric.utils.helpers import (
     FormattedString,
     truncate,
-    exec_shell_command,
     exec_shell_command_async,
 )
 
@@ -49,6 +48,9 @@ def _pick(icons, value: int) -> str:
 
 
 BATTERY = common.find_battery()
+# Probed once: which sysfs file holds the CPU temperature differs per machine,
+# but not per run.
+CPU_TEMP = common.find_cpu_temp()
 
 
 class StatusBar(Window):
@@ -259,10 +261,10 @@ class StatusBar(Window):
         return f"{_pick(VOLUME_ICONS, volume)} {volume}%"
 
     def _poll_cpu(self, _fabricator) -> str:
-        out = exec_shell_command(
-            "awk '{printf \"%.0f\", $1/1000}' /sys/class/thermal/thermal_zone0/temp"
-        )
-        return f" {out.strip()}°C" if out is not False else " --°C"
+        if CPU_TEMP is None:
+            return " --°C"
+        degrees = common.cpu_temp(CPU_TEMP)
+        return " --°C" if degrees is None else f" {degrees}°C"
 
     def _poll_battery(self, _fabricator) -> str:
         state = common.battery_state(BATTERY)

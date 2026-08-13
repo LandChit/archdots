@@ -1,3 +1,6 @@
+# OLD BUT WORKS WELL ENOUGH (NOT BEING UPDATED)
+> Change **branch** to [clean-n-convert](https://github.com/LandChit/archdots/tree/clean-n-convert) for a more updated setup. Take note **a clean install is recommended**. (needs NetworkManager (default), and PipeWire).
+
 # My Dots
 I made this repo because I'm both lazy and too incompetent to create my own install script. I am also too lazy to create my own iso. I will create an install script for the dot files when its polished...
 

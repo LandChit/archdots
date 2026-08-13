@@ -19,6 +19,10 @@ from common import Panel, Selection, UsageCounts, make_scroller
 COUNTS_PATH = "~/.local/share/fabric-launcher/counts.json"
 SEARCH_URL = "https://www.google.com/search?q={}"
 
+# Wrapper for .desktop entries marked Terminal=true. Kept here rather than
+# inline so there is one place to change it.
+TERMINAL = ("alacritty", "-e")
+
 ICON_SIZE = 32
 WIDTH = 540
 HEIGHT = 580
@@ -192,7 +196,7 @@ class Launcher(Panel):
             return app.launch
         # strip the %f/%U field codes a terminal command line cannot use
         cmd = shlex.split(re.sub(r"%[a-zA-Z]", "", app.command_line).strip())
-        return lambda: subprocess.Popen(["foot", "-e", *cmd])
+        return lambda: subprocess.Popen([*TERMINAL, *cmd])
 
     def _app_icon(self, app) -> Image:
         """The app's own pixbuf, else an absolute icon path, else a themed name."""

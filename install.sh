@@ -23,48 +23,75 @@ REPO_URL_DEFAULT="https://github.com/LandChit/archdots"
 REPO_DIR_DEFAULT="$HOME/archdots"
 WALLPAPER_DIR="$HOME/Pictures/wallpapers"
 
+# The SDDM theme is pinned. Its config schema changes between releases, and
+# .themes_sddm/ holds a default.conf written against this one.
+SDDM_THEME_VERSION="1.3.5"
+
 # Packages. These mirror README.md#packages — keep the two in step.
+#
+# Core is what the desktop cannot start without. Everything else is optional and
+# lives further down, because a package that is merely nice to have should not
+# be able to fail an install.
 PKG_CORE=(
     hyprland hyprpaper hyprlock hyprpolkitagent
     xdg-desktop-portal-hyprland xdg-desktop-portal-gtk uwsm sddm
-    alacritty foot dolphin ark kfind
-    python-pywal python-gobject gtk-layer-shell python-pip
+    alacritty dolphin
+    python-pywal python-gobject gtk3 gtk-layer-shell python-pip
+    # fabric.system_tray does gi.require_version("DbusmenuGtk3", "0.4") at
+    # import time, and daemon.py imports it through controlcenter -> tray. Miss
+    # this and *every* overlay dies with the daemon — launcher, clipboard,
+    # notifications, control centre, the lot — while bar.py keeps running, so
+    # the desktop looks half-alive rather than broken. pip cannot supply it:
+    # it is a typelib, not a wheel.
+    libdbusmenu-gtk3
     cliphist wl-clipboard grim slurp brightnessctl playerctl libnotify
-    pipewire pipewire-alsa pipewire-jack pipewire-pulse wireplumber pavucontrol
-    networkmanager network-manager-applet bluez bluez-utils blueman
+    pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol
+    networkmanager bluez bluez-utils blueman
     qt6ct kvantum qt5-wayland qt6-wayland
+    # GTK side of the theming. .config/gtk-3.0/settings.ini names both of these
+    # by name; without them GTK silently falls back to Adwaita *light* and the
+    # shell renders white panels with unreadable text.
+    breeze-icons adwaita-fonts
     zsh stow git
+    # .zshrc calls all four unconditionally — `eval "$(zoxide init zsh)"` plus
+    # `alias cd="z"`, `alias ls="eza …"`, `alias cat="bat"`, `eval "$(fzf --zsh)"`.
+    # Leaving any of them out breaks the login shell, `cd` included.
+    zoxide fzf eza bat
+    # hypr/config/autorun.lua starts kwalletmanager5 and pam_kwallet_init.
+    kwallet-pam kwalletmanager
     # pip compiles pycairo and PyGObject from source rather than fetching
     # wheels, so their build dependencies have to be present. base-devel is
     # also what makepkg needs to bootstrap paru.
     base-devel cairo gobject-introspection pkgconf
 )
 
+# JetBrainsMono Nerd is required — without it every glyph in the bar is a box.
+# Noto covers emoji (the picker) and CJK; dejavu and roboto are the generic
+# fallbacks GTK and Qt reach for when an app asks for a family neither has.
 PKG_FONTS=(
     ttf-jetbrains-mono-nerd ttf-dejavu ttf-roboto
     noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra
 )
 
 PKG_UTILS=(
-    tlp zoxide eza fzf fd bat htop nvtop fastfetch tmux unzip wget curl
-    solaar smartmontools kwallet-pam kwalletmanager flatpak
-    xwaylandvideobridge   # started by hypr/config/autorun.lua
+    tlp fd htop nvtop fastfetch tmux unzip wget curl smartmontools ark
 )
 
 PKG_AUR=(
-    zen-browser-bin visual-studio-code-bin sddm-silent-theme
-    hyprls-git downgrade qt5-websockets snapd
+    zen-browser-bin visual-studio-code-bin hyprls-git
+    xwaylandvideobridge   # started by autorun.lua; moved out of extra to the AUR
 )
 
+# Tools only. Media players, office suites and game launchers are a matter of
+# taste and are quicker to install by hand than to argue with in a script.
 PKG_FLATPAK=(
-    com.github.tchx84.Flatseal io.missioncenter.MissionCenter
-    com.interversehq.qView org.videolan.VLC
-    com.obsproject.Studio org.kde.kdenlive
-    com.usebottles.bottles org.prismlauncher.PrismLauncher
-    org.onlyoffice.desktopeditors org.remmina.Remmina
-    org.gnome.TextEditor org.gnome.Snapshot
-    io.github.nozwock.Packet io.github.kukuruzka165.materialgram
-    moe.launcher.an-anime-game-launcher
+    com.github.tchx84.Flatseal
+    io.missioncenter.MissionCenter
+    org.videolan.VLC
+    com.obsproject.Studio
+    io.github.nozwock.Packet
+    org.gnome.Snapshot
+    org.gnome.TextEditor
 )
 
 # The shell owns org.freedesktop.Notifications. Any of these takes that bus
@@ -185,7 +212,9 @@ command -v pacman >/dev/null || die "pacman not found. This installer is for Arc
 command -v sudo   >/dev/null || die "sudo not found. Install it and add your user to a wheel rule."
 
 printf '\n%sarchdots%s — Arch + Hyprland desktop\n' "$B" "$R"
-say "user: $USER    home: $HOME"
+# $USER is not exported by every shell — it is absent in a bare container and
+# when piped from curl, which under `set -u` would abort on the banner.
+say "user: $(id -un)    home: $HOME"
 (( ASSUME_YES )) && say "running non-interactively (--yes)"
 
 step "Checking sudo"
@@ -296,16 +325,26 @@ if (( DO_PACKAGES )); then
 
     if (( WANT_AUR )) && confirm "Install paru and the AUR packages (${#PKG_AUR[@]})?" y; then
         step "paru"
-        if command -v paru >/dev/null; then
+        if command -v paru >/dev/null && paru --version &>/dev/null; then
             skip "already installed"
         else
-            # paru itself is only on the AUR, so the first one is built by hand.
+            if command -v paru >/dev/null; then
+                # A paru that will not even print its version is the libalpm
+                # break: the binary is linked against the pacman that was
+                # current when it was packaged, and pacman has moved since.
+                warn "paru is installed but broken (libalpm mismatch) — rebuilding"
+            fi
+            # Built from source, not paru-bin. paru-bin ships a prebuilt binary
+            # against one libalpm soname; the moment pacman bumps it that binary
+            # dies with 'error while loading shared libraries: libalpm.so.N'.
+            # Compiling here links against the pacman actually installed.
             tmp="$(mktemp -d)"
             trap 'rm -rf "$tmp"' EXIT
-            git clone --depth 1 https://aur.archlinux.org/paru-bin.git "$tmp/paru-bin"
-            ( cd "$tmp/paru-bin" && makepkg -si --noconfirm )
+            git clone --depth 1 https://aur.archlinux.org/paru.git "$tmp/paru"
+            ( cd "$tmp/paru" && makepkg -si --noconfirm )
             rm -rf "$tmp"; trap - EXIT
-            ok "built and installed"
+            paru --version &>/dev/null || die "paru still will not run after a source build."
+            ok "built from source and installed"
         fi
 
         step "AUR packages"
@@ -319,7 +358,7 @@ if (( DO_PACKAGES )); then
         skip "AUR"
     fi
 
-    if (( WANT_FLATPAK )) || confirm "Install the flatpak applications (${#PKG_FLATPAK[@]}, large download)?" n; then
+    if (( WANT_FLATPAK )) || confirm "Install the flatpak tools (${#PKG_FLATPAK[@]})?" n; then
         step "Flatpaks"
         command -v flatpak >/dev/null || pac_install flatpak
         flatpak remote-add --if-not-exists flathub \
@@ -337,6 +376,150 @@ else
     skip "skipped (--skip-packages)"
 fi
 
+# ── 2b. the SDDM theme ──────────────────────────────────────────────────────
+#
+# Three separate things, all outside $HOME and so none of them stowable:
+# the theme package, the greeter config in /etc, and the theme's own
+# default.conf — which this repo overrides with an edited copy.
+
+install_sddm_theme() {
+    step "SDDM theme (silent $SDDM_THEME_VERSION)"
+
+    local theme_dir="/usr/share/sddm/themes/silent"
+    local custom_conf="$REPO_ROOT/.themes_sddm/silent_sddmTheme_custom_default/default.conf"
+
+    # ── the package, pinned ─────────────────────────────────────────────────
+    local have=""
+    have="$(pacman -Qi sddm-silent-theme 2>/dev/null | awk '/^Version/{print $3}')" || true
+
+    if [[ "${have%%-*}" == "$SDDM_THEME_VERSION" ]]; then
+        skip "sddm-silent-theme $have already installed"
+    elif ! command -v paru >/dev/null; then
+        warn "paru not available — skipping the theme"
+        note "install by hand: paru -S sddm-silent-theme (then pin it)"
+        return 0
+    else
+        # The AUR has no version tags, so walk PKGBUILD history for the newest
+        # commit that declares the pkgver we want and build from there.
+        local tmp commit=""
+        tmp="$(mktemp -d)"
+        git clone --quiet https://aur.archlinux.org/sddm-silent-theme.git "$tmp/theme" || {
+            rm -rf "$tmp"
+            warn "could not reach the AUR — skipping the theme"
+            note "install by hand: paru -S sddm-silent-theme"
+            return 0
+        }
+        local c
+        while read -r c; do
+            if git -C "$tmp/theme" show "$c:PKGBUILD" 2>/dev/null \
+                | grep -qx "pkgver=$SDDM_THEME_VERSION"; then
+                commit="$c"; break
+            fi
+        done < <(git -C "$tmp/theme" log --format=%H -- PKGBUILD)
+
+        if [[ -z "$commit" ]]; then
+            warn "no PKGBUILD in the AUR history declares pkgver=$SDDM_THEME_VERSION"
+            say "building the current version instead"
+        else
+            say "building from $(git -C "$tmp/theme" log -1 --format=%h "$commit") (pkgver=$SDDM_THEME_VERSION)"
+            git -C "$tmp/theme" checkout --quiet "$commit"
+        fi
+
+        # The theme depends on redhat-fonts, which is itself an AUR package, and
+        # makepkg resolves dependencies with pacman only — so `makepkg -si`
+        # dies on "target not found: redhat-fonts". Install the declared deps
+        # through paru first. Read them from the PKGBUILD rather than hardcoding
+        # them, so a version bump cannot silently drift from this list.
+        local deps=()
+        mapfile -t deps < <(
+            cd "$tmp/theme" && bash -c 'source ./PKGBUILD; printf "%s\n" "${depends[@]}"' 2>/dev/null
+        )
+        if (( ${#deps[@]} )); then
+            say "theme dependencies: ${deps[*]}"
+            paru -S --needed --noconfirm "${deps[@]}" || {
+                rm -rf "$tmp"
+                warn "could not install the theme's dependencies"
+                note "SDDM theme skipped; retry: paru -S sddm-silent-theme"
+                return 0
+            }
+        fi
+
+        ( cd "$tmp/theme" && makepkg -si --noconfirm ) || {
+            rm -rf "$tmp"
+            warn "theme build failed — the desktop still works, the login screen is plain"
+            note "SDDM theme failed to build; retry: paru -S sddm-silent-theme"
+            return 0
+        }
+        rm -rf "$tmp"
+        ok "installed"
+    fi
+
+    # ── the version lock ────────────────────────────────────────────────────
+    # A theme upgrade would replace default.conf and can change the config
+    # schema out from under the edited copy, so hold it where it is.
+    if grep -qE '^IgnorePkg.*\bsddm-silent-theme\b' /etc/pacman.conf; then
+        skip "already pinned in /etc/pacman.conf"
+    elif confirm "Pin sddm-silent-theme so pacman never upgrades it?" y; then
+        if grep -qE '^IgnorePkg' /etc/pacman.conf; then
+            sudo sed -i 's/^\(IgnorePkg.*\)$/\1 sddm-silent-theme/' /etc/pacman.conf
+        else
+            # There is a commented template under [options]; add a live one.
+            sudo sed -i '0,/^\[options\]/s//[options]\nIgnorePkg = sddm-silent-theme/' \
+                /etc/pacman.conf
+        fi
+        grep -qE '^IgnorePkg.*sddm-silent-theme' /etc/pacman.conf \
+            && ok "pinned in /etc/pacman.conf" \
+            || warn "could not pin it — add 'IgnorePkg = sddm-silent-theme' by hand"
+    fi
+
+    # ── the edited default.conf ─────────────────────────────────────────────
+    if [[ ! -f "$custom_conf" ]]; then
+        warn "$custom_conf missing — leaving the theme's own config"
+    elif [[ ! -d "$theme_dir" ]]; then
+        warn "$theme_dir does not exist — theme not installed"
+    elif sudo cmp -s "$custom_conf" "$theme_dir/configs/default.conf"; then
+        skip "default.conf already matches the repo copy"
+    else
+        # The theme ships its own; keep it so the change is reversible.
+        [[ -f "$theme_dir/configs/default.conf.orig" ]] \
+            || sudo cp "$theme_dir/configs/default.conf" "$theme_dir/configs/default.conf.orig"
+        sudo install -Dm644 "$custom_conf" "$theme_dir/configs/default.conf"
+        ok "installed the repo's default.conf (original kept as default.conf.orig)"
+        note "SDDM theme config is a root-owned copy — re-run install.sh after editing .themes_sddm/"
+    fi
+
+    # ── the greeter config ──────────────────────────────────────────────────
+    # QML2_IMPORT_PATH is not optional: without it the greeter loads with no
+    # components and SDDM falls back to a blank screen.
+    local sddm_conf="/etc/sddm.conf.d/10-archdots.conf"
+    local sddm_body="# Written by archdots install.sh.
+[General]
+InputMethod=qtvirtualkeyboard
+GreeterEnvironment=QML2_IMPORT_PATH=$theme_dir/components/,QT_IM_MODULE=qtvirtualkeyboard
+Numlock=on
+
+[Theme]
+Current=silent"
+
+    if [[ -f "$sddm_conf" ]] && [[ "$(sudo cat "$sddm_conf")" == "$sddm_body" ]]; then
+        skip "$sddm_conf already correct"
+    else
+        review "$sddm_conf" "$sddm_body"
+        if confirm "Write it? (needs root)" y; then
+            sudo mkdir -p /etc/sddm.conf.d
+            printf '%s\n' "$sddm_body" | sudo tee "$sddm_conf" >/dev/null
+            ok "wrote $sddm_conf"
+        else
+            skip "greeter config"
+            note "SDDM will not use the silent theme until $sddm_conf exists"
+        fi
+    fi
+}
+
+if (( DO_PACKAGES )); then
+    install_sddm_theme
+fi
+
 # ── 3. stow ─────────────────────────────────────────────────────────────────
 
 if (( DO_STOW )); then
@@ -345,15 +528,32 @@ if (( DO_STOW )); then
 
     # stow refuses to overwrite a real file. Find those first so the failure is
     # a question rather than a wall of errors.
-    # stow reports these on stderr as:
+    # stow aborts the entire run on any conflict, and reports them on stderr as
+    # a "WARNING! stowing . would cause conflicts:" block. Only one shape is
+    # fixable here — an ordinary file sitting where a link should go:
     #   * cannot stow <source> over existing target <path> since neither a
     #     link nor a directory and --adopt not specified
+    # Anything else (an absolute symlink in the package, say) needs a human, so
+    # collect the unrecognised lines rather than proceeding into a hard failure.
+    simulate="$(stow --simulate --verbose=1 --target="$HOME" . 2>&1 || true)"
     conflicts=()
+    unhandled=()
     while IFS= read -r line; do
+        [[ "$line" == *"  * "* ]] || continue
         if [[ "$line" =~ cannot\ stow\ .*\ over\ existing\ target\ (.+)\ since ]]; then
             conflicts+=("${BASH_REMATCH[1]}")
+        else
+            unhandled+=("${line#*\* }")
         fi
-    done < <(stow --simulate --verbose=1 --target="$HOME" . 2>&1 || true)
+    done <<< "$simulate"
+
+    if (( ${#unhandled[@]} )); then
+        warn "stow reported a conflict this script cannot resolve:"
+        printf '        %s\n' "${unhandled[@]}"
+        say "an entry in the repo root that should not be stowed belongs in"
+        say ".stow-local-ignore. Fix that and re-run."
+        die "refusing to continue with an unresolved stow conflict."
+    fi
 
     if (( ${#conflicts[@]} )); then
         warn "${#conflicts[@]} existing file(s) are in the way:"
@@ -400,11 +600,17 @@ else
     note "oh-my-zsh not installed; .zshrc sources it and will error on login"
 fi
 
-if [[ "${SHELL:-}" == */zsh ]]; then
+if [[ "$(getent passwd "$(id -un)" | cut -d: -f7)" == */zsh ]]; then
     skip "zsh is already your login shell"
 elif confirm "Make zsh your login shell?" y; then
-    chsh -s /usr/bin/zsh && ok "login shell set to zsh (takes effect next login)" \
-        || warn "chsh failed — run it yourself: chsh -s /usr/bin/zsh"
+    # Through sudo, which is already authenticated. A bare chsh prompts for the
+    # password again and stalls an unattended run.
+    if sudo chsh -s /usr/bin/zsh "$(id -un)"; then
+        ok "login shell set to zsh (takes effect next login)"
+    else
+        warn "could not change the login shell"
+        note "run it yourself: chsh -s /usr/bin/zsh"
+    fi
 fi
 
 # ── 5. the shell's virtualenv ───────────────────────────────────────────────
@@ -424,8 +630,13 @@ if (( DO_VENV )); then
         # against the working directory, which here is the repo root, where no
         # such file exists.
         "$venv/bin/pip" install --upgrade pip >/dev/null
-        "$venv/bin/pip" install -r "$reqs"
-        ok "$venv"
+        if "$venv/bin/pip" install -r "$reqs"; then
+            ok "$venv"
+        else
+            # Non-fatal so the machine config below still gets written.
+            warn "fabric failed to build — the bar and overlays will not start"
+            note "retry: $venv/bin/pip install -r $reqs"
+        fi
     fi
 else
     step "fabric_shell virtualenv"
@@ -506,8 +717,11 @@ export AQ_DRM_DEVICES=\"$drm_list\""
         else
             skip "env-hyprland left as-is"
         fi
-    else
+    elif (( ${#drm_ordered[@]} == 1 )); then
         skip "single GPU — AQ_DRM_DEVICES not needed"
+    else
+        # No /dev/dri at all: a container, or a kernel with no DRM driver bound.
+        warn "no GPU found under /dev/dri — leaving env-hyprland alone"
     fi
 
     # ── monitors ────────────────────────────────────────────────────────────
@@ -618,18 +832,22 @@ hl.workspace_rule({ workspace = \"1\", monitor = \"$primary\", default = true, p
         # machine's monitor names and one user's home directory.
         if [[ -n "$WALLPAPER" ]]; then
             hyprpaper="$HOME/.config/hypr/hyprpaper.conf"
-            paper_body="# Written by install.sh for this machine.
-# The wallpaper picker (SUPER + W) rewrites the path lines when you change
-# wallpaper, so this only has to be valid enough to start.
+            # An empty monitor means "every output" to hyprpaper — the same
+            # catch-all the picker uses when it sends `hyprctl hyprpaper
+            # wallpaper ",path"`. Naming monitors here instead looks tidier but
+            # silently shows nothing the moment an output is named differently
+            # than it was at install time: a dock, a new cable, a nested
+            # session. A black desktop with no error is the result.
+            paper_body="# Written by install.sh.
+# The empty monitor is deliberate: it means every output, so this keeps working
+# when the monitors change. The wallpaper picker (SUPER + W) rewrites the path
+# line when you pick a new one.
 splash = false
-"
-            for m in "${monitors[@]}"; do
-                paper_body+="
+
 wallpaper {
-    monitor = $m
+    monitor =
     path = $WALLPAPER
 }"
-            done
             review "$hyprpaper" "$paper_body"
             if confirm "Write it?" y; then
                 printf '%s\n' "$paper_body" > "$hyprpaper"
@@ -670,8 +888,10 @@ if [[ -z "$WALLPAPER" ]]; then
 elif ! command -v wal >/dev/null; then
     warn "python-pywal not installed — skipping"
     note "run once pywal is installed: wal -i $WALLPAPER"
+elif ! wal -i "$WALLPAPER" -n -q; then
+    warn "pywal failed — the shell will start on its fallback palette"
+    note "run by hand: wal -i $WALLPAPER"
 else
-    wal -i "$WALLPAPER" -n -q
     ok "palette generated from $(basename "$WALLPAPER")"
     # Every shell window watches this copy, not pywal's cache.
     css_src="$HOME/.cache/wal/colors-fabric.css"
@@ -691,6 +911,32 @@ fi
 # set them.
 
 step "dconf settings"
+
+# ── GTK theme ───────────────────────────────────────────────────────────────
+# .config/gtk-3.0/settings.ini is stowed and is what GTK3 itself reads, but
+# anything going through XSettings/portals (and GTK4) asks dconf instead. Both
+# have to agree or apps disagree about whether they are light or dark.
+if command -v gsettings >/dev/null; then
+    gtk_theme="$(awk -F= '/^gtk-theme-name=/{print $2}' \
+        "$HOME/.config/gtk-3.0/settings.ini" 2>/dev/null)"
+    icon_theme="$(awk -F= '/^gtk-icon-theme-name=/{print $2}' \
+        "$HOME/.config/gtk-3.0/settings.ini" 2>/dev/null)"
+    if [[ -n "$gtk_theme" ]]; then
+        gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme" 2>/dev/null \
+            && ok "gtk-theme = $gtk_theme" || warn "could not set gtk-theme"
+        gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" 2>/dev/null || true
+        [[ -n "$icon_theme" ]] && gsettings set org.gnome.desktop.interface icon-theme "$icon_theme" 2>/dev/null
+        ok "colour scheme = prefer-dark, icons = ${icon_theme:-default}"
+    else
+        warn "no gtk-theme-name in .config/gtk-3.0/settings.ini — was stow run?"
+    fi
+    if [[ ! -d "$HOME/.themes/$gtk_theme" && ! -d "/usr/share/themes/$gtk_theme" ]]; then
+        warn "theme '$gtk_theme' not found in ~/.themes or /usr/share/themes"
+        note "GTK will fall back to Adwaita light and the shell will look washed out"
+    fi
+fi
+
+# ── blueman ─────────────────────────────────────────────────────────────────
 if ! command -v gsettings >/dev/null; then
     skip "gsettings not available"
 elif ! pacman -Qq blueman &>/dev/null; then
@@ -706,14 +952,16 @@ else
     choice="$(ask "Which?" "1")"
     case "$choice" in
         1)
-            gsettings set org.blueman.general plugin-list "['!ConnectionNotifier']"
-            ok "ConnectionNotifier disabled"
+            gsettings set org.blueman.general plugin-list "['!ConnectionNotifier']" \
+                && ok "ConnectionNotifier disabled" \
+                || { warn "gsettings failed (no dbus session?)"; note "run later: gsettings set org.blueman.general plugin-list \"['!ConnectionNotifier']\""; }
             ;;
         2)
             # AutoConnect *performs* the reconnect and only notifies afterwards,
             # so disabling it costs the auto-reconnect too.
             gsettings set org.blueman.general plugin-list \
-                "['!ConnectionNotifier', '!AutoConnect']"
+                "['!ConnectionNotifier', '!AutoConnect']" \
+                || { warn "gsettings failed (no dbus session?)"; note "set the blueman plugin-list by hand"; }
             ok "ConnectionNotifier and AutoConnect disabled"
             warn "blueman no longer auto-reconnects"
             note "blueman AutoConnect off — use 'bluetoothctl trust <MAC>' for auto-reconnect"
@@ -735,7 +983,14 @@ for svc in NetworkManager bluetooth sddm; do
     if systemctl is-enabled "$svc" &>/dev/null; then
         skip "$svc already enabled"
     elif confirm "Enable $svc?" y; then
-        sudo systemctl enable "$svc" && ok "$svc enabled"
+        # Non-fatal: this fails in a container, and everything above it is
+        # still worth keeping.
+        if sudo systemctl enable "$svc"; then
+            ok "$svc enabled"
+        else
+            warn "could not enable $svc"
+            note "enable it by hand: sudo systemctl enable $svc"
+        fi
     fi
 done
 

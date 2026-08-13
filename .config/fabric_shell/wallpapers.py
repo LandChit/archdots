@@ -28,6 +28,7 @@ from common import COLORS_CSS, CSS_DIR, Panel, Selection, UsageCounts, make_scro
 
 WALLPAPER_DIR = os.path.expanduser("~/Pictures/wallpapers")
 HYPRPAPER_CONF = os.path.expanduser("~/.config/hypr/hyprpaper.conf")
+HYPRLOCK_CONF = os.path.expanduser("~/.config/hypr/hyprlock.conf")
 WAL_CACHE = os.path.expanduser("~/.cache/wal/" + COLORS_CSS)
 COUNTS_PATH = "~/.local/share/fabric-launcher/wallpaper-counts.json"
 
@@ -249,24 +250,30 @@ class WallpaperPicker(Panel):
 
     @staticmethod
     def _persist(path: str) -> None:
-        """Point hyprpaper.conf at `path` so the choice survives a reboot.
+        """Point the desktop and the lock screen at `path` so the choice sticks.
 
-        Only the `path =` lines inside the wallpaper blocks are touched —
-        everything else in the file is left exactly as it was written.
+        hyprpaper draws the desktop and hyprlock draws the lock screen, each
+        from its own config with its own `path =`. Updating only the first
+        leaves the lock screen on whatever was set at install time, which reads
+        as a stale cache rather than two files quietly disagreeing.
+
+        Only the `path =` lines are touched — everything else in either file is
+        left exactly as it was written.
         """
-        try:
-            with open(HYPRPAPER_CONF, encoding="utf-8") as f:
-                original = f.read()
-        except OSError:
-            return  # no config to keep in step with
+        for conf in (HYPRPAPER_CONF, HYPRLOCK_CONF):
+            try:
+                with open(conf, encoding="utf-8") as f:
+                    original = f.read()
+            except OSError:
+                continue  # no config to keep in step with
 
-        updated, count = re.subn(
-            r"(?m)^(\s*path\s*=\s*).*$", lambda m: m.group(1) + path, original
-        )
-        if count == 0 or updated == original:
-            return
-        try:
-            with open(HYPRPAPER_CONF, "w", encoding="utf-8") as f:
-                f.write(updated)
-        except OSError as e:
-            print(f"[wallpaper] could not update hyprpaper.conf: {e}")
+            updated, count = re.subn(
+                r"(?m)^(\s*path\s*=\s*).*$", lambda m: m.group(1) + path, original
+            )
+            if count == 0 or updated == original:
+                continue
+            try:
+                with open(conf, "w", encoding="utf-8") as f:
+                    f.write(updated)
+            except OSError as e:
+                print(f"[wallpaper] could not update {os.path.basename(conf)}: {e}")

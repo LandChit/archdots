@@ -13,8 +13,15 @@ from common import Overlay
 from gi.repository import Gdk, GtkLayerShell  # type: ignore
 
 # label, glyph, command, extra style class
+#
+# Lock runs hyprlock directly rather than `loginctl lock-session`. The latter
+# only *asks* the session to lock: it broadcasts a D-Bus signal and relies on
+# something — hypridle, or a systemd user unit — listening for it. With no
+# listener installed the signal goes nowhere and the button silently does
+# nothing, which is exactly how it behaved. Calling the locker is one less
+# moving part, at the cost of idle- and sleep-triggered locking.
 ACTIONS = [
-    ("Lock", "󰍁", ["loginctl", "lock-session"], ""),
+    ("Lock", "󰍁", ["hyprlock"], ""),
     ("Logout", "󰍃", 'hyprctl dispatch "hl.dsp.exit()"', ""),
     ("Restart", "󰑙", ["systemctl", "reboot"], ""),
     ("Shutdown", "󰐥", ["systemctl", "poweroff"], "shutdown"),

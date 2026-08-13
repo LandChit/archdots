@@ -13,5 +13,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("xwaylandvideobridge &")
     hl.exec_cmd("wl-paste --watch cliphist store")
     hl.exec_cmd("solaar --window=hide")
-    hl.exec_cmd("sh /home/chit/archdots/.config/hypr/Scripts/fix_dolphin.sh")
+    -- Through $HOME and the stowed path, not the repo: the clone is not always
+    -- at ~/archdots, and this file has no business knowing where it is.
+    hl.exec_cmd("sh $HOME/.config/hypr/Scripts/fix_dolphin.sh")
 end)

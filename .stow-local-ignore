@@ -14,6 +14,9 @@ DEVELOPMENT.md
 # ~/wallpapers symlink would be dead weight. install.sh copies these there.
 wallpapers
 
+# The container test harness. It is run from the repo, not linked into $HOME.
+archdots_docker
+
 # Agent/session state. Gitignored, and stow would otherwise scatter ~57
 # symlinks through ~/.omc.
 .omc

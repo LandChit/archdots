@@ -33,3 +33,6 @@ __pycache__/
 # are loaded after them and are meant to differ on every machine, so they are
 # never committed. The folder's README.md is tracked on purpose.
 .config/hypr/config/custom/*.lua
+
+# Dont include generated files in testing
+archdots_docker/artifacts

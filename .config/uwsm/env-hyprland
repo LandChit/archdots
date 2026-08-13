@@ -1,2 +1,17 @@
-# Force hyprland to run on integrated gpu
-export AQ_DRM_DEVICES="/dev/dri/card2:/dev/dri/card1"
+# Which GPU Hyprland renders on.
+#
+# Deliberately unset in the repo. This file is tracked, so any value committed
+# here is inherited by every machine that clones it — and a pin to card paths
+# that do not exist locally is worse than no pin at all: aquamarine fails to
+# create a DRI screen, falls back to kms_swrast, and then dies on
+# DRM_IOCTL_MODE_CREATE_DUMB.
+#
+# install.sh detects the GPUs on the machine it runs on and rewrites this file:
+# on a multi-GPU box it writes the real ordering, integrated first, so the
+# desktop does not end up rendering on a discrete card. On a single-GPU box
+# there is nothing to choose between and it stays commented out.
+#
+# Card numbering is not stable across boots. If the session ever comes up on
+# the wrong GPU, re-run install.sh or use a stable name from /dev/dri/by-path/.
+#
+# export AQ_DRM_DEVICES="/dev/dri/card1:/dev/dri/card0"

@@ -702,26 +702,53 @@ if (( DO_MACHINE )); then
 
     say "GPUs: ${#drm_ordered[@]} (${drm_ordered[*]:-none})"
 
+    # This file is *tracked*, and it ships with the author's card paths in it.
+    # Leaving it alone is therefore not a neutral choice: it hands every other
+    # machine a pin to devices that do not exist there, and aquamarine responds
+    # by failing to create a DRI screen, falling back to kms_swrast and then
+    # dying on DRM_IOCTL_MODE_CREATE_DUMB. So it is always rewritten to describe
+    # *this* machine, even when the answer is "no pin needed".
+    env_file="$HOME/.config/uwsm/env-hyprland"
     if (( ${#drm_ordered[@]} > 1 )); then
         drm_list="$(IFS=:; printf '%s' "${drm_ordered[*]}")"
-        env_file="$HOME/.config/uwsm/env-hyprland"
-        env_body="# Force hyprland to run on the integrated gpu.
-# Written by install.sh for this machine — these paths are not portable.
+        env_body="# Which GPU Hyprland renders on, in order of preference.
+# Written by install.sh for this machine — these paths are not portable, and
+# card numbering can change between boots. If the session ever comes up on the
+# wrong GPU, re-run install.sh or use a stable name from /dev/dri/by-path/.
 export AQ_DRM_DEVICES=\"$drm_list\""
+    else
+        # One GPU (or none, as in a container): there is nothing to choose
+        # between, and a pin can only be wrong. Ship the file with the export
+        # commented out rather than carrying another machine's value.
+        env_body="# Which GPU Hyprland renders on. Written by install.sh.
+#
+# This machine has ${#drm_ordered[@]} DRM device(s), so there is nothing to pick
+# between and the variable is deliberately left unset — pinning a single card
+# only risks naming one that is absent after a reboot or on other hardware.
+#
+# On a multi-GPU machine install.sh writes the real ordering here, integrated
+# GPU first, so the desktop does not render on a discrete card.
+#
+# export AQ_DRM_DEVICES=\"/dev/dri/card1:/dev/dri/card0\""
+    fi
+
+    if [[ -f "$env_file" ]] && [[ "$(cat "$env_file")" == "$env_body" ]]; then
+        skip "env-hyprland already matches this machine"
+    else
         review "$env_file" "$env_body"
         if confirm "Write it?" y; then
             # > follows the symlink, so this edits the tracked file in the repo.
             printf '%s\n' "$env_body" > "$env_file"
-            ok "AQ_DRM_DEVICES=$drm_list"
-            note "edited tracked file .config/uwsm/env-hyprland (GPU order)"
+            if (( ${#drm_ordered[@]} > 1 )); then
+                ok "AQ_DRM_DEVICES=$drm_list"
+            else
+                ok "AQ_DRM_DEVICES left unset (${#drm_ordered[@]} GPU detected)"
+            fi
+            note "edited tracked file .config/uwsm/env-hyprland (GPU selection)"
         else
-            skip "env-hyprland left as-is"
+            warn "env-hyprland left as-is — it still pins another machine's cards"
+            note "env-hyprland pins GPU paths that may not exist here; edit it by hand"
         fi
-    elif (( ${#drm_ordered[@]} == 1 )); then
-        skip "single GPU — AQ_DRM_DEVICES not needed"
-    else
-        # No /dev/dri at all: a container, or a kernel with no DRM driver bound.
-        warn "no GPU found under /dev/dri — leaving env-hyprland alone"
     fi
 
     # ── monitors ────────────────────────────────────────────────────────────

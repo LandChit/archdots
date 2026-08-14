@@ -79,6 +79,7 @@ PKG_UTILS=(
 
 PKG_AUR=(
     zen-browser-bin visual-studio-code-bin hyprls-git
+    xwaylandvideobridge   # started by autorun.lua; moved out of extra to the AUR
 )
 
 # Tools only. Media players, office suites and game launchers are a matter of

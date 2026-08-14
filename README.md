@@ -232,7 +232,7 @@ tlp fd htop nvtop fastfetch tmux unzip wget curl smartmontools ark
 ### AUR — optional
 
 ```
-paru zen-browser-bin visual-studio-code-bin hyprls-git xwaylandvideobridge
+paru zen-browser-bin visual-studio-code-bin hyprls-git
 sddm-silent-theme
 ```
 

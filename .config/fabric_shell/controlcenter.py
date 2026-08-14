@@ -65,10 +65,30 @@ def wifi_enabled() -> bool:
     return (exec_shell_command("nmcli radio wifi") or "").strip() == "enabled"
 
 
+# bluetoothctl does not fail when bluetoothd is unreachable — it sits there
+# printing "Waiting to connect to bluetoothd..." indefinitely. These readers run
+# on the GTK main loop, so one such call takes the whole panel with it: the
+# control centre opens and freezes. A machine with no adapter never starts the
+# service, which is why this only ever appeared in a VM.
+#
+# rfkill answers "is there a radio at all" straight from the kernel with no
+# daemon involved, so it gates every call below. The timeout covers the other
+# half — hardware present but bluetoothd wedged — where rfkill says yes and
+# bluetoothctl still never returns.
+BLUETOOTHCTL_TIMEOUT = 2
+
+
 def bluetooth_present() -> bool:
     """Whether this machine has a Bluetooth radio at all, blocked or not."""
     out = exec_shell_command("rfkill list bluetooth")
     return out is not False and bool(out.strip())
+
+
+def _bluetoothctl(command: str) -> str | bool:
+    """Run a bluetoothctl query, or return False if it cannot safely be asked."""
+    if not bluetooth_present():
+        return False
+    return exec_shell_command(f"timeout {BLUETOOTHCTL_TIMEOUT} bluetoothctl {command}")
 
 
 def bluetooth_powered() -> bool | None:
@@ -78,7 +98,7 @@ def bluetooth_powered() -> bool | None:
     is indistinguishable from having no hardware — so rfkill is asked as well.
     Blocked counts as "off, but switchable", not "absent".
     """
-    out = exec_shell_command("bluetoothctl show")
+    out = _bluetoothctl("show")
     if out is False or "Controller" not in out:
         return False if bluetooth_present() else None
     return "Powered: yes" in out
@@ -86,10 +106,10 @@ def bluetooth_powered() -> bool | None:
 
 def bluetooth_devices() -> list[tuple[str, str, bool]]:
     """(mac, name, connected) for each paired device, connected ones first."""
-    paired = exec_shell_command("bluetoothctl devices Paired")
+    paired = _bluetoothctl("devices Paired")
     if paired is False:
         return []
-    connected = exec_shell_command("bluetoothctl devices Connected") or ""
+    connected = _bluetoothctl("devices Connected") or ""
 
     # both list `Device AC:80:FB:DA:46:49 Galaxy Buds2 (4649)`
     def macs(text: str) -> set[str]:
@@ -556,15 +576,19 @@ class ControlCenter(Overlay):
             # at startup (main.conf: "AutoEnable ... Defaults to 'true'"), so on
             # its own this toggle would quietly undo itself on the next boot.
             # systemd-rfkill saves the rfkill state at shutdown and restores it.
+            # timeout on the bluetoothctl half only: if it hangs waiting for
+            # bluetoothd, the rfkill still has to run or the toggle does nothing.
             exec_shell_command_async(
-                "sh -c 'bluetoothctl power off; rfkill block bluetooth'"
+                f"sh -c 'timeout {BLUETOOTHCTL_TIMEOUT} bluetoothctl power off;"
+                " rfkill block bluetooth'"
             )
             self._show_status("Bluetooth off")
         else:
             # `power on` fails silently while the radio is soft-blocked, so
             # the unblock has to happen first, in the same shell
             exec_shell_command_async(
-                "sh -c 'rfkill unblock bluetooth; bluetoothctl power on'"
+                "sh -c 'rfkill unblock bluetooth;"
+                f" timeout {BLUETOOTHCTL_TIMEOUT} bluetoothctl power on'"
             )
             self._show_status("Bluetooth on")
         GLib.timeout_add(900, self._after_radio_change)
@@ -572,7 +596,12 @@ class ControlCenter(Overlay):
     def _on_device_clicked(self, mac: str, name: str, connected: bool) -> None:
         action = "disconnect" if connected else "connect"
         self._show_status(f"{'Disconnecting from' if connected else 'Connecting to'} {name}…")
-        exec_shell_command_async(f"bluetoothctl {action} {mac}", self._on_device_output)
+        # connect/disconnect can hang the same way a query does; the callback
+        # then never fires and the row sits on "Connecting..." forever.
+        exec_shell_command_async(
+            f"timeout {BLUETOOTHCTL_TIMEOUT} bluetoothctl {action} {mac}",
+            self._on_device_output,
+        )
 
     def _on_device_output(self, line: str) -> None:
         text = line.strip()

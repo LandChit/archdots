@@ -335,6 +335,17 @@ desktop, not every package on the machine. Notes on the non-obvious ones:
   the adapter and connect paired devices. **Pairing a new device still has to be
   done from `bluetoothctl`** — it needs a passkey prompt the panel has nowhere
   to show.
+
+  **`bluetoothctl` never gives up.** With `bluetoothd` unreachable it does not
+  exit with an error — it prints *"Waiting to connect to bluetoothd..."* and
+  waits indefinitely. The control centre's readers run on the GTK main loop, so
+  a single such call froze the whole panel. That is why it only ever appeared on
+  a machine with no Bluetooth hardware, where the service never starts. Every
+  call is now gated on `rfkill list bluetooth`, which the kernel answers with no
+  daemon involved, and bounded by `timeout` for the case where the radio exists
+  but the daemon is wedged. Same failure mode as the `nmcli` note below, and the
+  second time it has been paid for: any blocking command on the main loop is a
+  freeze waiting to happen.
 - `nmcli` (networkmanager) backs the Wi-Fi list. The control centre reads it
   with `--rescan no`: without that, nmcli forces a scan and blocks ~5 seconds on
   the GTK main loop, which made the panel look like it had hung.

@@ -124,7 +124,7 @@ REPO_URL="$REPO_URL_DEFAULT"
 REPO_DIR="$REPO_DIR_DEFAULT"
 WANT_UTILS=1
 WANT_AUR=1
-WANT_FLATPAK=0
+WANT_FLATPAK=1
 DO_PACKAGES=1
 DO_STOW=1
 DO_VENV=1
@@ -140,13 +140,18 @@ Usage: install.sh [install|update] [options]
   update              Pull the repo, re-link, refresh the packages and the
                       virtualenv, and offer to restart the running shell.
 
+With whiptail installed this runs as dialogs: you pick what to install once, and
+the rest is unattended behind a progress bar, with the full output kept in
+~/.local/state/archdots/. Use --no-gui to be asked about each step instead, in
+plain text, with every command's output on screen.
+
   -y, --yes           Take the default for every prompt (non-interactive).
                       Implies --no-gui.
-      --no-gui        Plain-text prompts instead of whiptail dialogs.
-                      (--gui forces the dialogs back on.)
+      --no-gui        Plain-text prompts instead of whiptail dialogs, and one
+                      question per step. (--gui forces the dialogs back on.)
       --repo URL      Clone from URL instead of the default remote.
       --dir PATH      Clone into PATH (default: ~/archdots).
-      --flatpak       Also install the flatpak applications (off by default).
+      --no-flatpak    Skip the flatpak applications.
       --no-utils      Skip the utility packages.
       --no-aur        Skip paru and every AUR package.
       --skip-packages Install nothing; only link, build and configure.
@@ -174,7 +179,8 @@ while [[ $# -gt 0 ]]; do
         --update)        MODE="update" ;;
         --repo)          REPO_URL="${2:?--repo needs a URL}"; shift ;;
         --dir)           REPO_DIR="${2:?--dir needs a path}"; shift ;;
-        --flatpak)       WANT_FLATPAK=1 ;;
+        --flatpak)       WANT_FLATPAK=1 ;;   # kept: it used to be opt-in
+        --no-flatpak)    WANT_FLATPAK=0 ;;
         --no-utils)      WANT_UTILS=0 ;;
         --no-aur)        WANT_AUR=0 ;;
         --skip-packages) DO_PACKAGES=0 ;;
@@ -187,6 +193,12 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
+# What --yes meant on the command line, before the menu had its say. A dialog
+# run answers its own questions (see choose_mode) but a handful of them are
+# still worth stopping for; those are asked through interactive(), which winds
+# ASSUME_YES back to this. With a real --yes, nothing asks anything.
+CLI_ASSUME_YES=$ASSUME_YES
+
 # ── output ──────────────────────────────────────────────────────────────────
 
 if [[ -t 1 ]]; then
@@ -196,14 +208,250 @@ else
     B=''; DIM=''; RED=''; GRN=''; YEL=''; BLU=''; R=''
 fi
 
+# Everything the script says goes to the log as well as the screen, and *only*
+# to the log while the progress bar is up — a gauge with pacman scrolling
+# through it is unreadable, and the output is worth keeping either way.
+LOG_FILE=""
+LOG_DIR="$HOME/.local/state/archdots"
+
+log_open() {
+    mkdir -p "$LOG_DIR" 2>/dev/null || return 0
+    LOG_FILE="$LOG_DIR/${1:-install}-$(date +%Y%m%d-%H%M%S).log"
+    {
+        printf 'archdots %s\n' "${1:-install}"
+        printf 'started  %s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
+        printf 'user     %s\n' "$(id -un)"
+        printf 'command  %s\n\n' "$0 ${ARGS_ORIGINAL[*]:-}"
+    } > "$LOG_FILE" 2>/dev/null || LOG_FILE=""
+    # Nine logs is enough history to compare a bad run against a good one.
+    ls -1t "$LOG_DIR"/*.log 2>/dev/null | tail -n +10 | xargs -r rm -f 2>/dev/null || true
+}
+
+log() { [[ -n "$LOG_FILE" ]] && printf '%s\n' "$1" >> "$LOG_FILE"; return 0; }
+
 SUMMARY=()
-note()    { SUMMARY+=("$1"); }
-step()    { printf '\n%s==>%s %s%s%s\n' "$BLU" "$R" "$B" "$1" "$R"; }
-say()     { printf '    %s\n' "$1"; }
-ok()      { printf '    %s✓%s %s\n' "$GRN" "$R" "$1"; }
-skip()    { printf '    %s·%s %s\n' "$DIM" "$R" "$1"; }
-warn()    { printf '    %s!%s %s\n' "$YEL" "$R" "$1" >&2; }
-die()     { printf '\n%serror:%s %s\n' "$RED" "$R" "$1" >&2; exit 1; }
+note()    { SUMMARY+=("$1"); log "    note: $1"; }
+step()    {
+    log ""; log "==> $1"
+    if gauge_up; then gauge_step "$1"
+    else printf '\n%s==>%s %s%s%s\n' "$BLU" "$R" "$B" "$1" "$R"; fi
+}
+say()     { log "    $1";   gauge_up || printf '    %s\n' "$1"; }
+ok()      { log "    ok: $1";   gauge_up || printf '    %s✓%s %s\n' "$GRN" "$R" "$1"; }
+skip()    { log "    skip: $1"; gauge_up || printf '    %s·%s %s\n' "$DIM" "$R" "$1"; }
+warn()    { log "    WARN: $1"; gauge_up || printf '    %s!%s %s\n' "$YEL" "$R" "$1" >&2; }
+die()     {
+    log "    ERROR: $1"
+    gauge_close
+    printf '\n%serror:%s %s\n' "$RED" "$R" "$1" >&2
+    [[ -n "$LOG_FILE" ]] && printf '       the full log is at %s\n' "$LOG_FILE" >&2
+    exit 1
+}
+
+# ── the progress bar ────────────────────────────────────────────────────────
+#
+# One whiptail --gauge runs for the whole install, fed percentages and text on a
+# pipe. It replaces the wall of pacman output rather than summarising it: the
+# output goes to the log, and what stays on screen is which step is running and
+# how far in it is.
+#
+# The gauge is only ever raised when the run is unattended (dialog mode, which
+# answers every question from the menu you already saw), so it can never end up
+# hiding a prompt. Anything that does need the screen — sudo, a fatal error —
+# closes it first.
+
+GAUGE_OPEN=0
+PCT_MIN=0        # the span of the bar belonging to the current step,
+PCT_MAX=100      # so a step can report its own internal progress inside it
+PCT_NOW=0
+GAUGE_TITLE=""
+GAUGE_DETAIL=""
+
+gauge_up() { (( GAUGE_OPEN )); }
+
+GAUGE_LABEL=""
+
+gauge_open() {
+    [[ $UI == whiptail ]] || return 0
+    have_tty || return 0
+    # Unattended runs only. `install.sh install` names a mode on the command
+    # line and so never went through the menu, which means it still has
+    # questions to ask — and a question behind the bar is a hang as far as
+    # anybody watching is concerned.
+    (( ASSUME_YES )) || return 0
+    GAUGE_LABEL="${1:-$GAUGE_LABEL}"
+    # A coprocess would give a job to manage; a process substitution is a plain
+    # fd that closes when the script does.
+    exec 3> >(whiptail --backtitle "$BACKTITLE" --title "$GAUGE_LABEL" \
+        --gauge "${GAUGE_TITLE:-Starting…}" 9 74 "$PCT_NOW" >/dev/tty 2>/dev/null)
+    GAUGE_OPEN=1
+}
+
+# Ask something for real, even in the middle of an unattended run.
+#
+# Most of an install is foregone once you have chosen it — nobody wants to
+# confirm oh-my-zsh — but a few questions are nobody's to answer for you: which
+# monitor is the primary one, whether to move dotfiles you already had, whether
+# to interrupt the shell you are using right now. Those go through here: the bar
+# steps aside, the question is asked properly, and the bar comes back where it
+# was.
+PROMPT_SAVED_YES=0
+PROMPT_GAUGE_WAS_UP=0
+
+prompt_begin() {
+    PROMPT_GAUGE_WAS_UP=0
+    gauge_up && { PROMPT_GAUGE_WAS_UP=1; gauge_close; }
+    PROMPT_SAVED_YES=$ASSUME_YES
+    ASSUME_YES=$CLI_ASSUME_YES
+}
+
+prompt_end() {
+    ASSUME_YES=$PROMPT_SAVED_YES
+    (( PROMPT_GAUGE_WAS_UP )) && gauge_open
+    PROMPT_GAUGE_WAS_UP=0
+    return 0
+}
+
+# For prompts whose answer is an exit status. Prompts that answer on *stdout*
+# run inside $( ), which is a subshell — pausing the gauge in there would pause
+# a copy and leave the real one drawing over the dialog — so those call
+# prompt_begin/prompt_end around the substitution instead.
+interactive() {
+    local rc=0
+    prompt_begin
+    "$@" || rc=$?
+    prompt_end
+    return "$rc"
+}
+
+gauge_close() {
+    gauge_up || return 0
+    GAUGE_OPEN=0
+    exec 3>&-
+    # Let whiptail finish drawing and restore the terminal before anything else
+    # writes to it.
+    sleep 0.3
+}
+
+# The gauge protocol: XXX, percentage, replacement text, XXX.
+gauge_paint() {
+    gauge_up || return 0
+    printf 'XXX\n%s\n%s\nXXX\n' "$1" "$2" >&3 2>/dev/null || true
+}
+
+# Give the current step a slice of the bar. Everything it reports moves inside
+# that slice, so the bar only ever goes forwards.
+phase() {
+    PCT_MIN="$1"; PCT_MAX="$2"; PCT_NOW="$1"
+    GAUGE_TITLE="${3:-$GAUGE_TITLE}"; GAUGE_DETAIL=""
+    gauge_paint "$PCT_NOW" "$(gauge_body)"
+}
+
+gauge_step() {
+    GAUGE_TITLE="$1"; GAUGE_DETAIL=""
+    gauge_paint "$PCT_NOW" "$(gauge_body)"
+}
+
+gauge_detail() {
+    GAUGE_DETAIL="$1"
+    gauge_paint "$PCT_NOW" "$(gauge_body)"
+}
+
+# One line, and one line only: whiptail's gauge renders the *first* line of an
+# update and silently drops the rest (tested — a three-line update shows line
+# one), and it does no escape processing either. So the step and its detail are
+# composed into a single line and trimmed to the box.
+gauge_body() {
+    local text="$GAUGE_TITLE"
+    [[ -n "$GAUGE_DETAIL" ]] && text="$GAUGE_TITLE — $GAUGE_DETAIL"
+    printf '%s' "${text:0:68}"
+}
+
+# Move to `done/total` through the current step's slice.
+gauge_fraction() {
+    local done="$1" total="$2" span
+    (( total > 0 )) || return 0
+    span=$(( PCT_MAX - PCT_MIN ))
+    PCT_NOW=$(( PCT_MIN + (span * done) / total ))
+    (( PCT_NOW > PCT_MAX )) && PCT_NOW=$PCT_MAX
+}
+
+# ── running things ──────────────────────────────────────────────────────────
+
+# Run a command with its output in the log instead of on the screen, and the
+# gauge following along. Returns the command's own exit status, so every caller
+# keeps deciding for itself whether a failure is fatal.
+run_logged() {
+    local label="$1"; shift
+    log ""
+    log "--- $label"
+    log "+ $*"
+    if ! gauge_up; then
+        # Plain mode shows everything, as it always did, and logs it too.
+        set +e
+        "$@" 2>&1 | tee -a "${LOG_FILE:-/dev/null}"
+        local plain_rc=${PIPESTATUS[0]}
+        set -e
+        return "$plain_rc"
+    fi
+    set +e
+    "$@" 2>&1 | log_filter "$label"
+    local rc=${PIPESTATUS[0]}
+    set -e
+    return "$rc"
+}
+
+# Reads a command's output line by line: everything to the log, and the
+# interesting lines to the gauge.
+#
+# It runs in a pipeline, so it is a subshell — it can read PCT_* and write to
+# the gauge's fd, but nothing it assigns comes back. That is why the percentage
+# it computes is sent straight to the bar rather than stored.
+log_filter() {
+    local label="$1" line text pct done total
+    while IFS= read -r line; do
+        log "$line"
+        # Strip the carriage returns and colour escapes that pacman and pip use
+        # to animate a terminal; on one line of a gauge they are just noise.
+        line="${line//$'\r'/}"
+        line="$(printf '%s' "$line" | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g')"
+        # pacman's own counter: "( 12/692) installing glibc-common".
+        if [[ "$line" =~ ^\(\ *([0-9]+)/([0-9]+)\)\ *(.*)$ ]]; then
+            done="${BASH_REMATCH[1]}"; total="${BASH_REMATCH[2]}"
+            pct=$(( PCT_MIN + ((PCT_MAX - PCT_MIN) * done) / total ))
+            (( pct > PCT_MAX )) && pct=$PCT_MAX
+            # "installing"/"upgrading" is already obvious from the step, and
+            # the package name is the part worth the room.
+            text="$label — $done of $total — ${BASH_REMATCH[3]#* }"
+            printf 'XXX\n%s\n%s\nXXX\n' "$pct" "${text:0:68}" >&3 2>/dev/null || true
+            continue
+        fi
+        # Everything else: keep the bar where it is and show the line, which is
+        # what makes a long pip build or an AUR compile look alive rather than
+        # hung. Blank and decorative lines are skipped so the text stays put.
+        [[ -n "${line// /}" ]] || continue
+        [[ "$line" =~ ^[[:punct:][:space:]]+$ ]] && continue
+        text="$label — $line"
+        printf 'XXX\n%s\n%s\nXXX\n' "$PCT_NOW" "${text:0:68}" >&3 2>/dev/null || true
+    done
+}
+
+# sudo's timestamp expires while a long build runs, and behind the gauge its
+# password prompt would be invisible — the install would look hung. Refresh it
+# in the background for as long as the script is alive.
+SUDO_KEEPALIVE_PID=""
+sudo_keepalive() {
+    [[ -z "$SUDO_KEEPALIVE_PID" ]] || return 0
+    ( while true; do sudo -n true 2>/dev/null || exit 0; sleep 45; done ) &
+    SUDO_KEEPALIVE_PID=$!
+}
+
+cleanup() {
+    [[ -n "$SUDO_KEEPALIVE_PID" ]] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null
+    gauge_close
+    return 0
+}
+trap cleanup EXIT
 
 # ── the prompts ─────────────────────────────────────────────────────────────
 #
@@ -221,6 +469,14 @@ die()     { printf '\n%serror:%s %s\n' "$RED" "$R" "$1" >&2; exit 1; }
 
 UI="plain"
 BACKTITLE="archdots — Arch + Hyprland desktop"
+
+# Newt has a help line for exactly this and whiptail does not expose it, so the
+# key hints go inside the box, on the last line, where somebody who has never
+# used a dialog like this is already looking.
+KEYS_YESNO="Enter confirms · Tab switches buttons · Esc cancels"
+KEYS_INPUT="Type to edit · Enter confirms · Esc keeps the suggestion"
+KEYS_MENU="↑ ↓ choose · Enter confirms · Esc cancels"
+KEYS_LIST="↑ ↓ move · Space ticks · Tab to the buttons · Enter confirms"
 
 # Piped from curl, stdin is the script itself, so every prompt — plain or
 # whiptail — reads from /dev/tty instead.
@@ -305,7 +561,9 @@ confirm() {
     if [[ $UI == whiptail ]]; then
         local defaultno=() text
         [[ $default == y ]] || defaultno=(--defaultno)
-        text="$(wt_clip "$prompt")"
+        text="$(wt_clip "$prompt")
+
+$KEYS_YESNO"
         wt_status --title "archdots" "${defaultno[@]}" \
             --yesno "$text" "$(wt_height "$text")" "$(wt_width "$text")"
         return
@@ -325,8 +583,11 @@ ask() {
     fi
     if [[ $UI == whiptail ]]; then
         # Cancel means "leave it alone", which is the default, not an abort.
-        reply="$(wt --title "archdots" --inputbox "$prompt" \
-            "$(wt_height "$prompt" 8)" "$(wt_width "$prompt")" "$default")" || reply=""
+        local text="$prompt
+
+$KEYS_INPUT"
+        reply="$(wt --title "archdots" --inputbox "$text" \
+            "$(wt_height "$text" 8)" "$(wt_width "$text")" "$default")" || reply=""
         printf '%s' "${reply:-$default}"
         return
     fi
@@ -345,12 +606,15 @@ choose() {
     if [[ $UI == whiptail ]]; then
         # A menu's height has to cover the prompt *and* the list, or whiptail
         # silently drops rows off the bottom of the box.
-        local reply rows height
+        local reply rows height text
         rows=$(( $# / 2 ))
-        height=$(( $(wt_lines "$prompt" 76) + rows + 8 ))
+        text="$prompt
+
+$KEYS_MENU"
+        height=$(( $(wt_lines "$text" 76) + rows + 8 ))
         (( height > 20 )) && height=20
         reply="$(wt --title "archdots" --default-item "$default" \
-            --menu "$prompt" "$height" 76 "$rows" "$@")" || reply=""
+            --menu "$text" "$height" 76 "$rows" "$@")" || reply=""
         printf '%s' "${reply:-$default}"
         return
     fi
@@ -383,7 +647,9 @@ review_confirm() {
         local text
         text="$path
 
-$(wt_clip "$body" 12)"
+$(wt_clip "$body" 12)
+
+$KEYS_YESNO"
         wt_status --title "$prompt" --yes-button "Write" --no-button "Skip" \
             --yesno "$text" "$(wt_height "$text")" 76
         return
@@ -470,8 +736,9 @@ locate_repo() {
 # ── packages ────────────────────────────────────────────────────────────────
 
 pac_install() {
+    local label="$1"; shift
     (( $# )) || return 0
-    sudo pacman -S --needed --noconfirm "$@"
+    run_logged "$label" sudo pacman -S --needed --noconfirm "$@"
 }
 
 # Build paru from source, unless a working one is already here.
@@ -492,10 +759,9 @@ ensure_paru() {
     # against the pacman actually installed.
     local tmp
     tmp="$(mktemp -d)"
-    trap 'rm -rf "$tmp"' EXIT
-    git clone --depth 1 https://aur.archlinux.org/paru.git "$tmp/paru"
-    ( cd "$tmp/paru" && makepkg -si --noconfirm )
-    rm -rf "$tmp"; trap - EXIT
+    run_logged "Fetching paru" git clone --depth 1 https://aur.archlinux.org/paru.git "$tmp/paru"
+    run_logged "Building paru from source" bash -c "cd '$tmp/paru' && makepkg -si --noconfirm"
+    rm -rf "$tmp"
     paru --version &>/dev/null || die "paru still will not run after a source build."
     ok "built from source and installed"
 }
@@ -507,6 +773,7 @@ stage_packages() {
         return 0
     fi
 
+    phase 4 6 "Checking for conflicting notification daemons"
     step "Removing conflicting notification daemons"
     local installed_conflicts=() pkg
     for pkg in "${PKG_CONFLICTS[@]}"; do
@@ -517,12 +784,14 @@ stage_packages() {
         say "the desktop shell *is* the notification daemon — it owns"
         say "org.freedesktop.Notifications. Each of these grabs that bus name at"
         say "login, and the shell's notifications then silently never appear."
-        if confirm "Installed: ${installed_conflicts[*]}
+        # Asked even in a dialog run: this uninstalls something the user chose.
+        if interactive confirm "Installed: ${installed_conflicts[*]}
 
 The desktop shell *is* the notification daemon — it owns org.freedesktop.Notifications. Each of these grabs that bus name at login, and the shell's notifications then silently never appear.
 
 Remove them?" y; then
-            sudo pacman -Rns --noconfirm "${installed_conflicts[@]}"
+            run_logged "Removing ${installed_conflicts[*]}" \
+                sudo pacman -Rns --noconfirm "${installed_conflicts[@]}"
             ok "removed"
             note "removed conflicting notification daemon(s): ${installed_conflicts[*]}"
         else
@@ -533,16 +802,20 @@ Remove them?" y; then
         skip "none installed"
     fi
 
+    phase 6 42 "Core packages and fonts"
     step "Core packages and fonts"
     say "${#PKG_CORE[@]} core + ${#PKG_FONTS[@]} font packages"
-    sudo pacman -Syu --needed --noconfirm "${PKG_CORE[@]}" "${PKG_FONTS[@]}"
+    run_logged "Core packages and fonts" \
+        sudo pacman -Syu --needed --noconfirm "${PKG_CORE[@]}" "${PKG_FONTS[@]}" \
+        || die "pacman could not install the core packages."
     ok "installed"
 
     if (( WANT_UTILS )) && confirm "Install the utility packages (${#PKG_UTILS[@]})?
 
 ${PKG_UTILS[*]}" y; then
+        phase 42 48 "Utilities"
         step "Utilities"
-        pac_install "${PKG_UTILS[@]}"
+        pac_install "Utilities" "${PKG_UTILS[@]}"
         ok "installed"
     else
         skip "utilities"
@@ -553,12 +826,14 @@ ${PKG_UTILS[*]}" y; then
 ${PKG_AUR[*]}
 
 paru is built from source, which takes a few minutes." y; then
+        phase 48 54 "paru"
         step "paru"
         ensure_paru
 
+        phase 54 64 "AUR packages"
         step "AUR packages"
         # One failed build should not lose the rest of the install.
-        paru -S --needed --noconfirm "${PKG_AUR[@]}" || {
+        run_logged "AUR packages" paru -S --needed --noconfirm "${PKG_AUR[@]}" || {
             warn "one or more AUR builds failed — continuing"
             note "some AUR packages failed to build; retry: paru -S ${PKG_AUR[*]}"
         }
@@ -567,14 +842,17 @@ paru is built from source, which takes a few minutes." y; then
         skip "AUR"
     fi
 
-    if (( WANT_FLATPAK )) || confirm "Install the flatpak tools (${#PKG_FLATPAK[@]})?
+    if (( WANT_FLATPAK )) && confirm "Install the flatpak applications (${#PKG_FLATPAK[@]})?
 
-${PKG_FLATPAK[*]}" n; then
+${PKG_FLATPAK[*]}" y; then
+        phase 64 72 "Flatpak applications"
         step "Flatpaks"
-        command -v flatpak >/dev/null || pac_install flatpak
-        flatpak remote-add --if-not-exists flathub \
+        command -v flatpak >/dev/null || pac_install "Installing flatpak" flatpak
+        run_logged "Adding the flathub remote" \
+            flatpak remote-add --if-not-exists flathub \
             https://dl.flathub.org/repo/flathub.flatpakrepo
-        flatpak install -y flathub "${PKG_FLATPAK[@]}" || {
+        run_logged "Flatpak applications" \
+            flatpak install -y flathub "${PKG_FLATPAK[@]}" || {
             warn "some flatpaks failed to install"
             note "some flatpaks failed; re-run the flatpak install by hand"
         }
@@ -591,6 +869,7 @@ ${PKG_FLATPAK[*]}" n; then
 # default.conf — which this repo overrides with an edited copy.
 
 install_sddm_theme() {
+    phase 72 80 "SDDM login theme"
     step "SDDM theme (silent $SDDM_THEME_VERSION)"
 
     local theme_dir="/usr/share/sddm/themes/silent"
@@ -611,7 +890,8 @@ install_sddm_theme() {
         # commit that declares the pkgver we want and build from there.
         local tmp commit=""
         tmp="$(mktemp -d)"
-        git clone --quiet https://aur.archlinux.org/sddm-silent-theme.git "$tmp/theme" || {
+        run_logged "Fetching the SDDM theme" \
+            git clone --quiet https://aur.archlinux.org/sddm-silent-theme.git "$tmp/theme" || {
             rm -rf "$tmp"
             warn "could not reach the AUR — skipping the theme"
             note "install by hand: paru -S sddm-silent-theme"
@@ -644,7 +924,7 @@ install_sddm_theme() {
         )
         if (( ${#deps[@]} )); then
             say "theme dependencies: ${deps[*]}"
-            paru -S --needed --noconfirm "${deps[@]}" || {
+            run_logged "Theme dependencies" paru -S --needed --noconfirm "${deps[@]}" || {
                 rm -rf "$tmp"
                 warn "could not install the theme's dependencies"
                 note "SDDM theme skipped; retry: paru -S sddm-silent-theme"
@@ -652,7 +932,7 @@ install_sddm_theme() {
             }
         fi
 
-        ( cd "$tmp/theme" && makepkg -si --noconfirm ) || {
+        run_logged "Building the SDDM theme" bash -c "cd '$tmp/theme' && makepkg -si --noconfirm" || {
             rm -rf "$tmp"
             warn "theme build failed — the desktop still works, the login screen is plain"
             note "SDDM theme failed to build; retry: paru -S sddm-silent-theme"
@@ -665,11 +945,13 @@ install_sddm_theme() {
     # ── the version lock ────────────────────────────────────────────────────
     # A theme upgrade would replace default.conf and can change the config
     # schema out from under the edited copy, so hold it where it is.
+    # Not a question. Installing this theme and letting pacman upgrade it out
+    # from under the config written against $SDDM_THEME_VERSION are not two
+    # sensible halves of a choice — the pin is part of installing it.
     if grep -qE '^IgnorePkg.*\bsddm-silent-theme\b' /etc/pacman.conf; then
         skip "already pinned in /etc/pacman.conf"
-    elif confirm "Pin sddm-silent-theme so pacman never upgrades it?
-
-An upgrade replaces the theme's default.conf, which this repo overrides with an edited copy written against $SDDM_THEME_VERSION." y; then
+    else
+        say "pinning sddm-silent-theme so an upgrade cannot replace its config"
         if grep -qE '^IgnorePkg' /etc/pacman.conf; then
             sudo sed -i 's/^\(IgnorePkg.*\)$/\1 sddm-silent-theme/' /etc/pacman.conf
         else
@@ -732,6 +1014,7 @@ stage_stow() {
         return 0
     fi
 
+    phase 80 84 "Linking the dotfiles into your home folder"
     step "Linking the dotfiles into \$HOME"
     command -v stow >/dev/null || die "stow is not installed (--skip-packages was used?)"
 
@@ -768,7 +1051,8 @@ stage_stow() {
         warn "${#conflicts[@]} existing file(s) are in the way:"
         printf '        %s\n' "${conflicts[@]}"
         backup="$HOME/.archdots-backup-$(date +%Y%m%d-%H%M%S)"
-        if confirm "${#conflicts[@]} existing file(s) sit where the dotfiles need to go:
+        # Asked even in a dialog run: these are the user's own files.
+        if interactive confirm "${#conflicts[@]} existing file(s) sit where the dotfiles need to go:
 
 $(printf '%s\n' "${conflicts[@]}")
 
@@ -786,13 +1070,15 @@ Move them to $backup and continue?" y; then
         fi
     fi
 
-    stow --restow --target="$HOME" .
+    run_logged "Linking the dotfiles" stow --restow --target="$HOME" . \
+        || die "stow failed — see the log."
     ok "stowed into $HOME"
 }
 
 # ── zsh ─────────────────────────────────────────────────────────────────────
 
 stage_zsh() {
+    phase 84 87 "zsh and oh-my-zsh"
     step "zsh"
     if [[ -d "$HOME/.oh-my-zsh" ]]; then
         skip "oh-my-zsh already installed"
@@ -802,7 +1088,8 @@ stage_zsh() {
     elif confirm "Install oh-my-zsh? (.zshrc expects it)" y; then
         # --keep-zshrc is essential: without it the installer replaces the .zshrc
         # symlink stow just created with its own template.
-        RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c \
+        run_logged "Installing oh-my-zsh" \
+            env RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c \
             "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" \
             "" --unattended --keep-zshrc
         ok "installed"
@@ -828,6 +1115,7 @@ stage_zsh() {
 # ── the shell's virtualenv ──────────────────────────────────────────────────
 
 stage_venv() {
+    phase 87 96 "Building the desktop shell"
     step "fabric_shell virtualenv"
     if (( ! DO_VENV )); then
         skip "skipped (--skip-venv)"
@@ -844,16 +1132,16 @@ stage_venv() {
         return 0
     fi
 
-    [[ -d "$venv" ]] || python -m venv "$venv"
+    [[ -d "$venv" ]] || run_logged "Creating the virtualenv" python -m venv "$venv"
     say "installing fabric (this compiles pycairo and PyGObject — slow)"
     # The absolute path matters. A bare `-r requirements.txt` resolves against
     # the working directory, which here is the repo root, where no such file
     # exists.
-    "$venv/bin/pip" install --upgrade pip >/dev/null
+    "$venv/bin/pip" install --upgrade pip >/dev/null 2>&1 || true
     local pip_args=(install -r "$reqs")
     # On an update, requirements.txt may have moved to a newer fabric.
     [[ "$mode" == "upgrade" ]] && pip_args=(install --upgrade -r "$reqs")
-    if "$venv/bin/pip" "${pip_args[@]}"; then
+    if run_logged "Building fabric (this takes a while)" "$venv/bin/pip" "${pip_args[@]}"; then
         ok "$venv"
     else
         # Non-fatal so the machine config below still gets written.
@@ -974,7 +1262,7 @@ stage_machine() {
         # reboot. Any drop-in from an earlier run on different hardware has to
         # go, or it outlives the machine it described.
         if [[ -f "$env_file" ]]; then
-            if confirm "This machine has ${#drm_ordered[@]} GPU, but $env_file pins one from an earlier run.
+            if interactive confirm "This machine has ${#drm_ordered[@]} GPU, but $env_file pins one from an earlier run.
 
 With a single GPU there is nothing to choose between, and a stale pin can name a card that no longer exists. Remove it?" y; then
                 rm -f "$env_file"
@@ -997,7 +1285,7 @@ export AQ_DRM_DEVICES=\"$drm_list\""
 
         if [[ -f "$env_file" ]] && [[ "$(cat "$env_file")" == "$env_body" ]]; then
             skip "GPU pin already matches this machine"
-        elif review_confirm "$env_file" "$env_body"; then
+        elif interactive review_confirm "$env_file" "$env_body"; then
             mkdir -p "$env_dir"
             printf '%s\n' "$env_body" > "$env_file"
             ok "AQ_DRM_DEVICES=$drm_list"
@@ -1045,6 +1333,9 @@ export AQ_DRM_DEVICES=\"$drm_list\""
     for m in "${monitors[@]}"; do
         [[ "$m" == eDP-* ]] && { primary="$m"; break; }
     done
+    # Worth stopping for even in an unattended run: only you know which screen
+    # you actually look at.
+    prompt_begin
     if (( ${#monitors[@]} > 1 )) && [[ $UI == whiptail ]]; then
         # With several to choose from, a menu beats retyping a connector name.
         local menu_items=()
@@ -1055,6 +1346,7 @@ Workspaces and the lock screen favour it." "$primary" "${menu_items[@]}")"
     else
         primary="$(ask "Primary monitor?" "$primary")"
     fi
+    prompt_end
 
     for m in "${monitors[@]}"; do
         [[ "$m" != "$primary" ]] && { secondary="$m"; break; }
@@ -1107,7 +1399,7 @@ hl.workspace_rule({ workspace = \"1\", monitor = \"$primary\", default = true, p
 
     if [[ -s "$mon_file" ]]; then
         skip "$mon_file already exists — left alone"
-    elif review_confirm "$mon_file" "$mon_body"; then
+    elif interactive review_confirm "$mon_file" "$mon_body"; then
         printf '%s\n' "$mon_body" > "$mon_file"
         ok "wrote $mon_file"
         # A broken override is reported rather than fatal, but catching it here
@@ -1199,12 +1491,15 @@ stage_dconf() {
     say "the shell has claimed the notification bus — which is exactly what"
     say "happens at boot, when a headset auto-connects."
     local choice
+    # A preference with no safe default, so it is asked even in a dialog run.
+    prompt_begin
     choice="$(choose "blueman draws its own centred popup when it connects a device before the shell has claimed the notification bus — which is what happens at boot, when a headset auto-connects.
 
 What should it do?" "1" \
         1 "Disable ConnectionNotifier — stops the popup" \
         2 "Disable both plugins — also stops auto-reconnect" \
         3 "Leave blueman alone")"
+    prompt_end
     case "$choice" in
         1)
             gsettings set org.blueman.general plugin-list "['!ConnectionNotifier']" \
@@ -1260,8 +1555,16 @@ stage_services() {
 # own command line is what its own pkill sees rather than the processes it is
 # about to spawn.
 
+# Both patterns are anchored to *this* $HOME. The bracket in fabric_shel[l] is
+# what keeps pkill from matching the shell running the restart itself; the $HOME
+# prefix is what keeps it from matching a session belonging to another home
+# under the same user — an installer run with HOME pointed somewhere else would
+# otherwise kill the desktop that is running right now. (Found the hard way.)
+SHELL_PROCS="$HOME/\.config/fabric_shel[l][^ ]*/(daemon|bar)\.py"
+SHELL_PROCS_ALL="$HOME/\.config/fabric_shel[l][^ ]*/(daemon|bar|notifications)\.py"
+
 shell_is_running() {
-    pgrep -f 'fabric_shel[l][^ ]*/(daemon|bar)\.py' >/dev/null 2>&1
+    pgrep -f "$SHELL_PROCS" >/dev/null 2>&1
 }
 
 restart_shell() {
@@ -1270,7 +1573,7 @@ restart_shell() {
         skip "not running — it starts itself at your next login"
         return 0
     fi
-    if ! confirm "Restart the running shell now?
+    if ! interactive confirm "Restart the running shell now?
 
 The bar and the overlays disappear for a second while it comes back. Skip this if you are in the middle of something — SUPER + SHIFT + R does the same later." y; then
         skip "left running the old code"
@@ -1280,7 +1583,7 @@ The bar and the overlays disappear for a second while it comes back. Skip this i
     # setsid, or the new daemon is a child of this script and dies with it.
     setsid bash -c '
         R=$HOME/.config/fabric_shell; PY=$R/.venv/bin/python
-        pkill -f "fabric_shel[l][^ ]*/(daemon|bar|notifications)\.py"
+        pkill -f "'"$SHELL_PROCS_ALL"'"
         sleep 1
         wal -R >/dev/null 2>&1 && cp "$HOME/.cache/wal/colors-fabric.css" "$R/css/colors-fabric.css"
         $PY $R/daemon.py >/dev/null 2>&1 &
@@ -1303,6 +1606,7 @@ The bar and the overlays disappear for a second while it comes back. Skip this i
 # install.sh itself made to tracked files.
 
 update_repo() {
+    phase 2 15 "Pulling the latest changes"
     step "Updating the repository"
 
     if [[ ! -d "$REPO_ROOT/.git" ]]; then
@@ -1385,17 +1689,19 @@ This is 'pacman -S --needed' over the package lists: already-installed packages 
         return 0
     fi
 
+    phase 15 45 "Packages the repo has added"
     step "Package lists"
-    pac_install "${PKG_CORE[@]}" "${PKG_FONTS[@]}"
+    pac_install "Core packages and fonts" "${PKG_CORE[@]}" "${PKG_FONTS[@]}"
     ok "core and fonts up to date"
 
     if (( WANT_UTILS )); then
-        pac_install "${PKG_UTILS[@]}" && ok "utilities up to date"
+        pac_install "Utilities" "${PKG_UTILS[@]}" && ok "utilities up to date"
     fi
 
     if (( WANT_AUR )) && command -v paru >/dev/null; then
+        phase 45 60 "AUR packages"
         step "AUR packages"
-        paru -S --needed --noconfirm "${PKG_AUR[@]}" || {
+        run_logged "AUR packages" paru -S --needed --noconfirm "${PKG_AUR[@]}" || {
             warn "one or more AUR builds failed — continuing"
             note "some AUR packages failed to build; retry: paru -S ${PKG_AUR[*]}"
         }
@@ -1404,23 +1710,34 @@ This is 'pacman -S --needed' over the package lists: already-installed packages 
         skip "paru not installed — AUR packages left alone"
     fi
 
-    if confirm "Upgrade the whole system as well (pacman -Syu)?" n; then
+    # Not asked in dialog mode: there the run is unattended, and a full system
+    # upgrade is a bigger thing than "update my dotfiles" — it has to be chosen
+    # deliberately, so the default is no and it stays no.
+    if interactive confirm "Upgrade the whole system as well (pacman -Syu)?" n; then
+        phase 60 70 "Upgrading the system"
         step "System upgrade"
-        sudo pacman -Syu --noconfirm
+        run_logged "System upgrade" sudo pacman -Syu --noconfirm
         ok "upgraded"
     fi
 }
 
 run_update() {
+    # Before the gauge: sudo has to be able to reach the terminal to ask for a
+    # password, and the keepalive keeps it reachable for the rest of the run.
     step "Checking sudo"
     sudo -v || die "sudo authentication failed."
+    sudo_keepalive
     ok "authenticated"
+
+    gauge_open "Updating archdots"
 
     update_repo
     update_packages
     stage_stow          # picks up whatever the update added, moved or renamed
     stage_venv upgrade  # requirements.txt may have moved to a newer fabric
     stage_wallpapers    # copies any new wallpapers into ~/Pictures/wallpapers
+    phase 97 100 "Finishing up"
+    gauge_close
     restart_shell
 
     step "Done"
@@ -1434,26 +1751,37 @@ run_update() {
         printf '\n    %sWorth knowing:%s\n' "$B" "$R"
         printf '      • %s\n' "${SUMMARY[@]}"
     fi
+    [[ -n "$LOG_FILE" ]] && printf '\n    full log: %s\n' "$LOG_FILE"
     printf '\n'
 }
 
 # ── install ─────────────────────────────────────────────────────────────────
 
 run_install() {
+    # Before the gauge, for the same reason as in run_update: this is the one
+    # prompt that is not ours to answer.
     step "Checking sudo"
     sudo -v || die "sudo authentication failed."
+    sudo_keepalive
     ok "authenticated"
+
+    gauge_open "Installing archdots"
 
     stage_packages
     (( DO_PACKAGES )) && install_sddm_theme
     stage_stow
     stage_zsh
     stage_venv
+    phase 96 97 "Wallpapers"
     stage_wallpapers
+    phase 97 98 "This machine's hardware"
     stage_machine
+    phase 98 99 "Theming"
     stage_theming
     stage_dconf
+    phase 99 100 "Services"
     stage_services
+    gauge_close
 
     step "Done"
     say "Log out and pick Hyprland at the SDDM login screen. The desktop starts itself."
@@ -1479,6 +1807,9 @@ run_install() {
     ${B}Later${R}
       $REPO_ROOT/install.sh update
 
+    ${B}Full log${R}
+      ${LOG_FILE:-not written}
+
 EOF
 }
 
@@ -1486,13 +1817,20 @@ EOF
 #
 # Only the dialog build asks. With no mode on the command line and no dialogs,
 # it installs — which is what every existing curl one-liner expects.
+#
+# Picking from these menus is the *only* question a dialog run asks. Ticking a
+# box already means "yes, do this", so asking again once the run is under way
+# would be asking the same question twice; everything after this point takes the
+# answer it was given. --no-gui is the mode that stops at each step.
 
 choose_stages() {
     local sel tag
     on_off() { (( $1 )) && printf 'on' || printf 'off'; }
 
     sel="$(wt --title "Custom install" --checklist \
-        "Which parts should run? Space toggles, Enter confirms." 20 76 7 \
+        "Everything ticked here runs without asking again.
+
+$KEYS_LIST" 20 76 7 \
         packages "Install packages"                        "$(on_off $DO_PACKAGES)" \
         utils    "  the utility packages"                  "$(on_off $WANT_UTILS)" \
         aur      "  paru and the AUR packages"             "$(on_off $WANT_AUR)" \
@@ -1538,7 +1876,11 @@ choose_mode() {
     MODE="$(wt --title "archdots" --default-item "$default" --menu \
         "Arch + Hyprland desktop.
 
-Everything here can also be driven from the command line — see --help." 20 76 4 \
+Whatever you pick runs on its own from here. The output goes to
+a log file and this screen keeps a progress bar instead; run it
+with --no-gui to be asked about each step and watch it work.
+
+$KEYS_MENU" 20 76 4 \
         install "Install: packages, dotfiles, shell, machine config" \
         update  "Update: pull, re-link, refresh packages and the venv" \
         custom  "Custom install: pick the stages yourself" \
@@ -1548,11 +1890,17 @@ Everything here can also be driven from the command line — see --help." 20 76 
         quit|"") say "nothing to do"; exit 0 ;;
         custom)  MODE="install"; choose_stages ;;
     esac
+
+    # The menu *was* the consent, for both paths. Answer the rest from the
+    # defaults so the run is unattended — the gauge could not show a prompt
+    # anyway, and a question behind it would look like a hang.
+    ASSUME_YES=1
 }
 
 # ── main ────────────────────────────────────────────────────────────────────
 
 choose_mode
+log_open "$MODE"
 locate_repo
 
 case "$MODE" in

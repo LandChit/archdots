@@ -126,11 +126,13 @@ into your home folder, builds the shell, and sets up the parts that depend on
 *your* machine — which graphics card to use, your monitor layout, your wallpaper
 paths. It shows you each of those before writing it.
 
-It asks before each optional group, so you can skip the ones you don't want. The
-questions come up as dialog boxes when the machine has `whiptail`; pass
-`--no-gui` for plain text prompts instead, `--yes` to accept every default and
-ask nothing at all, or `--help` for the full list of options. Flatpaks are off
-unless you pass `--flatpak`.
+The questions come up as dialog boxes when the machine has `whiptail`. There you
+choose once — install, update, or pick the parts yourself — and the rest runs on
+its own behind a progress bar, with everything it did kept in
+`~/.local/state/archdots/`. Pass `--no-gui` to be asked about each step in plain
+text and watch the output as it happens, `--yes` to accept every default and ask
+nothing at all, `--no-flatpak` to skip the flatpak applications, or `--help` for
+the full list.
 
 Already have the repo cloned? `./install.sh` from inside it does the same thing
 and skips the clone. It's safe to run again — a second run updates rather than
@@ -145,8 +147,8 @@ duplicates.
 That pulls the repo, re-links anything new, installs packages the repo has
 gained since your last run, refreshes the shell's virtualenv, and offers to
 restart the running shell. Your machine-specific values — graphics card, monitor
-layout, wallpaper paths — are stashed across the pull and put back afterwards,
-so an update does not overwrite them.
+layout, wallpaper — are not in the repo at all, so an update cannot overwrite
+them.
 
 **When it finishes, log out and pick Hyprland at the login screen.** The desktop
 starts itself. Press <kbd>SUPER</kbd> <kbd>/</kbd> for the cheatsheet.
@@ -264,9 +266,9 @@ linked against one libalpm version and stops working the moment pacman bumps
 it. `sddm-silent-theme` is pinned to a specific version and added to `IgnorePkg`,
 because a theme upgrade replaces the login screen's config.
 
-### Flatpak — optional, off by default
+### Flatpak — installed by default
 
-Tools only. Pass `--flatpak` to install them.
+Tools only. Pass `--no-flatpak` to skip them.
 
 ```
 com.github.tchx84.Flatseal    io.missioncenter.MissionCenter

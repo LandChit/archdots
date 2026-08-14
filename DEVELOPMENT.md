@@ -481,11 +481,64 @@ supported mode, not a degraded one — the curl one-liner and the container test
 both land there — and `libnewt` is in `PKG_CORE`, so the *second* run gets boxes
 even when the first could not.
 
-Only the questions are drawn. pacman, makepkg and pip keep printing to the
-terminal: hiding a half-hour PyGObject compile behind a fake progress bar helps
-nobody, and that output is the only thing that explains a failure.
+**A dialog run asks once and then gets on with it.** The menu — and the
+checklist behind *Custom install* — is the consent: ticking `venv` already means
+"yes, build the venv", so asking again mid-run would be asking the same question
+twice. `choose_mode()` sets `ASSUME_YES=1` on the way out, and everything after
+that takes the answer it was given. `--no-gui` is the mode that stops at each
+step.
 
-Three details are load-bearing:
+Seven questions are exempt, because a default would be answering for you:
+
+| Still asked | Why |
+|---|---|
+| Which monitor is primary, and `monitor.lua` | only you know which screen you look at, and the generated positions are a guess |
+| blueman's plugins | a preference with no safe default — one of the answers costs auto-reconnect |
+| Restart the shell now (update) | it interrupts the session you are using |
+| Move clashing dotfiles to a backup | they are files you already had |
+| Remove dunst / mako / swaync | it uninstalls something you chose |
+| The GPU pin, before it is written | hardware-specific and easy to get wrong |
+| `pacman -Syu` during an update | upgrading the system is not part of updating dotfiles |
+
+They go through `interactive`, which lowers the bar, restores `ASSUME_YES` to
+what the *command line* asked for, puts the question up, and raises the bar
+again where it left off. Prompts that answer on stdout run inside `$( )` — a
+subshell, where pausing the gauge would pause a copy while the real one keeps
+drawing — so those bracket the substitution with `prompt_begin`/`prompt_end`
+instead. With a real `--yes`, nothing asks anything.
+
+Everything else is foregone once the run has started: the utilities, the AUR
+packages, the flatpaks (on by default), oh-my-zsh, zsh as the login shell, the
+SDDM theme and its `IgnorePkg` pin, the services, stow, the venv.
+
+That is also what makes the progress bar honest. `gauge_open()` refuses to raise
+unless the run is unattended, so a question can never end up hidden behind it —
+`install.sh install` names its mode on the command line, never sees the menu,
+and therefore gets dialogs and visible output instead of a bar.
+
+**The output goes to a log, not the screen** — in dialog mode. `run_logged`
+sends every command through `log_filter`, which writes each line to
+`~/.local/state/archdots/<mode>-<date>.log` and turns the interesting ones into
+gauge text; the last nine logs are kept. In `--no-gui` mode the same function
+`tee`s to the terminal instead, because there the output *is* the interface.
+Either way the log is written, and the path is printed at the end and on any
+fatal error.
+
+`sudo -v` runs before the gauge and a background loop refreshes the timestamp
+every 45 seconds. Without it a long AUR build outlives the timestamp and pacman
+stops for a password nobody can see.
+
+Five details are load-bearing:
+
+- **whiptail's gauge renders only the first line** of an update and does no
+  escape processing — a three-line update shows line one and silently drops the
+  rest (tested). So `gauge_body()` composes one line, `step — detail`, trimmed
+  to 68 columns, and the package counter is parsed out of pacman's own
+  `( 12/692) installing glibc-common` to fill it.
+- **The kill pattern is anchored to `$HOME`.** `pkill -f fabric_shell/...` matches
+  by path, not by user's session, so an installer run with `HOME` pointed
+  somewhere else will happily kill the desktop that is running right now. Found
+  the hard way, from a test.
 
 - **whiptail answers on stderr** and draws on stdout, hence `2>&1 1>/dev/tty`
   in `wt()`. Prompts read from `/dev/tty` for the same reason the plain ones do:
@@ -499,6 +552,11 @@ Three details are load-bearing:
   whole generated file before showing its box, so the clip loses nothing.
 - **`choose()` prints its plain-mode menu to stderr.** The caller reads the
   function through `$(…)`, and anything on stdout is swallowed into the answer.
+- **The key hints are part of the text.** newt has a help line along the bottom
+  of the screen for exactly this — the `<Tab>/<Alt-Tab> between elements` bar
+  you have seen in Anaconda — and whiptail does not expose it. Writing it to the
+  last terminal row by hand scrolls newt's screen and breaks the box, so the
+  `KEYS_*` strings go inside each dialog as its last line instead.
 
 ### What it does beyond `stow .`
 

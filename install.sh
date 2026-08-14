@@ -270,6 +270,7 @@ GAUGE_DETAIL=""
 gauge_up() { (( GAUGE_OPEN )); }
 
 GAUGE_LABEL=""
+GAUGE_PID=""
 
 gauge_open() {
     [[ $UI == whiptail ]] || return 0
@@ -284,6 +285,10 @@ gauge_open() {
     # fd that closes when the script does.
     exec 3> >(whiptail --backtitle "$BACKTITLE" --title "$GAUGE_LABEL" \
         --gauge "${GAUGE_TITLE:-Starting…}" 9 74 "$PCT_NOW" >/dev/tty 2>/dev/null)
+    # $! is the whiptail itself, which the askpass helper needs so it can stop
+    # the bar while it asks and start it again afterwards.
+    GAUGE_PID=$!
+    export ARCHDOTS_GAUGE_PID="$GAUGE_PID"
     GAUGE_OPEN=1
 }
 
@@ -327,6 +332,8 @@ interactive() {
 gauge_close() {
     gauge_up || return 0
     GAUGE_OPEN=0
+    GAUGE_PID=""
+    export ARCHDOTS_GAUGE_PID=""
     exec 3>&-
     # Let whiptail finish drawing and restore the terminal before anything else
     # writes to it.
@@ -398,6 +405,14 @@ run_logged() {
     "$@" 2>&1 | log_filter "$label"
     local rc=${PIPESTATUS[0]}
     set -e
+    # If the helper had to ask for a password, a dialog has been drawn over the
+    # bar and the bar was stopped while it was up. Redraw it from scratch rather
+    # than leaving the leftovers on screen.
+    if [[ -n "$ASKPASS_FLAG" && -f "$ASKPASS_FLAG" ]]; then
+        rm -f "$ASKPASS_FLAG"
+        log "    (sudo asked for a password)"
+        gauge_up && { gauge_close; gauge_open; }
+    fi
     return "$rc"
 }
 
@@ -436,19 +451,96 @@ log_filter() {
     done
 }
 
-# sudo's timestamp expires while a long build runs, and behind the gauge its
-# password prompt would be invisible — the install would look hung. Refresh it
-# in the background for as long as the script is alive.
+# ── sudo ────────────────────────────────────────────────────────────────────
+#
+# A password prompt is the one thing that must never appear *behind* the
+# progress bar. It did once: makepkg ran `sudo pacman -U` after a long build,
+# sudo drew "[sudo] password for you:" straight over the gauge, and the
+# keystrokes went to whiptail — which owns the terminal — so sudo read nothing
+# and answered "Sorry, try again".
+#
+# Two things stop that. The timestamp is kept warm in the background, so the
+# question usually never comes up; and when it does, sudo asks through a helper
+# that puts the gauge to sleep, shows a proper password box, and wakes it again.
+# Nothing gets to prompt on the raw terminal while the bar is up.
+
+SUDO=(sudo)          # becomes (sudo -A) once the helper exists
+ASKPASS_DIR=""
+ASKPASS_FLAG=""
+
+sudo_askpass_setup() {
+    [[ $UI == whiptail ]] || return 0
+    have_tty || return 0
+    ASKPASS_DIR="$(mktemp -d)" || return 0
+    chmod 700 "$ASKPASS_DIR"
+    ASKPASS_FLAG="$ASKPASS_DIR/asked"
+
+    cat > "$ASKPASS_DIR/askpass" <<'HELPER'
+#!/usr/bin/env bash
+# Written by archdots install.sh, and run by sudo instead of prompting on the
+# terminal. SIGSTOP rather than a kill: the gauge has to survive to be resumed,
+# and a stopped process cannot repaint over the box while it is up.
+[[ -n "${ARCHDOTS_GAUGE_PID:-}" ]] && kill -STOP "$ARCHDOTS_GAUGE_PID" 2>/dev/null
+[[ -n "${ARCHDOTS_ASKPASS_FLAG:-}" ]] && : > "$ARCHDOTS_ASKPASS_FLAG"
+pw="$(whiptail --backtitle "${ARCHDOTS_BACKTITLE:-archdots}" \
+    --title "Administrator password" \
+    --passwordbox "${1:-Password:}
+
+Installing packages needs root. Your password is not
+stored, and nothing is echoed as you type.
+
+Enter confirms · Esc cancels" 13 62 2>&1 1>/dev/tty </dev/tty)"
+[[ -n "${ARCHDOTS_GAUGE_PID:-}" ]] && kill -CONT "$ARCHDOTS_GAUGE_PID" 2>/dev/null
+printf '%s\n' "$pw"
+HELPER
+    chmod 700 "$ASKPASS_DIR/askpass"
+
+    export SUDO_ASKPASS="$ASKPASS_DIR/askpass"
+    export ARCHDOTS_ASKPASS_FLAG="$ASKPASS_FLAG"
+    export ARCHDOTS_BACKTITLE="$BACKTITLE"
+    SUDO=(sudo -A)
+    # makepkg and paru call plain `sudo` themselves, with no -A to add. Denying
+    # them a controlling terminal is what sends *those* prompts to the helper
+    # too: with no tty to write to, sudo falls back to SUDO_ASKPASS.
+    CHILD_WRAP=(setsid)
+}
+
+CHILD_WRAP=()
+
+# Ask once, up front, before the bar goes up.
+sudo_authenticate() {
+    step "Checking sudo"
+    if sudo -n true 2>/dev/null; then
+        ok "already authenticated"
+        sudo_keepalive
+        return 0
+    fi
+    local try
+    for try in 1 2 3; do
+        if "${SUDO[@]}" -v 2>/dev/null; then
+            ok "authenticated"
+            sudo_keepalive
+            return 0
+        fi
+        (( try < 3 )) && warn "that password did not work — try again"
+    done
+    die "sudo authentication failed."
+}
+
+# sudo's timestamp expires while a long build runs. Refresh it for as long as
+# the script is alive: a failure here is not fatal, because the askpass helper
+# is still there to ask properly if it comes to that.
 SUDO_KEEPALIVE_PID=""
 sudo_keepalive() {
     [[ -z "$SUDO_KEEPALIVE_PID" ]] || return 0
-    ( while true; do sudo -n true 2>/dev/null || exit 0; sleep 45; done ) &
+    ( while true; do sudo -n true 2>/dev/null; sleep 45; done ) &
     SUDO_KEEPALIVE_PID=$!
 }
 
 cleanup() {
     [[ -n "$SUDO_KEEPALIVE_PID" ]] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null
     gauge_close
+    [[ -n "$ASKPASS_DIR" ]] && rm -rf "$ASKPASS_DIR"
     return 0
 }
 trap cleanup EXIT
@@ -477,6 +569,7 @@ KEYS_YESNO="Enter confirms · Tab switches buttons · Esc cancels"
 KEYS_INPUT="Type to edit · Enter confirms · Esc keeps the suggestion"
 KEYS_MENU="↑ ↓ choose · Enter confirms · Esc cancels"
 KEYS_LIST="↑ ↓ move · Space ticks · Tab to the buttons · Enter confirms"
+KEYS_RADIO="↑ ↓ move · Space picks · Enter confirms"
 
 # Piped from curl, stdin is the script itself, so every prompt — plain or
 # whiptail — reads from /dev/tty instead.
@@ -630,6 +723,35 @@ $KEYS_MENU"
     ask "Which?" "$default"
 }
 
+# Pick exactly one of a list, with the current answer already selected. Same
+# arguments as choose(), but drawn as radio buttons — for a question like "which
+# monitor" the point is to *see* everything that was detected, including when
+# there is only one of them and nothing to choose.
+choose_radio() {
+    local prompt="$1" default="$2"; shift 2
+    if (( ASSUME_YES )) || ! have_tty || [[ $UI != whiptail ]]; then
+        printf '%s' "$default"
+        return
+    fi
+    local items=() tag desc rows=0 text height reply
+    while (( $# )); do
+        tag="$1"; desc="$2"; shift 2
+        items+=("$tag" "$desc" "$([[ "$tag" == "$default" ]] && printf on || printf off)")
+        rows=$(( rows + 1 ))
+    done
+    text="$prompt
+
+$KEYS_RADIO"
+    height=$(( $(wt_lines "$text" 76) + rows + 8 ))
+    (( height > 20 )) && height=20
+    reply="$(wt --title "archdots" --radiolist "$text" "$height" 76 "$rows" "${items[@]}")" \
+        || reply=""
+    # whiptail quotes what it returns, and returns nothing if you untick
+    # everything and press Enter.
+    reply="${reply//\"/}"
+    printf '%s' "${reply:-$default}"
+}
+
 # Show a generated file and ask whether to write it. The two are one operation,
 # because the point of showing it is to answer the question.
 review_confirm() {
@@ -706,7 +828,7 @@ locate_repo() {
     else
         command -v git >/dev/null || {
             say "git is missing; installing it first"
-            sudo pacman -Sy --needed --noconfirm git
+            "${SUDO[@]}" pacman -Sy --needed --noconfirm git
         }
         if [[ -e "$REPO_DIR" ]]; then
             if [[ -f "$REPO_DIR/.stow-local-ignore" ]]; then
@@ -738,7 +860,7 @@ locate_repo() {
 pac_install() {
     local label="$1"; shift
     (( $# )) || return 0
-    run_logged "$label" sudo pacman -S --needed --noconfirm "$@"
+    run_logged "$label" "${SUDO[@]}" pacman -S --needed --noconfirm "$@"
 }
 
 # Build paru from source, unless a working one is already here.
@@ -760,7 +882,8 @@ ensure_paru() {
     local tmp
     tmp="$(mktemp -d)"
     run_logged "Fetching paru" git clone --depth 1 https://aur.archlinux.org/paru.git "$tmp/paru"
-    run_logged "Building paru from source" bash -c "cd '$tmp/paru' && makepkg -si --noconfirm"
+    run_logged "Building paru from source" ${CHILD_WRAP[@]+"${CHILD_WRAP[@]}"} \
+        bash -c "cd '$tmp/paru' && makepkg -si --noconfirm"
     rm -rf "$tmp"
     paru --version &>/dev/null || die "paru still will not run after a source build."
     ok "built from source and installed"
@@ -791,7 +914,7 @@ The desktop shell *is* the notification daemon — it owns org.freedesktop.Notif
 
 Remove them?" y; then
             run_logged "Removing ${installed_conflicts[*]}" \
-                sudo pacman -Rns --noconfirm "${installed_conflicts[@]}"
+                "${SUDO[@]}" pacman -Rns --noconfirm "${installed_conflicts[@]}"
             ok "removed"
             note "removed conflicting notification daemon(s): ${installed_conflicts[*]}"
         else
@@ -806,7 +929,7 @@ Remove them?" y; then
     step "Core packages and fonts"
     say "${#PKG_CORE[@]} core + ${#PKG_FONTS[@]} font packages"
     run_logged "Core packages and fonts" \
-        sudo pacman -Syu --needed --noconfirm "${PKG_CORE[@]}" "${PKG_FONTS[@]}" \
+        "${SUDO[@]}" pacman -Syu --needed --noconfirm "${PKG_CORE[@]}" "${PKG_FONTS[@]}" \
         || die "pacman could not install the core packages."
     ok "installed"
 
@@ -833,7 +956,8 @@ paru is built from source, which takes a few minutes." y; then
         phase 54 64 "AUR packages"
         step "AUR packages"
         # One failed build should not lose the rest of the install.
-        run_logged "AUR packages" paru -S --needed --noconfirm "${PKG_AUR[@]}" || {
+        run_logged "AUR packages" ${CHILD_WRAP[@]+"${CHILD_WRAP[@]}"} \
+            paru -S --needed --noconfirm "${PKG_AUR[@]}" || {
             warn "one or more AUR builds failed — continuing"
             note "some AUR packages failed to build; retry: paru -S ${PKG_AUR[*]}"
         }
@@ -924,7 +1048,8 @@ install_sddm_theme() {
         )
         if (( ${#deps[@]} )); then
             say "theme dependencies: ${deps[*]}"
-            run_logged "Theme dependencies" paru -S --needed --noconfirm "${deps[@]}" || {
+            run_logged "Theme dependencies" ${CHILD_WRAP[@]+"${CHILD_WRAP[@]}"} \
+                paru -S --needed --noconfirm "${deps[@]}" || {
                 rm -rf "$tmp"
                 warn "could not install the theme's dependencies"
                 note "SDDM theme skipped; retry: paru -S sddm-silent-theme"
@@ -932,7 +1057,8 @@ install_sddm_theme() {
             }
         fi
 
-        run_logged "Building the SDDM theme" bash -c "cd '$tmp/theme' && makepkg -si --noconfirm" || {
+        run_logged "Building the SDDM theme" ${CHILD_WRAP[@]+"${CHILD_WRAP[@]}"} \
+            bash -c "cd '$tmp/theme' && makepkg -si --noconfirm" || {
             rm -rf "$tmp"
             warn "theme build failed — the desktop still works, the login screen is plain"
             note "SDDM theme failed to build; retry: paru -S sddm-silent-theme"
@@ -953,10 +1079,10 @@ install_sddm_theme() {
     else
         say "pinning sddm-silent-theme so an upgrade cannot replace its config"
         if grep -qE '^IgnorePkg' /etc/pacman.conf; then
-            sudo sed -i 's/^\(IgnorePkg.*\)$/\1 sddm-silent-theme/' /etc/pacman.conf
+            "${SUDO[@]}" sed -i 's/^\(IgnorePkg.*\)$/\1 sddm-silent-theme/' /etc/pacman.conf
         else
             # There is a commented template under [options]; add a live one.
-            sudo sed -i '0,/^\[options\]/s//[options]\nIgnorePkg = sddm-silent-theme/' \
+            "${SUDO[@]}" sed -i '0,/^\[options\]/s//[options]\nIgnorePkg = sddm-silent-theme/' \
                 /etc/pacman.conf
         fi
         grep -qE '^IgnorePkg.*sddm-silent-theme' /etc/pacman.conf \
@@ -969,13 +1095,13 @@ install_sddm_theme() {
         warn "$custom_conf missing — leaving the theme's own config"
     elif [[ ! -d "$theme_dir" ]]; then
         warn "$theme_dir does not exist — theme not installed"
-    elif sudo cmp -s "$custom_conf" "$theme_dir/configs/default.conf"; then
+    elif "${SUDO[@]}" cmp -s "$custom_conf" "$theme_dir/configs/default.conf"; then
         skip "default.conf already matches the repo copy"
     else
         # The theme ships its own; keep it so the change is reversible.
         [[ -f "$theme_dir/configs/default.conf.orig" ]] \
-            || sudo cp "$theme_dir/configs/default.conf" "$theme_dir/configs/default.conf.orig"
-        sudo install -Dm644 "$custom_conf" "$theme_dir/configs/default.conf"
+            || "${SUDO[@]}" cp "$theme_dir/configs/default.conf" "$theme_dir/configs/default.conf.orig"
+        "${SUDO[@]}" install -Dm644 "$custom_conf" "$theme_dir/configs/default.conf"
         ok "installed the repo's default.conf (original kept as default.conf.orig)"
         note "SDDM theme config is a root-owned copy — re-run install.sh after editing .themes_sddm/"
     fi
@@ -993,11 +1119,11 @@ Numlock=on
 [Theme]
 Current=silent"
 
-    if [[ -f "$sddm_conf" ]] && [[ "$(sudo cat "$sddm_conf")" == "$sddm_body" ]]; then
+    if [[ -f "$sddm_conf" ]] && [[ "$("${SUDO[@]}" cat "$sddm_conf")" == "$sddm_body" ]]; then
         skip "$sddm_conf already correct"
     elif review_confirm "$sddm_conf" "$sddm_body" "Write it? (needs root)"; then
-        sudo mkdir -p /etc/sddm.conf.d
-        printf '%s\n' "$sddm_body" | sudo tee "$sddm_conf" >/dev/null
+        "${SUDO[@]}" mkdir -p /etc/sddm.conf.d
+        printf '%s\n' "$sddm_body" | "${SUDO[@]}" tee "$sddm_conf" >/dev/null
         ok "wrote $sddm_conf"
     else
         skip "greeter config"
@@ -1103,7 +1229,7 @@ stage_zsh() {
     elif confirm "Make zsh your login shell?" y; then
         # Through sudo, which is already authenticated. A bare chsh prompts for
         # the password again and stalls an unattended run.
-        if sudo chsh -s /usr/bin/zsh "$(id -un)"; then
+        if "${SUDO[@]}" chsh -s /usr/bin/zsh "$(id -un)"; then
             ok "login shell set to zsh (takes effect next login)"
         else
             warn "could not change the login shell"
@@ -1336,13 +1462,23 @@ export AQ_DRM_DEVICES=\"$drm_list\""
     # Worth stopping for even in an unattended run: only you know which screen
     # you actually look at.
     prompt_begin
-    if (( ${#monitors[@]} > 1 )) && [[ $UI == whiptail ]]; then
-        # With several to choose from, a menu beats retyping a connector name.
-        local menu_items=()
-        for m in "${monitors[@]}"; do menu_items+=("$m" "connected output"); done
-        primary="$(choose "Which monitor is the primary one?
+    if [[ $UI == whiptail ]]; then
+        # Every detected output is listed, with the suggestion already ticked —
+        # including when there is only one, because seeing that the installer
+        # found your screen (and what it decided to call it) is worth a box on
+        # its own. Retyping a connector name from memory is not.
+        local radio_items=() label
+        for m in "${monitors[@]}"; do
+            case "$m" in
+                eDP-*|LVDS-*) label="built-in display" ;;
+                *)            label="external display" ;;
+            esac
+            radio_items+=("$m" "$label")
+        done
+        primary="$(choose_radio "Which monitor is the primary one?
 
-Workspaces and the lock screen favour it." "$primary" "${menu_items[@]}")"
+Workspaces and the lock screen favour it. ${#monitors[@]} detected." \
+            "$primary" "${radio_items[@]}")"
     else
         primary="$(ask "Primary monitor?" "$primary")"
     fi
@@ -1537,7 +1673,7 @@ stage_services() {
         elif confirm "Enable $svc?" y; then
             # Non-fatal: this fails in a container, and everything above it is
             # still worth keeping.
-            if sudo systemctl enable "$svc"; then
+            if "${SUDO[@]}" systemctl enable "$svc"; then
                 ok "$svc enabled"
             else
                 warn "could not enable $svc"
@@ -1716,18 +1852,16 @@ This is 'pacman -S --needed' over the package lists: already-installed packages 
     if interactive confirm "Upgrade the whole system as well (pacman -Syu)?" n; then
         phase 60 70 "Upgrading the system"
         step "System upgrade"
-        run_logged "System upgrade" sudo pacman -Syu --noconfirm
+        run_logged "System upgrade" "${SUDO[@]}" pacman -Syu --noconfirm
         ok "upgraded"
     fi
 }
 
 run_update() {
-    # Before the gauge: sudo has to be able to reach the terminal to ask for a
-    # password, and the keepalive keeps it reachable for the rest of the run.
-    step "Checking sudo"
-    sudo -v || die "sudo authentication failed."
-    sudo_keepalive
-    ok "authenticated"
+    # Before the gauge, always: the password box is ours to draw, and after this
+    # point sudo asks through the askpass helper instead of the terminal.
+    sudo_askpass_setup
+    sudo_authenticate
 
     gauge_open "Updating archdots"
 
@@ -1758,12 +1892,10 @@ run_update() {
 # ── install ─────────────────────────────────────────────────────────────────
 
 run_install() {
-    # Before the gauge, for the same reason as in run_update: this is the one
-    # prompt that is not ours to answer.
-    step "Checking sudo"
-    sudo -v || die "sudo authentication failed."
-    sudo_keepalive
-    ok "authenticated"
+    # Before the gauge, for the same reason as in run_update: a password
+    # request is the one thing that must never land behind the bar.
+    sudo_askpass_setup
+    sudo_authenticate
 
     gauge_open "Installing archdots"
 

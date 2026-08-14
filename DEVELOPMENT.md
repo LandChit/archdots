@@ -492,7 +492,7 @@ Seven questions are exempt, because a default would be answering for you:
 
 | Still asked | Why |
 |---|---|
-| Which monitor is primary, and `monitor.lua` | only you know which screen you look at, and the generated positions are a guess |
+| Which monitor is primary, and `monitor.lua` | only you know which screen you look at, and the generated positions are a guess. Drawn as a `--radiolist` of every detected output, including when there is only one — seeing what the installer found, and what it calls it, is the point |
 | blueman's plugins | a preference with no safe default — one of the answers costs auto-reconnect |
 | Restart the shell now (update) | it interrupts the session you are using |
 | Move clashing dotfiles to a backup | they are files you already had |
@@ -524,9 +524,32 @@ gauge text; the last nine logs are kept. In `--no-gui` mode the same function
 Either way the log is written, and the path is printed at the end and on any
 fatal error.
 
-`sudo -v` runs before the gauge and a background loop refreshes the timestamp
-every 45 seconds. Without it a long AUR build outlives the timestamp and pacman
-stops for a password nobody can see.
+**sudo never prompts on the terminal while the bar is up.** It did once, and it
+is worth describing, because it looks like a hang rather than a question:
+`makepkg -si` ran `sudo pacman -U` after a long paru build, sudo drew
+`[sudo] password for you:` straight over the gauge, and the keystrokes went to
+whiptail — which owns the terminal in raw mode — so sudo read nothing and
+answered *Sorry, try again*.
+
+Two things stop it now. The timestamp is authenticated up front and kept warm
+by a loop every 45 seconds, so the question usually never arises; and if it
+does, `sudo_askpass_setup` has pointed `SUDO_ASKPASS` at a helper that
+
+1. `SIGSTOP`s the gauge — stopped, not killed, so it can be resumed and cannot
+   repaint over the box while the box is up,
+2. shows a proper `--passwordbox`,
+3. `SIGCONT`s the gauge and leaves a flag file behind.
+
+`run_logged` sees that flag when the command returns and redraws the bar from
+scratch, because a resumed newt does not repaint its own frame — it would carry
+on writing text into a box that is no longer there.
+
+The script's own `sudo` calls go through `"${SUDO[@]}"`, which becomes
+`sudo -A` once the helper exists. makepkg and paru call plain `sudo` themselves
+and there is no `-A` to add, so those run under `setsid`: with no controlling
+terminal, sudo falls back to `SUDO_ASKPASS` on its own. In `--no-gui` mode
+neither applies — `SUDO` stays `(sudo)` and it prompts on the terminal, which is
+exactly where you are looking.
 
 Five details are load-bearing:
 

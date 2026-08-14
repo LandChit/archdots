@@ -421,6 +421,38 @@ else; when piped there is no `BASH_SOURCE` path to resolve, so it clones and
 
 Every step is idempotent, so a second run updates rather than duplicates.
 
+It has two modes — `install.sh install` (the default) and `install.sh update`,
+[below](#update-mode).
+
+### The prompts
+
+Every question goes through one layer with two backends: `whiptail` boxes when
+libnewt is installed and there is a terminal to draw on, plain text on stdout
+otherwise. `ui_init()` picks between them, and plain wins for any of `--no-gui`,
+`--yes`, no `/dev/tty`, no `whiptail`, or `TERM` unset or `dumb`. Plain is a
+supported mode, not a degraded one — the curl one-liner and the container tests
+both land there — and `libnewt` is in `PKG_CORE`, so the *second* run gets boxes
+even when the first could not.
+
+Only the questions are drawn. pacman, makepkg and pip keep printing to the
+terminal: hiding a half-hour PyGObject compile behind a fake progress bar helps
+nobody, and that output is the only thing that explains a failure.
+
+Three details are load-bearing:
+
+- **whiptail answers on stderr** and draws on stdout, hence `2>&1 1>/dev/tty`
+  in `wt()`. Prompts read from `/dev/tty` for the same reason the plain ones do:
+  piped from curl, stdin is the script itself.
+- **Nothing uses `--scrolltext`.** A scrollable widget puts keyboard focus in
+  the text pane, so <kbd>Enter</kbd> scrolls instead of pressing a button and
+  the dialog looks frozen until you think to press <kbd>Tab</kbd>; given a box
+  taller than its own text it also draws a broken scrollbar across the border.
+  Long content is clipped to fit (`wt_clip()`) and printed in full to the
+  terminal, which scrolls the way people expect. `review_confirm()` prints the
+  whole generated file before showing its box, so the clip loses nothing.
+- **`choose()` prints its plain-mode menu to stderr.** The caller reads the
+  function through `$(…)`, and anything on stdout is swallowed into the answer.
+
 ### What it does beyond `stow .`
 
 | Step | Why it cannot be a symlink |
@@ -533,6 +565,37 @@ The edited `default.conf` is copied over the theme's own, and the original is
 kept beside it as `default.conf.orig`. Because the destination is root-owned,
 editing `.themes_sddm/…/default.conf` is not enough on its own — re-run
 `install.sh` (or copy it across by hand) to apply the change.
+
+### Update mode
+
+`install.sh update` is the "I already have this installed" path. It runs
+`update_repo`, `update_packages`, `stage_stow`, `stage_venv upgrade`,
+`stage_wallpapers` and `restart_shell`, and deliberately skips the machine
+detection — the GPU, monitor and wallpaper answers were settled at install time,
+and rewriting them on every update would keep asking about hardware that has not
+changed. `./install.sh install --skip-packages` is the way to redo them after a
+hardware change.
+
+**The stash is the whole trick.** `install.sh` edits *tracked* files on purpose —
+`env-hyprland`, `hyprpaper.conf`, `hyprlock.conf`, `colors-fabric.css` — so a
+dirty tree is the normal state of an installed clone, and `git pull --ff-only`
+would refuse to run in it. `update_repo` stashes with `-u`, pulls, then pops. If
+the pop conflicts the stash is **kept**, the run continues, and the summary says
+where to find it; losing a machine's GPU pin to a silent `stash drop` would be
+much worse than a merge conflict.
+
+`update_packages` is `pacman -S --needed` over the same package lists, which is
+a no-op for everything already installed and picks up only what the repo has
+gained since the last run. A full `-Syu` is asked separately and defaults to no:
+upgrading the system is the user's decision, not a side effect of updating some
+dotfiles.
+
+`restart_shell` mirrors `hypr/config/helpers/shell.lua` — kill both long-lived
+modules, re-sync the pywal colours, start them again, all in one shell so that
+shell's own command line is what its own `pkill` sees. It runs under `setsid`,
+or the new daemon would be a child of the installer and die with it. It only
+offers when a shell is actually running, and skipping it is fine: the keybind
+does the same thing later.
 
 ### Testing it
 

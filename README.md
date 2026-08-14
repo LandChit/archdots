@@ -126,13 +126,27 @@ into your home folder, builds the shell, and sets up the parts that depend on
 *your* machine — which graphics card to use, your monitor layout, your wallpaper
 paths. It shows you each of those before writing it.
 
-It asks before each optional group, so you can skip the ones you don't want.
-Run it with `--yes` to accept every default instead, or `--help` for the full
-list of options. Flatpaks are off unless you pass `--flatpak`.
+It asks before each optional group, so you can skip the ones you don't want. The
+questions come up as dialog boxes when the machine has `whiptail`; pass
+`--no-gui` for plain text prompts instead, `--yes` to accept every default and
+ask nothing at all, or `--help` for the full list of options. Flatpaks are off
+unless you pass `--flatpak`.
 
 Already have the repo cloned? `./install.sh` from inside it does the same thing
 and skips the clone. It's safe to run again — a second run updates rather than
 duplicates.
+
+**To update later:**
+
+```bash
+~/archdots/install.sh update
+```
+
+That pulls the repo, re-links anything new, installs packages the repo has
+gained since your last run, refreshes the shell's virtualenv, and offers to
+restart the running shell. Your machine-specific values — graphics card, monitor
+layout, wallpaper paths — are stashed across the pull and put back afterwards,
+so an update does not overwrite them.
 
 **When it finishes, log out and pick Hyprland at the login screen.** The desktop
 starts itself. Press <kbd>SUPER</kbd> <kbd>/</kbd> for the cheatsheet.

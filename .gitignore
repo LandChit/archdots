@@ -34,5 +34,10 @@ __pycache__/
 # never committed. The folder's README.md is tracked on purpose.
 .config/hypr/config/custom/*.lua
 
+# The same idea for uwsm's session environment. env-hyprland is the committed
+# default and holds nothing machine-specific; uwsm sources everything in
+# env-hyprland.d/ after it, and install.sh writes this machine's GPU order there.
+.config/uwsm/env-hyprland.d/
+
 # Dont include generated files in testing
 archdots_docker/artifacts

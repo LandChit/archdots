@@ -5,7 +5,8 @@ Picking one does three things:
     1. tells hyprpaper to show it, on every monitor
     2. runs pywal over it and copies the palette into css/, which every window
        is already watching, so the whole shell recolours without a restart
-    3. rewrites hyprpaper.conf so the choice survives a reboot
+    3. re-points ~/.local/state/archdots/wallpaper at it, so the choice survives
+       a reboot
 
 hyprpaper 0.8.4 rejects the `preload` request, but `wallpaper "MONITOR,PATH"`
 loads the file itself — so there is nothing to preload first.
@@ -13,7 +14,6 @@ loads the file itself — so there is nothing to preload first.
 
 import json
 import os
-import re
 import shutil
 
 from fabric.widgets.box import Box
@@ -27,8 +27,10 @@ from gi.repository import Gdk, GdkPixbuf, GLib  # type: ignore
 from common import COLORS_CSS, CSS_DIR, Panel, Selection, UsageCounts, make_scroller
 
 WALLPAPER_DIR = os.path.expanduser("~/Pictures/wallpapers")
-HYPRPAPER_CONF = os.path.expanduser("~/.config/hypr/hyprpaper.conf")
-HYPRLOCK_CONF = os.path.expanduser("~/.config/hypr/hyprlock.conf")
+# hyprpaper.conf and hyprlock.conf both name this symlink rather than a picture,
+# so the choice made here is the only thing that has to change — and it changes
+# outside the repo, where it belongs.
+WALLPAPER_POINTER = os.path.expanduser("~/.local/state/archdots/wallpaper")
 WAL_CACHE = os.path.expanduser("~/.cache/wal/" + COLORS_CSS)
 COUNTS_PATH = "~/.local/share/fabric-launcher/wallpaper-counts.json"
 
@@ -253,27 +255,24 @@ class WallpaperPicker(Panel):
         """Point the desktop and the lock screen at `path` so the choice sticks.
 
         hyprpaper draws the desktop and hyprlock draws the lock screen, each
-        from its own config with its own `path =`. Updating only the first
-        leaves the lock screen on whatever was set at install time, which reads
-        as a stale cache rather than two files quietly disagreeing.
+        from its own config — and both of those configs name WALLPAPER_POINTER
+        rather than a picture, so moving the one symlink keeps the two in step
+        by construction. They cannot drift apart the way they could when this
+        rewrote a `path =` line in each of them.
 
-        Only the `path =` lines are touched — everything else in either file is
-        left exactly as it was written.
+        It also stops the picker from writing into the repo. Both configs are
+        stowed symlinks, so editing them in place edited the tracked files and
+        every wallpaper change turned up in `git status`.
         """
-        for conf in (HYPRPAPER_CONF, HYPRLOCK_CONF):
-            try:
-                with open(conf, encoding="utf-8") as f:
-                    original = f.read()
-            except OSError:
-                continue  # no config to keep in step with
-
-            updated, count = re.subn(
-                r"(?m)^(\s*path\s*=\s*).*$", lambda m: m.group(1) + path, original
-            )
-            if count == 0 or updated == original:
-                continue
-            try:
-                with open(conf, "w", encoding="utf-8") as f:
-                    f.write(updated)
-            except OSError as e:
-                print(f"[wallpaper] could not update {os.path.basename(conf)}: {e}")
+        try:
+            os.makedirs(os.path.dirname(WALLPAPER_POINTER), exist_ok=True)
+            # os.symlink cannot replace an existing link, so aim at a temporary
+            # name and rename over it — atomic, and never leaves the pointer
+            # missing if this is interrupted.
+            staging = WALLPAPER_POINTER + ".new"
+            if os.path.lexists(staging):
+                os.remove(staging)
+            os.symlink(path, staging)
+            os.replace(staging, WALLPAPER_POINTER)
+        except OSError as e:
+            print(f"[wallpaper] could not update {WALLPAPER_POINTER}: {e}")

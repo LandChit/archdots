@@ -171,11 +171,20 @@ python -m venv ~/.config/fabric_shell/.venv
 mkdir -p ~/Pictures/wallpapers && cp ~/archdots/wallpapers/* ~/Pictures/wallpapers/
 wal -i ~/Pictures/wallpapers/<pick-one>
 cp ~/.cache/wal/colors-fabric.css ~/.config/fabric_shell/css/
+
+# 4. the desktop and the lock screen read this symlink, not a path in a config
+mkdir -p ~/.local/state/archdots
+ln -sfn ~/Pictures/wallpapers/<pick-one> ~/.local/state/archdots/wallpaper
+
+# 5. only on a machine with two GPUs — put the integrated one first, so the
+#    desktop doesn't render on the discrete card. uwsm sources this directory.
+mkdir -p ~/.config/uwsm/env-hyprland.d
+echo 'export AQ_DRM_DEVICES="/dev/dri/card1:/dev/dri/card0"' \
+  > ~/.config/uwsm/env-hyprland.d/10-gpu.sh
 ```
 
-You'll also need to edit `.config/hypr/hyprpaper.conf` and
-`.config/uwsm/env-hyprland` for your own monitors and graphics card, and apply
-the settings in
+You'll also want a monitor layout in `.config/hypr/config/custom/monitor.lua`,
+and the settings in
 [DEVELOPMENT.md](DEVELOPMENT.md#settings-that-cannot-be-stowed) that can't be
 stowed.
 

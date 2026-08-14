@@ -270,10 +270,11 @@ GTKPY
 if [ -n "${nested:-}" ] && command -v grim >/dev/null; then
     echo "  --- live re-theme test ---"
     before="$(grep -E '^\s+--background:' "$HOME/.config/fabric_shell/css/colors-fabric.css" | tr -d ' ')"
-    # install.sh's $WALLPAPER is not in scope here; hyprpaper.conf records what
-    # it actually chose, so read the current one from there and pick a different
-    # file. Comparing a palette against itself proves nothing.
-    current="$(awk -F'= *' '/^\s*path/{print $2}' "$HOME/.config/hypr/hyprpaper.conf" | head -1)"
+    # install.sh's $WALLPAPER is not in scope here. The wallpaper pointer holds
+    # what it actually chose — hyprpaper.conf names the pointer, not a picture —
+    # so resolve that and pick a different file. Comparing a palette against
+    # itself proves nothing.
+    current="$(readlink -f "$HOME/.local/state/archdots/wallpaper" 2>/dev/null)"
     other="$(find "$HOME/Pictures/wallpapers" -maxdepth 1 -type f ! -name "$(basename "$current")" | head -1)"
     printf "    %-28s %s\n" "palette before:" "$before"
     printf "    %-28s %s\n" "switching to:" "$(basename "$other")"

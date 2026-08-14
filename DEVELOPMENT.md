@@ -200,8 +200,9 @@ palette when `~/.cache/wal/` is missing, so a fresh install works before the
 first `wal` run.
 
 The wallpaper picker (`SUPER` + `W`) sets the wallpaper on every monitor, runs
-pywal, copies the palette into `fabric_shell/css/`, and rewrites the paths in
-`hyprpaper.conf` so the choice survives a reboot.
+pywal, copies the palette into `fabric_shell/css/`, and re-points
+`~/.local/state/archdots/wallpaper` so the choice survives a reboot
+([below](#the-wallpaper-is-a-pointer)).
 
 **The shell recolours in place** because every window watches that palette file
 through `common._watch_palette()`. One catch worth knowing: `monitor_file()`
@@ -228,6 +229,50 @@ config/custom/monitor.lua   loaded after, wins
 documents what belongs there. What usually differs: monitor layout and the
 workspace rules that name monitors, GPU env vars, `hl.device` blocks (they key
 off exact device names), and hardware-bound autostarts like `solaar`.
+
+### Programs that are not Hyprland
+
+Three settings live outside Lua, so `config/custom/` cannot hold them. Each one
+uses the escape hatch its own program provides, and in every case the tracked
+file stays machine-neutral and `install.sh` never edits it:
+
+| Setting | Committed default | This machine |
+|---|---|---|
+| `AQ_DRM_DEVICES` (which GPU renders) | `uwsm/env-hyprland` — comments only | `uwsm/env-hyprland.d/10-gpu.sh` |
+| Desktop wallpaper | `hypr/hyprpaper.conf` — names the pointer | `~/.local/state/archdots/wallpaper` |
+| Lock screen wallpaper | `hypr/hyprlock.conf` — names the same pointer | the same symlink |
+
+**uwsm sources a directory.** `/usr/lib/uwsm/prepare-env.sh` calls `source_file`
+on `env-hyprland` and then `source_dir` on `env-hyprland.d`, sourcing every file
+in it in `ls` order. That is a supported drop-in, not a trick: a missing
+directory is skipped silently, so a machine that needs no GPU pin has no file.
+`install.sh` writes `10-gpu.sh` there only when it finds more than one GPU, and
+*removes* a stale one when it finds a single GPU — a pin left over from other
+hardware names a card that may no longer exist.
+
+Do not put a `README.md` in that directory the way `config/custom/` has one:
+`source_dir` sources everything, and shell would choke on the markdown.
+
+### The wallpaper is a pointer
+
+`hyprpaper.conf` and `hyprlock.conf` name `~/.local/state/archdots/wallpaper`,
+a symlink, rather than a picture. `install.sh` creates it and the picker
+re-points it, so choosing a wallpaper touches nothing tracked — before this,
+every wallpaper change rewrote a `path =` line in two stowed files and turned up
+in `git status`.
+
+Both programs also degrade well if the pointer is missing: hyprpaper logs
+`Failed to resolve path` and carries on, and hyprlock falls back to the `color =`
+in its `background` block. That is why this is a pointer rather than a
+`source =` of a gitignored fragment — **hyprlang treats a missing `source` path
+as a config error**, and it validates the path before expanding it, so a glob
+over an empty directory fails too (tested with hyprpaper 0.8.4 / hyprlang
+0.6.8). A fresh clone that had not run `install.sh` yet would have started with
+a broken config.
+
+`install.sh` only ever creates a *missing* pointer. An existing one is the
+choice made since the install, and an update quietly resetting it to whatever
+sorts first would undo it.
 
 Two things that are not obvious, both found by testing:
 
@@ -367,10 +412,12 @@ flatpak list --app --columns=application
 - **GTK transparency is not uniform.** The catppuccin theme was hand-modified to
   be transparent, so it is definitely broken in places.
 - **Dolphin's list view is broken** under Kvantum `KvGlass`. Use icon view.
-- **`uwsm/env-hyprland` pins specific DRM device paths** to force Hyprland onto
-  the iGPU. It is not Lua, so the per-machine override mechanism does not cover
-  it — `install.sh` detects and rewrites it instead, which leaves the tracked
-  file dirty. Same for `hyprpaper.conf` and `hyprlock.conf`.
+- **The GPU pin names DRM device paths, and those are not stable.**
+  `env-hyprland.d/10-gpu.sh` forces Hyprland onto the iGPU by listing
+  `/dev/dri/cardN` in order, and card numbering can change between boots. If a
+  session ever comes up on the wrong GPU, re-run `install.sh` or replace the
+  paths with stable ones from `/dev/dri/by-path/`
+  ([above](#programs-that-are-not-hyprland)).
 - **`config/monitor.lua` keeps one laptop's layout as the default**, which is
   wrong elsewhere until overridden in `config/custom/`. `install.sh` writes a
   starter override from the detected outputs, but the positions in it are a
@@ -486,11 +533,14 @@ Three things are detected, shown for review, and only then written:
 
 | What | Detected from | Written to |
 |---|---|---|
-| GPU order (`AQ_DRM_DEVICES`) | `/sys/class/drm/card*/device/vendor` — anything that is not `0x10de` goes first, so Hyprland lands on the iGPU | `.config/uwsm/env-hyprland` |
+| GPU order (`AQ_DRM_DEVICES`) | `/sys/class/drm/card*/device/vendor` — anything that is not `0x10de` goes first, so Hyprland lands on the iGPU | `.config/uwsm/env-hyprland.d/10-gpu.sh` |
 | Monitor layout | `hyprctl monitors -j` when Hyprland is up, otherwise the connected connectors under `/sys/class/drm/card*-*` — the sysfs names are the same names Hyprland uses | `config/custom/monitor.lua` |
-| Wallpaper paths | the first file in `~/Pictures/wallpapers` | `hyprpaper.conf`, `hyprlock.conf` |
+| Wallpaper | the first file in `~/Pictures/wallpapers`, and only when no pointer exists yet | `~/.local/state/archdots/wallpaper` |
 
-`hyprpaper.conf` is written with an **empty** `monitor =`, which means *every
+None of those are tracked files, so a finished install leaves `git status` clean
+([above](#programs-that-are-not-hyprland)).
+
+`hyprpaper.conf` ships with an **empty** `monitor =`, which means *every
 output*. Naming the detected monitors instead reads better and is a trap: the
 moment an output is named differently than it was at install time — a dock, a
 different cable, a nested session — hyprpaper matches nothing and paints
@@ -510,12 +560,12 @@ Two traps found while writing it:
   rewrites with `>` are safe — redirection follows the link and truncates the
   target.
 
-Only `config/custom/monitor.lua` is gitignored. `env-hyprland`, `hyprpaper.conf`
-and `hyprlock.conf` are **tracked**, so writing this machine's values into them
-shows up as a dirty worktree. That is expected rather than a bug — it is the
-same thing the wallpaper picker does to `hyprpaper.conf` every time you change
-wallpaper — and the script says so in its closing summary. `git checkout --` on
-the file undoes it.
+Everything the script generates is gitignored or outside the repo altogether —
+`config/custom/monitor.lua`, `env-hyprland.d/10-gpu.sh`, the wallpaper pointer —
+so an install leaves the worktree clean and nothing detected here can be pushed
+onto anybody else. The one tracked file still written is
+`fabric_shell/css/colors-fabric.css`, the pywal palette, which the picker
+rewrites too.
 
 The generated layout places monitors left to right at 1920 intervals, which is a
 guess. It is `luac -p`-checked when luac is present, since a broken override is
@@ -576,10 +626,10 @@ and rewriting them on every update would keep asking about hardware that has not
 changed. `./install.sh install --skip-packages` is the way to redo them after a
 hardware change.
 
-**The stash is the whole trick.** `install.sh` edits *tracked* files on purpose —
-`env-hyprland`, `hyprpaper.conf`, `hyprlock.conf`, `colors-fabric.css` — so a
-dirty tree is the normal state of an installed clone, and `git pull --ff-only`
-would refuse to run in it. `update_repo` stashes with `-u`, pulls, then pops. If
+**The stash is the whole trick.** The machine-specific values are out of the
+repo now, but `colors-fabric.css` is still a tracked file that pywal rewrites
+on every wallpaper change, so an installed clone can be dirty for reasons its
+owner never chose — and `git pull --ff-only` refuses to run in a dirty tree. `update_repo` stashes with `-u`, pulls, then pops. If
 the pop conflicts the stash is **kept**, the run continues, and the summary says
 where to find it; losing a machine's GPU pin to a silent `stash drop` would be
 much worse than a merge conflict.
@@ -774,6 +824,7 @@ Bugs this harness caught that reading the script did not:
 - [x] Rewrite the install script — `install.sh` ([above](#the-install-script))
 - [x] Detect the CPU temperature sensor instead of assuming `thermal_zone0`
 - [x] Test the installer in a container ([above](#testing-it))
-- [ ] Separate the remaining machine-specific bits (per-program configs) —
-      `uwsm/env-hyprland`, `hyprpaper.conf` and `hyprlock.conf` are still
-      tracked files the installer edits in place
+- [x] Separate the remaining machine-specific bits (per-program configs) —
+      `uwsm/env-hyprland` keeps its values in `env-hyprland.d/`, and
+      `hyprpaper.conf` / `hyprlock.conf` name a wallpaper pointer instead of a
+      picture ([above](#programs-that-are-not-hyprland))

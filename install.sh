@@ -31,6 +31,11 @@ REPO_URL_DEFAULT="https://github.com/LandChit/archdots"
 REPO_DIR_DEFAULT="$HOME/archdots"
 WALLPAPER_DIR="$HOME/Pictures/wallpapers"
 
+# The wallpaper this machine is using, as a symlink. hyprpaper.conf and
+# hyprlock.conf point at it instead of at a picture, which is what keeps both of
+# those files identical on every machine and out of `git status`.
+WALLPAPER_POINTER="$HOME/.local/state/archdots/wallpaper"
+
 # The SDDM theme is pinned. Its config schema changes between releases, and
 # .themes_sddm/ holds a default.conf written against this one.
 SDDM_THEME_VERSION="1.3.5"
@@ -887,14 +892,44 @@ stage_wallpapers() {
         [[ -f "$candidate" ]] && { WALLPAPER="$candidate"; break; }
     done
     shopt -u nullglob
-    [[ -n "$WALLPAPER" ]] || warn "no wallpaper found — the desktop starts on its fallback palette"
+    if [[ -z "$WALLPAPER" ]]; then
+        warn "no wallpaper found — the desktop starts on its fallback palette"
+        return 0
+    fi
+
+    # ── the pointer ─────────────────────────────────────────────────────────
+    # hyprpaper.conf and hyprlock.conf both name $WALLPAPER_POINTER rather than
+    # a picture, so neither tracked file has to be edited per machine — or per
+    # wallpaper. This symlink is the machine's actual choice, and the picker
+    # (SUPER + W) re-points it whenever you change wallpaper.
+    #
+    # An existing pointer is never repointed: on an update it is the choice made
+    # since the install, and quietly resetting it to whatever sorts first would
+    # undo it. Only a missing or dangling one is (re)made.
+    mkdir -p "$(dirname "$WALLPAPER_POINTER")"
+    if [[ -e "$WALLPAPER_POINTER" ]]; then
+        WALLPAPER="$(readlink -f "$WALLPAPER_POINTER")"
+        skip "wallpaper already set: $(basename "$WALLPAPER")"
+    else
+        # -e is false for a dangling symlink, so this covers "the file it named
+        # is gone" as well as "there is no pointer".
+        ln -sfn "$WALLPAPER" "$WALLPAPER_POINTER"
+        ok "$WALLPAPER_POINTER → $(basename "$WALLPAPER")"
+    fi
 }
 
 # ── machine-specific config ─────────────────────────────────────────────────
 #
-# Everything below differs per machine. The Lua bits go in config/custom/, which
-# is gitignored and loaded after the defaults. The rest are tracked files that
-# have to be edited in place — those are listed in the summary at the end.
+# Everything below differs per machine, and none of it is written into a tracked
+# file. Each program is given its own escape hatch instead:
+#
+#   Hyprland   config/custom/*.lua, loaded after the defaults (gitignored)
+#   uwsm       env-hyprland.d/, sourced after env-hyprland  (gitignored)
+#   hyprpaper  ~/.local/state/archdots/wallpaper, a symlink the tracked
+#   hyprlock   config points at, so neither config names a picture
+#
+# The repo therefore stays clean after an install, and nothing here can push one
+# machine's hardware onto another.
 
 stage_machine() {
     if (( ! DO_MACHINE )); then
@@ -925,50 +960,52 @@ stage_machine() {
 
     say "GPUs: ${#drm_ordered[@]} (${drm_ordered[*]:-none})"
 
-    # This file is *tracked*, and it ships with the author's card paths in it.
-    # Leaving it alone is therefore not a neutral choice: it hands every other
-    # machine a pin to devices that do not exist there, and aquamarine responds
-    # by failing to create a DRI screen, falling back to kms_swrast and then
-    # dying on DRM_IOCTL_MODE_CREATE_DUMB. So it is always rewritten to describe
-    # *this* machine, even when the answer is "no pin needed".
-    local env_file="$HOME/.config/uwsm/env-hyprland" env_body drm_list=""
-    if (( ${#drm_ordered[@]} > 1 )); then
+    # uwsm sources every file in env-hyprland.d/ after env-hyprland itself
+    # (`source_dir` in /usr/lib/uwsm/prepare-env.sh), which is what makes this
+    # separable at all: the tracked file keeps no value, and the pin lives in a
+    # gitignored drop-in beside it. A missing directory is not an error there,
+    # so a machine that needs no pin simply has no drop-in.
+    local env_dir="$HOME/.config/uwsm/env-hyprland.d"
+    local env_file="$env_dir/10-gpu.sh" env_body drm_list=""
+
+    if (( ${#drm_ordered[@]} <= 1 )); then
+        # One GPU (or none, as in a container): nothing to choose between, and a
+        # pin can only be wrong — it names a card that may be absent after a
+        # reboot. Any drop-in from an earlier run on different hardware has to
+        # go, or it outlives the machine it described.
+        if [[ -f "$env_file" ]]; then
+            if confirm "This machine has ${#drm_ordered[@]} GPU, but $env_file pins one from an earlier run.
+
+With a single GPU there is nothing to choose between, and a stale pin can name a card that no longer exists. Remove it?" y; then
+                rm -f "$env_file"
+                ok "removed the stale GPU pin"
+            else
+                warn "left in place — check it names a card this machine has"
+            fi
+        else
+            skip "no GPU pin needed (${#drm_ordered[@]} DRM device(s))"
+        fi
+    else
         drm_list="$(IFS=:; printf '%s' "${drm_ordered[*]}")"
         env_body="# Which GPU Hyprland renders on, in order of preference.
-# Written by install.sh for this machine — these paths are not portable, and
-# card numbering can change between boots. If the session ever comes up on the
-# wrong GPU, re-run install.sh or use a stable name from /dev/dri/by-path/.
+#
+# Written by install.sh for this machine, and sourced by uwsm after
+# env-hyprland. Gitignored: these paths are not portable, and card numbering can
+# change between boots. If the session ever comes up on the wrong GPU, re-run
+# install.sh or name a stable path from /dev/dri/by-path/ instead.
 export AQ_DRM_DEVICES=\"$drm_list\""
-    else
-        # One GPU (or none, as in a container): there is nothing to choose
-        # between, and a pin can only be wrong. Ship the file with the export
-        # commented out rather than carrying another machine's value.
-        env_body="# Which GPU Hyprland renders on. Written by install.sh.
-#
-# This machine has ${#drm_ordered[@]} DRM device(s), so there is nothing to pick
-# between and the variable is deliberately left unset — pinning a single card
-# only risks naming one that is absent after a reboot or on other hardware.
-#
-# On a multi-GPU machine install.sh writes the real ordering here, integrated
-# GPU first, so the desktop does not render on a discrete card.
-#
-# export AQ_DRM_DEVICES=\"/dev/dri/card1:/dev/dri/card0\""
-    fi
 
-    if [[ -f "$env_file" ]] && [[ "$(cat "$env_file")" == "$env_body" ]]; then
-        skip "env-hyprland already matches this machine"
-    elif review_confirm "$env_file" "$env_body"; then
-        # > follows the symlink, so this edits the tracked file in the repo.
-        printf '%s\n' "$env_body" > "$env_file"
-        if (( ${#drm_ordered[@]} > 1 )); then
+        if [[ -f "$env_file" ]] && [[ "$(cat "$env_file")" == "$env_body" ]]; then
+            skip "GPU pin already matches this machine"
+        elif review_confirm "$env_file" "$env_body"; then
+            mkdir -p "$env_dir"
+            printf '%s\n' "$env_body" > "$env_file"
             ok "AQ_DRM_DEVICES=$drm_list"
         else
-            ok "AQ_DRM_DEVICES left unset (${#drm_ordered[@]} GPU detected)"
+            skip "GPU pin"
+            warn "Hyprland may render on the discrete card"
+            note "no GPU pin written; write $env_file by hand if the session picks the wrong card"
         fi
-        note "edited tracked file .config/uwsm/env-hyprland (GPU selection)"
-    else
-        warn "env-hyprland left as-is — it still pins another machine's cards"
-        note "env-hyprland pins GPU paths that may not exist here; edit it by hand"
     fi
 
     # ── monitors ────────────────────────────────────────────────────────────
@@ -1084,45 +1121,6 @@ hl.workspace_rule({ workspace = \"1\", monitor = \"$primary\", default = true, p
         skip "monitor.lua"
     fi
 
-    # ── wallpaper paths ─────────────────────────────────────────────────────
-    # hyprpaper.conf and hyprlock.conf are tracked files carrying one machine's
-    # monitor names and one user's home directory.
-    [[ -n "$WALLPAPER" ]] || return 0
-
-    local hyprpaper="$HOME/.config/hypr/hyprpaper.conf"
-    # An empty monitor means "every output" to hyprpaper — the same catch-all
-    # the picker uses when it sends `hyprctl hyprpaper wallpaper ",path"`.
-    # Naming monitors here instead looks tidier but silently shows nothing the
-    # moment an output is named differently than it was at install time: a dock,
-    # a new cable, a nested session. A black desktop with no error is the result.
-    local paper_body="# Written by install.sh.
-# The empty monitor is deliberate: it means every output, so this keeps working
-# when the monitors change. The wallpaper picker (SUPER + W) rewrites the path
-# line when you pick a new one.
-splash = false
-
-wallpaper {
-    monitor =
-    path = $WALLPAPER
-}"
-    if review_confirm "$hyprpaper" "$paper_body"; then
-        printf '%s\n' "$paper_body" > "$hyprpaper"
-        ok "hyprpaper.conf points at $WALLPAPER"
-        note "edited tracked file .config/hypr/hyprpaper.conf (monitors + wallpaper)"
-    else
-        skip "hyprpaper.conf"
-    fi
-
-    local hyprlock="$HOME/.config/hypr/hyprlock.conf"
-    if [[ -f "$hyprlock" ]] && grep -q '^[[:space:]]*path[[:space:]]*=' "$hyprlock"; then
-        # --follow-symlinks, or sed replaces the stow symlink with a regular
-        # file and the repo copy quietly stops being the source.
-        sed -i --follow-symlinks \
-            "s|^\([[:space:]]*path[[:space:]]*=[[:space:]]*\).*|\1$WALLPAPER|" \
-            "$hyprlock"
-        ok "hyprlock.conf background set"
-        note "edited tracked file .config/hypr/hyprlock.conf (wallpaper path)"
-    fi
 }
 
 # ── first pywal run ─────────────────────────────────────────────────────────
@@ -1316,9 +1314,11 @@ update_repo() {
     local before after dirty stashed=0 count
     before="$(git -C "$REPO_ROOT" rev-parse --short HEAD)"
 
-    # install.sh edits tracked files on purpose — env-hyprland, hyprpaper.conf,
-    # the pywal CSS — so a dirty tree is the normal case here, not the exception.
-    # Stash it across the pull and put it back afterwards.
+    # The machine-specific values live outside the repo now, but the pywal
+    # palette is still copied into the tracked colors-fabric.css, so an
+    # installed clone can be dirty for reasons the user did not choose. Stash
+    # whatever is there across the pull and put it back afterwards; git would
+    # otherwise refuse to fast-forward over it.
     dirty="$(git -C "$REPO_ROOT" status --porcelain)"
     if [[ -n "$dirty" ]]; then
         say "local changes:"
@@ -1466,15 +1466,15 @@ run_install() {
 
     cat <<EOF
 
-    ${B}Machine-specific edits${R}
-    Some of the files above are tracked, so this machine's values now show up as
-    repo changes. That is expected — they are the values this machine needs.
-      see them:      git -C $REPO_ROOT status
-      discard them:  git -C $REPO_ROOT checkout -- <file>
-
-    Anything else that differs on this machine belongs in
-    ~/.config/hypr/config/custom/, which is gitignored and loaded last.
-    See DEVELOPMENT.md#per-machine-config.
+    ${B}What this machine got, and where it lives${R}
+    None of it is in a tracked file, so \`git status\` stays clean and none of
+    it can follow you onto another machine.
+      monitors, input, autorun   ~/.config/hypr/config/custom/*.lua
+      GPU order                  ~/.config/uwsm/env-hyprland.d/10-gpu.sh
+      wallpaper                  $WALLPAPER_POINTER
+    Anything else that differs here belongs in config/custom/ too — it is loaded
+    after the defaults, so whatever it sets wins. See
+    DEVELOPMENT.md#per-machine-config.
 
     ${B}Later${R}
       $REPO_ROOT/install.sh update

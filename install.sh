@@ -969,15 +969,42 @@ ensure_paru() {
         bash -c "cd '$tmp/paru' && makepkg -s --noconfirm" \
         || { rm -rf "$tmp"; die "paru failed to build — see the log."; }
 
-    local built
-    built="$(find "$tmp/paru" -maxdepth 1 -name '*.pkg.tar*' | head -1)"
-    [[ -n "$built" ]] || { rm -rf "$tmp"; die "paru built no package — see the log."; }
-    run_logged "Installing paru" "${SUDO[@]}" pacman -U --noconfirm "$built" \
+    local built=()
+    mapfile -t built < <(built_packages "$tmp/paru")
+    (( ${#built[@]} )) || { rm -rf "$tmp"; die "paru built no package — see the log."; }
+    run_logged "Installing paru" "${SUDO[@]}" pacman -U --noconfirm "${built[@]}" \
         || { rm -rf "$tmp"; die "could not install the paru package — see the log."; }
 
     rm -rf "$tmp"
     paru --version &>/dev/null || die "paru still will not run after a source build."
     ok "built from source and installed"
+}
+
+# The packages a finished build actually produced, minus the debug ones.
+#
+# Arch builds with OPTIONS=(debug) by default, so `makepkg` leaves *two* files
+# behind: paru-2.1.0-2-x86_64.pkg.tar.zst and paru-debug-2.1.0-2-…, the second
+# being nothing but detached debug symbols. Installing that one succeeds, looks
+# entirely convincing in pacman's output — "reinstalling paru-debug" — and
+# leaves no paru on the system. Picking the first file a glob happens to return
+# is therefore a coin flip, and it came up wrong.
+#
+# makepkg --packagelist is the authority on what it built, so ask it, and keep
+# the glob only for the case where that fails.
+built_packages() {
+    local dir="$1" list=()
+    mapfile -t list < <(
+        cd "$dir" 2>/dev/null && makepkg --packagelist 2>/dev/null | grep -v -- '-debug-'
+    )
+    if (( ! ${#list[@]} )); then
+        mapfile -t list < <(
+            find "$dir" -maxdepth 1 -name '*.pkg.tar*' ! -name '*-debug-*' | sort
+        )
+    fi
+    local pkg
+    for pkg in ${list[@]+"${list[@]}"}; do
+        [[ -f "$pkg" ]] && printf '%s\n' "$pkg"
+    done
 }
 
 # The depends and makedepends of a PKGBUILD, with version constraints trimmed:
@@ -1171,10 +1198,10 @@ install_sddm_theme() {
             return 0
         }
 
-        local built
-        built="$(find "$tmp/theme" -maxdepth 1 -name '*.pkg.tar*' | head -1)"
-        if [[ -z "$built" ]] || ! run_logged "Installing the SDDM theme" \
-            "${SUDO[@]}" pacman -U --noconfirm "$built"; then
+        local built=()
+        mapfile -t built < <(built_packages "$tmp/theme")
+        if (( ! ${#built[@]} )) || ! run_logged "Installing the SDDM theme" \
+            "${SUDO[@]}" pacman -U --noconfirm "${built[@]}"; then
             rm -rf "$tmp"
             warn "could not install the built theme package"
             note "SDDM theme not installed; retry: paru -S sddm-silent-theme"

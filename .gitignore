@@ -41,3 +41,5 @@ __pycache__/
 
 # Dont include generated files in testing
 archdots_docker/artifacts
+
+.zsh_custom

@@ -470,11 +470,11 @@ ASKPASS_FLAG=""
 
 # Which terminal to draw on, by name rather than by /dev/tty.
 #
-# This matters more than it looks. The children that need a password run under
-# setsid — that is what makes their sudo use the helper at all — and setsid
-# takes the *controlling* terminal away, so /dev/tty inside the helper is "No
-# such device or address" and there is nowhere to put the box. The device itself
-# is still perfectly openable by path, so the path is what gets passed down.
+# /dev/tty is by definition the *controlling* terminal, and anything that has
+# been detached from one — a daemon, a setsid child, a build system being
+# thorough — cannot open it at all: "No such device or address", and there is
+# nowhere to put the box. The device itself is still perfectly openable by path,
+# so the path is what gets passed down.
 current_tty() {
     local t fd
     t="$(tty 2>/dev/null)" && [[ "$t" == /dev/* ]] && { printf '%s' "$t"; return 0; }
@@ -502,10 +502,11 @@ sudo_askpass_setup() {
 # Written by archdots install.sh, and run by sudo instead of prompting on the
 # terminal.
 #
-# $ARCHDOTS_TTY, not /dev/tty: whoever called sudo here has been through setsid
-# and no longer has a controlling terminal, so /dev/tty cannot be opened at all.
-# If even that is unusable, exit rather than hand sudo an empty password — three
-# silent retries and a "Sorry, try again" tell nobody anything.
+# $ARCHDOTS_TTY, not /dev/tty: whoever called sudo may have no controlling
+# terminal, and /dev/tty is exactly that terminal — it cannot be opened from a
+# detached process. If even the named device is unusable, exit rather than hand
+# sudo an empty password: three silent retries and a "Sorry, try again" tell
+# nobody anything.
 T="${ARCHDOTS_TTY:-/dev/tty}"
 if [[ ! -r "$T" || ! -w "$T" ]]; then
     printf 'archdots: no terminal to ask for a password on (%s)\n' "$T" >&2
@@ -528,19 +529,44 @@ printf '%s\n' "$pw"
 HELPER
     chmod 700 "$ASKPASS_DIR/askpass"
 
+    # A stand-in for sudo, first on PATH, for everything this script starts.
+    #
+    # makepkg and paru call `sudo` themselves and there is no -A to add to
+    # those calls — and makepkg's is `sudo -k`, which discards the cached
+    # credentials so that every single pacman call needs a password typed
+    # again. The shim drops the -k, so the session we already authenticated
+    # stays usable, and adds -A, so a password that genuinely is needed is
+    # asked for in a dialog rather than on a terminal the progress bar owns.
+    #
+    # Only leading options are rewritten: everything from the first non-option
+    # onwards is the command being run and is passed through untouched.
+    mkdir -p "$ASKPASS_DIR/bin"
+    cat > "$ASKPASS_DIR/bin/sudo" <<HELPER
+#!/usr/bin/env bash
+# Written by archdots install.sh. See sudo_askpass_setup.
+real=$(command -v sudo)
+opts=(); saw_a=0
+while [[ \$# -gt 0 ]]; do
+    case "\$1" in
+        -k|--reset-timestamp) shift ;;
+        -A|--askpass)         saw_a=1; opts+=("\$1"); shift ;;
+        -*)                   opts+=("\$1"); shift ;;
+        *)                    break ;;
+    esac
+done
+(( saw_a )) || opts+=(-A)
+exec "\$real" \${opts[@]+"\${opts[@]}"} "\$@"
+HELPER
+    chmod 700 "$ASKPASS_DIR/bin/sudo"
+    export PATH="$ASKPASS_DIR/bin:$PATH"
+
     export SUDO_ASKPASS="$ASKPASS_DIR/askpass"
     export ARCHDOTS_ASKPASS_FLAG="$ASKPASS_FLAG"
     export ARCHDOTS_BACKTITLE="$BACKTITLE"
     export ARCHDOTS_TTY="$term"
-    SUDO=(sudo -A)
-    # makepkg and paru call plain `sudo` themselves, with no -A to add. Denying
-    # them a controlling terminal is what sends *those* prompts to the helper
-    # too: with no tty to write to, sudo falls back to SUDO_ASKPASS. -w so the
-    # exit status is the command's own even if setsid decides to fork first.
-    CHILD_WRAP=(setsid -w)
+    # The shim adds -A itself, and our own calls go through it too.
+    SUDO=(sudo)
 }
-
-CHILD_WRAP=()
 
 # Ask once, up front, before the bar goes up.
 sudo_authenticate() {
@@ -917,11 +943,58 @@ ensure_paru() {
     local tmp
     tmp="$(mktemp -d)"
     run_logged "Fetching paru" git clone --depth 1 https://aur.archlinux.org/paru.git "$tmp/paru"
-    run_logged "Building paru from source" ${CHILD_WRAP[@]+"${CHILD_WRAP[@]}"} \
-        bash -c "cd '$tmp/paru' && makepkg -si --noconfirm"
+
+    # Install the build dependencies here rather than letting makepkg do it.
+    #
+    # makepkg escalates with `sudo -k` (see run_pacman in /usr/bin/makepkg), and
+    # -k throws away the cached credentials on purpose: every pacman call it
+    # makes demands a password, however recently you typed one. That is fine
+    # when you are watching a terminal and fatal when a progress bar owns the
+    # screen — the ask goes somewhere invisible, sudo fails, and makepkg reports
+    # "Could not resolve all dependencies", which is a sentence about
+    # dependencies describing a problem about passwords.
+    #
+    # So makepkg is given nothing to escalate for. The dependencies go in first
+    # through our own sudo, and the built package is installed by us afterwards.
+    # -s stays as a safety net for any dependency this misses.
+    local deps=()
+    mapfile -t deps < <(pkgbuild_deps "$tmp/paru")
+    if (( ${#deps[@]} )); then
+        say "paru needs: ${deps[*]}"
+        pac_install "paru's build dependencies" "${deps[@]}" \
+            || warn "could not pre-install every dependency — makepkg will try"
+    fi
+
+    run_logged "Building paru from source" \
+        bash -c "cd '$tmp/paru' && makepkg -s --noconfirm" \
+        || { rm -rf "$tmp"; die "paru failed to build — see the log."; }
+
+    local built
+    built="$(find "$tmp/paru" -maxdepth 1 -name '*.pkg.tar*' | head -1)"
+    [[ -n "$built" ]] || { rm -rf "$tmp"; die "paru built no package — see the log."; }
+    run_logged "Installing paru" "${SUDO[@]}" pacman -U --noconfirm "$built" \
+        || { rm -rf "$tmp"; die "could not install the paru package — see the log."; }
+
     rm -rf "$tmp"
     paru --version &>/dev/null || die "paru still will not run after a source build."
     ok "built from source and installed"
+}
+
+# The depends and makedepends of a PKGBUILD, with version constraints trimmed:
+# pacman wants `rust`, not `rust>=1.70`.
+pkgbuild_deps() {
+    local dir="$1" dep
+    ( cd "$dir" && bash -c 'source ./PKGBUILD 2>/dev/null
+        printf "%s\n" ${depends[@]+"${depends[@]}"} ${makedepends[@]+"${makedepends[@]}"}' ) 2>/dev/null \
+    | while read -r dep; do
+        dep="${dep%%[<>=]*}"
+        # Soname dependencies (libalpm.so=15-64) are not package names. pacman
+        # would abort the whole transaction on one unknown target, taking the
+        # real dependencies down with it, and whatever provides the soname is
+        # installed already if the PKGBUILD builds at all.
+        [[ "$dep" == *.so ]] && continue
+        [[ -n "$dep" ]] && printf '%s\n' "$dep"
+    done | sort -u
 }
 
 stage_packages() {
@@ -991,8 +1064,7 @@ paru is built from source, which takes a few minutes." y; then
         phase 54 64 "AUR packages"
         step "AUR packages"
         # One failed build should not lose the rest of the install.
-        run_logged "AUR packages" ${CHILD_WRAP[@]+"${CHILD_WRAP[@]}"} \
-            paru -S --needed --noconfirm "${PKG_AUR[@]}" || {
+        run_logged "AUR packages" paru -S --needed --noconfirm "${PKG_AUR[@]}" || {
             warn "one or more AUR builds failed — continuing"
             note "some AUR packages failed to build; retry: paru -S ${PKG_AUR[*]}"
         }
@@ -1078,13 +1150,10 @@ install_sddm_theme() {
         # through paru first. Read them from the PKGBUILD rather than hardcoding
         # them, so a version bump cannot silently drift from this list.
         local deps=()
-        mapfile -t deps < <(
-            cd "$tmp/theme" && bash -c 'source ./PKGBUILD; printf "%s\n" "${depends[@]}"' 2>/dev/null
-        )
+        mapfile -t deps < <(pkgbuild_deps "$tmp/theme")
         if (( ${#deps[@]} )); then
             say "theme dependencies: ${deps[*]}"
-            run_logged "Theme dependencies" ${CHILD_WRAP[@]+"${CHILD_WRAP[@]}"} \
-                paru -S --needed --noconfirm "${deps[@]}" || {
+            run_logged "Theme dependencies" paru -S --needed --noconfirm "${deps[@]}" || {
                 rm -rf "$tmp"
                 warn "could not install the theme's dependencies"
                 note "SDDM theme skipped; retry: paru -S sddm-silent-theme"
@@ -1092,13 +1161,25 @@ install_sddm_theme() {
             }
         fi
 
-        run_logged "Building the SDDM theme" ${CHILD_WRAP[@]+"${CHILD_WRAP[@]}"} \
-            bash -c "cd '$tmp/theme' && makepkg -si --noconfirm" || {
+        # Built, then installed by us — never `makepkg -si`. See ensure_paru for
+        # why makepkg is not allowed to reach for sudo.
+        run_logged "Building the SDDM theme" \
+            bash -c "cd '$tmp/theme' && makepkg -s --noconfirm" || {
             rm -rf "$tmp"
             warn "theme build failed — the desktop still works, the login screen is plain"
             note "SDDM theme failed to build; retry: paru -S sddm-silent-theme"
             return 0
         }
+
+        local built
+        built="$(find "$tmp/theme" -maxdepth 1 -name '*.pkg.tar*' | head -1)"
+        if [[ -z "$built" ]] || ! run_logged "Installing the SDDM theme" \
+            "${SUDO[@]}" pacman -U --noconfirm "$built"; then
+            rm -rf "$tmp"
+            warn "could not install the built theme package"
+            note "SDDM theme not installed; retry: paru -S sddm-silent-theme"
+            return 0
+        fi
         rm -rf "$tmp"
         ok "installed"
     fi

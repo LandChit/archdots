@@ -544,29 +544,65 @@ does, `sudo_askpass_setup` has pointed `SUDO_ASKPASS` at a helper that
 scratch, because a resumed newt does not repaint its own frame — it would carry
 on writing text into a box that is no longer there.
 
-The script's own `sudo` calls go through `"${SUDO[@]}"`, which becomes
-`sudo -A` once the helper exists. makepkg and paru call plain `sudo` themselves
-and there is no `-A` to add, so those run under `setsid`: with no controlling
-terminal, sudo falls back to `SUDO_ASKPASS` on its own. In `--no-gui` mode
-neither applies — `SUDO` stays `(sudo)` and it prompts on the terminal, which is
-exactly where you are looking.
+The helper opens `$ARCHDOTS_TTY` rather than `/dev/tty`, resolved once in the
+parent by `current_tty()` (`tty`, else `/proc/$$/fd/{1,2}`, else `ps -o tty=`,
+which between them cover being piped from curl). `/dev/tty` is by definition the
+*controlling* terminal, and a child detached from one cannot open it at all —
+`No such device or address`. A helper that cannot find a terminal exits non-zero
+rather than handing sudo an empty password, so sudo fails once and says why
+instead of retrying three times in silence.
 
-**The helper opens `$ARCHDOTS_TTY`, never `/dev/tty`.** This is the part that
-bites, and it cost a failed install to find. `setsid` is what makes a child's
-sudo reach for the askpass program at all — but it works by taking the
-*controlling* terminal away, and `/dev/tty` is by definition that terminal.
-Inside a setsid child it cannot be opened at all: `No such device or address`.
-So the helper got no box, handed sudo an empty password, sudo retried three
-times and gave up, and makepkg reported `==> ERROR: Could not resolve all
-dependencies` — with no password prompt anywhere on screen, because the prompt
-was the thing that had failed. `--no-gui` was unaffected, which is what made it
-look like a dialog problem rather than a terminal one.
+### makepkg escalates with `sudo -k`
 
-The device is still perfectly openable *by path*. `current_tty()` resolves it
-once in the parent — `tty`, else `/proc/$$/fd/{1,2}`, else `ps -o tty=`, which
-between them cover being piped from curl — and exports the path for the helper.
-A helper that still cannot open a terminal exits non-zero rather than answering
-with an empty string, so sudo fails once and says why.
+This one survived two attempted fixes, because every symptom pointed somewhere
+else:
+
+```
+Building paru from source — ==> ERROR: Could not resolve all dependencies
+```
+
+No password prompt, no sudo error, just makepkg apparently unable to find
+`cargo` — on a fresh install, where `rust` is genuinely absent. The same build
+in `--no-gui` mode worked, and asked for the password on the way. That was the
+tell.
+
+`run_pacman` in `/usr/bin/makepkg` builds its command as `sudo -k pacman …`.
+The `-k` is deliberate: it discards the cached credentials, so **every** pacman
+call makepkg makes demands a freshly typed password, however recently you
+authenticated. Nothing the installer does with timestamps or keepalive loops can
+change that. On a terminal you type it and move on; behind a progress bar the
+ask lands somewhere invisible, sudo fails, and makepkg reports the *consequence*
+— a dependency it could not install — rather than the cause.
+
+So makepkg is no longer given anything to escalate for:
+
+| Step | Who runs it |
+|---|---|
+| build dependencies (`cargo`, `git`, …) | us, `pacman -S --needed`, before makepkg starts |
+| the build | `makepkg -s --noconfirm` — note the absent `-i` |
+| installing the built package | us, `pacman -U` |
+
+`pkgbuild_deps()` reads `depends` and `makedepends` out of the PKGBUILD and
+trims version constraints, because pacman wants `rust`, not `rust>=1.70`. It
+drops soname entries such as `libalpm.so=15-64`: those are not package names,
+and a single unknown target makes pacman abort the whole transaction, taking the
+real dependencies down with it. `-s` stays on the build as a safety net for
+anything the list misses. The SDDM theme, the other thing built from an AUR
+PKGBUILD here, gets the same treatment.
+
+**A `sudo` shim covers whatever still escalates.** paru runs pacman itself, and
+there is no `-A` to add to a call this script does not make. `sudo_askpass_setup`
+writes a `sudo` into a temp directory at the front of `PATH`: it drops a leading
+`-k`, adds `-A` if it is not already there, and passes everything from the first
+non-option onwards through untouched, so `sudo grep -k foo` keeps its `-k`.
+Dropping `-k` is what lets the session we already authenticated stay usable;
+adding `-A` is what sends any password that genuinely is needed to the dialog
+rather than to a terminal the bar owns. The script's own calls go through
+`"${SUDO[@]}"`, which is plain `sudo` — the shim supplies the rest.
+
+In `--no-gui` mode none of this exists: no helper, no shim, `SUDO` stays
+`(sudo)`, and sudo prompts on the terminal, which is exactly where you are
+looking.
 
 Five details are load-bearing:
 

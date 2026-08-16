@@ -289,6 +289,21 @@ gauge_open() {
     # the bar while it asks and start it again afterwards.
     GAUGE_PID=$!
     export ARCHDOTS_GAUGE_PID="$GAUGE_PID"
+
+    # While the bar is up, everything this script prints goes to the log and
+    # nothing reaches the terminal.
+    #
+    # run_logged already routes the output of the commands it runs, but a script
+    # this size also calls things directly — chsh announces "Changing shell for
+    # you.", systemctl prints the symlinks it made, luac reports a syntax error.
+    # Newt owns the screen and keeps its own model of what is on it, so anything
+    # written behind its back does not merely look untidy: it lands in the middle
+    # of the box, and every repaint after that builds on a screen newt no longer
+    # describes correctly. The bar is unaffected — it talks to whiptail down
+    # fd 3, and whiptail draws on /dev/tty.
+    exec 4>&1 5>&2
+    exec >>"${LOG_FILE:-/dev/null}" 2>&1
+
     GAUGE_OPEN=1
 }
 
@@ -334,6 +349,10 @@ gauge_close() {
     GAUGE_OPEN=0
     GAUGE_PID=""
     export ARCHDOTS_GAUGE_PID=""
+    # Give the script its terminal back before the bar goes away, so whatever
+    # prints next — the summary, an error, a prompt — has somewhere to appear.
+    exec 1>&4 2>&5
+    exec 4>&- 5>&-
     exec 3>&-
     # Let whiptail finish drawing and restore the terminal before anything else
     # writes to it.
@@ -1372,7 +1391,8 @@ stage_zsh() {
     elif confirm "Make zsh your login shell?" y; then
         # Through sudo, which is already authenticated. A bare chsh prompts for
         # the password again and stalls an unattended run.
-        if "${SUDO[@]}" chsh -s /usr/bin/zsh "$(id -un)"; then
+        if run_logged "Setting zsh as the login shell" \
+            "${SUDO[@]}" chsh -s /usr/bin/zsh "$(id -un)"; then
             ok "login shell set to zsh (takes effect next login)"
         else
             warn "could not change the login shell"
@@ -1816,7 +1836,7 @@ stage_services() {
         elif confirm "Enable $svc?" y; then
             # Non-fatal: this fails in a container, and everything above it is
             # still worth keeping.
-            if "${SUDO[@]}" systemctl enable "$svc"; then
+            if run_logged "Enabling $svc" "${SUDO[@]}" systemctl enable "$svc"; then
                 ok "$svc enabled"
             else
                 warn "could not enable $svc"

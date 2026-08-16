@@ -1,0 +1,230 @@
+/* Notification cards. Shared typography lives in style.css. */
+
+/* ── outer window (transparent container) ───────────────────────────── */
+
+.notif-window {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.notif-container {
+    background-color: transparent;
+}
+
+/* ── card (floating glass panel) ────────────────────────────────────── */
+
+.notif-card {
+    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.92);
+    border: 1px solid alpha(var(--color4), 0.28);
+    border-radius: 14px;
+    padding: 11px 13px;
+    min-width: 360px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.notif-card.notif-low {
+    opacity: 0.9;
+}
+
+.notif-card.notif-critical {
+    border-color: alpha(var(--color4), 0.50);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55),
+                0 0 18px alpha(var(--color4), 0.16),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ── header row ─────────────────────────────────────────────────────── */
+
+.notif-icon-tile {
+    background-color: alpha(var(--color4), 0.12);
+    border-radius: 10px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 4px;
+}
+
+.notif-card.notif-critical .notif-icon-tile {
+    background-color: alpha(var(--color4), 0.25);
+}
+
+.notif-app-name {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    color: alpha(var(--foreground), 0.50);
+}
+
+.notif-summary {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--foreground);
+}
+
+.notif-close {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    color: alpha(var(--foreground), 0.50);
+    font-size: 18px;
+    padding: 0 2px;
+    min-height: 0;
+    min-width: 0;
+    transition: color 140ms ease;
+}
+
+.notif-close:hover {
+    color: var(--foreground);
+}
+
+.notif-close:focus,
+.notif-close:active {
+    outline: none;
+    box-shadow: none;
+}
+
+/* ── body ───────────────────────────────────────────────────────────── */
+
+.notif-body {
+    font-size: 11px;
+    color: alpha(var(--foreground), 0.55);
+    padding-left: 46px;
+}
+
+/* ── action buttons (key-cap style) ─────────────────────────────────── */
+
+.notif-actions {
+    padding-top: 4px;
+    padding-left: 46px;
+}
+
+.notif-action-btn {
+    background-color: alpha(var(--color4), 0.10);
+    border: 1px solid alpha(var(--color4), 0.25);
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 10.5px;
+    color: var(--foreground);
+    box-shadow: none;
+    min-height: 0;
+    transition: background-color 140ms ease, border-color 140ms ease,
+                color 140ms ease;
+}
+
+.notif-action-btn:hover {
+    background-color: alpha(var(--color4), 0.18);
+    border-color: alpha(var(--color4), 0.45);
+    color: var(--color7);
+}
+
+.notif-action-btn:focus,
+.notif-action-btn:active {
+    outline: none;
+    box-shadow: none;
+}
+
+/* ── Notification centre ─────────────────────────────────────── */
+/* Same card surface as calendar.css, and the same position under the bar. */
+.notif-center-window,
+.notif-center-root {
+    background-color: transparent;
+}
+
+.notif-center-card {
+    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.94);
+    border-radius: 18px;
+    border: 1px solid alpha(var(--color4), 0.28);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    padding: 14px 16px;
+    opacity: 1;
+    margin-top: 0;
+    transition: opacity 180ms ease, margin-top 180ms ease;
+}
+
+.notif-center-window.anim-out .notif-center-card {
+    opacity: 0;
+    margin-top: -12px;
+}
+
+.notif-center-title {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--foreground);
+    padding-right: 6px;
+}
+
+/* ── Header buttons ──────────────────────────────────────────── */
+.notif-center-toggle,
+.notif-center-btn {
+    background-color: alpha(var(--color4), 0.12);
+    border: 1px solid alpha(var(--color4), 0.30);
+    border-radius: 11px;
+    box-shadow: none;
+    padding: 4px 12px;
+    font-size: 10.5px;
+    color: var(--foreground);
+    min-height: 0;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.notif-center-toggle:hover,
+.notif-center-btn:hover {
+    background-color: alpha(var(--color4), 0.22);
+    border-color: alpha(var(--color4), 0.50);
+}
+
+.notif-center-toggle:focus,
+.notif-center-toggle:active,
+.notif-center-btn:focus,
+.notif-center-btn:active {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Silenced is a state worth seeing at a glance, so it gets the accent fill */
+.notif-center-toggle.active {
+    background-color: alpha(var(--color4), 0.30);
+    border-color: alpha(var(--color4), 0.60);
+    color: var(--color7);
+}
+
+.notif-center-btn-label {
+    font-size: 10.5px;
+    color: var(--foreground);
+}
+
+/* ── History rows ────────────────────────────────────────────── */
+.notif-history-row {
+    background-color: alpha(var(--color4), 0.08);
+    border: 1px solid alpha(var(--color4), 0.18);
+    border-radius: 12px;
+    padding: 9px 11px;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.notif-history-row:hover {
+    background-color: alpha(var(--color4), 0.14);
+    border-color: alpha(var(--color4), 0.34);
+}
+
+/* Same warm red the rest of the shell reserves for danger */
+.notif-history-row.notif-critical {
+    border-color: rgba(224, 96, 78, 0.45);
+}
+
+.notif-history-row.notif-low {
+    background-color: alpha(var(--color4), 0.05);
+}
+
+.notif-history-time {
+    font-size: 10px;
+    color: alpha(var(--foreground), 0.45);
+}
+
+.notif-empty {
+    font-size: 11.5px;
+    color: alpha(var(--foreground), 0.40);
+    padding: 28px 0;
+}

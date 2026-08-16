@@ -1,0 +1,37 @@
+/* Clipboard panel. Window chrome, search row and row selection live in
+   style.css — only what is specific to clipboard rows belongs here. */
+
+.clip-list {
+    padding: 2px 0;
+}
+
+.clip-item {
+    padding: 9px 11px;
+    min-height: 52px;
+}
+
+/* ── Entry text ──────────────────────────────────────────────── */
+.clip-label {
+    font-size: 12px;
+    color: var(--foreground);
+}
+
+/* ── Icon for text / file / link entries ─────────────────────── */
+.clip-text-icon {
+    opacity: 0.45;
+    min-width: 20px;
+    color: alpha(var(--foreground), 0.55);
+}
+
+.clip-button.clip-selected .clip-text-icon {
+    color: var(--color4);
+    opacity: 0.90;
+}
+
+/* ── Image thumbnail ─────────────────────────────────────────── */
+.clip-thumb {
+    border-radius: 9px;
+    border: 1px solid alpha(var(--color4), 0.25);
+    min-width: 52px;
+    min-height: 40px;
+}

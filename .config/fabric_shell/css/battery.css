@@ -1,0 +1,95 @@
+/* Low-battery warning. The button chrome reset lives in style.css. */
+
+/* ── No scrim — only the card is painted ─────────────────────── */
+.battery-window,
+.battery-root {
+    background-color: transparent;
+}
+
+/* ── Card ────────────────────────────────────────────────────── */
+.battery-card {
+    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.94);
+    border-radius: 18px;
+    border: 1px solid alpha(var(--color4), 0.28);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    padding: 18px 20px;
+    min-width: 380px;
+}
+
+/* Critical uses a fixed warm red rather than a pywal slot — the palette's
+   red can resolve to a muted grey, which is no use as a danger signal. */
+.battery-card.critical {
+    background-color: alpha(mix(var(--background), rgb(224, 96, 78), 0.22), 0.94);
+    border-color: rgba(224, 96, 78, 0.50);
+    animation: batterypulse 2.2s ease-in-out infinite;
+}
+
+@keyframes batterypulse {
+    0%   { box-shadow: 0 0 18px rgba(224, 96, 78, 0.20),
+                       0 30px 70px rgba(0, 0, 0, 0.6); }
+    50%  { box-shadow: 0 0 36px rgba(224, 96, 78, 0.42),
+                       0 30px 70px rgba(0, 0, 0, 0.6); }
+    100% { box-shadow: 0 0 18px rgba(224, 96, 78, 0.20),
+                       0 30px 70px rgba(0, 0, 0, 0.6); }
+}
+
+/* ── Icon ────────────────────────────────────────────────────── */
+.battery-icon {
+    font-size: 34px;
+    color: var(--color4);
+    padding: 0 6px 0 2px;
+}
+
+.battery-card.critical .battery-icon {
+    color: rgb(224, 96, 78);
+}
+
+/* ── Text ────────────────────────────────────────────────────── */
+.battery-title {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--foreground);
+}
+
+.battery-body {
+    font-size: 11.5px;
+    color: alpha(var(--foreground), 0.62);
+}
+
+/* ── Dismiss button ──────────────────────────────────────────── */
+.battery-btn {
+    background-color: alpha(var(--color4), 0.12);
+    border: 1px solid alpha(var(--color4), 0.30);
+    border-radius: 11px;
+    box-shadow: none;
+    padding: 6px 14px;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.battery-btn:hover {
+    background-color: alpha(var(--color4), 0.22);
+    border-color: alpha(var(--color4), 0.50);
+}
+
+.battery-btn:focus,
+.battery-btn:focus-visible,
+.battery-btn:active {
+    outline: none;
+    box-shadow: none;
+}
+
+.battery-btn-label {
+    font-size: 11.5px;
+    color: var(--foreground);
+}
+
+.battery-card.critical .battery-btn {
+    background-color: rgba(224, 96, 78, 0.14);
+    border-color: rgba(224, 96, 78, 0.36);
+}
+
+.battery-card.critical .battery-btn:hover {
+    background-color: rgba(224, 96, 78, 0.24);
+    border-color: rgba(224, 96, 78, 0.55);
+}

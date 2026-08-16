@@ -14,12 +14,15 @@ alias protontricks='flatpak run com.github.Matoking.protontricks'
 alias protontricks-launch='flatpak run --command=protontricks-launch com.github.Matoking.protontricks'
 
 
+# Pywal — restore terminal palette on every new shell
+(cat ~/.cache/wal/sequences &)
+
 # oh my zsh
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_CUSTOM=~/.ohmyzsh_custom
-ZSH_THEME="fino"
+ZSH_THEME="chit"
 
-plugins=(git zsh-syntax-highlighting)
+plugins=(git zsh-syntax-highlighting zsh-autosuggestions)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -33,13 +36,7 @@ source $ZSH/oh-my-zsh.sh
 # Set up fzf key bindings and fuzzy completion
 eval "$(fzf --zsh)"
 
-# --- setup fzf theme ---
-fg="#CBE0F0"
-purple="#B388FF"
-pink="#FF5784"
-pink_dark="#8c344b"
-
-export FZF_DEFAULT_OPTS="--color=fg:${fg},hl:${purple},fg+:${fg},bg+:${pink},hl+:${purple},info:${pink},prompt:${pink},pointer:${pink_dark},marker:${pink},spinner:${pink},header:${pink}"
+# --- setup fzf theme (colors come from pywal via colors.sh sourced below) ---
 
 # -- Use fd instead of fzf --
 
@@ -89,3 +86,6 @@ eval "$(zoxide init zsh)"
 
 alias cd="z"
 alias cat="bat"
+
+# Pywal — load color variables + override FZF colors with current palette
+source ~/.cache/wal/colors.sh

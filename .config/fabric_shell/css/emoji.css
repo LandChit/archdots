@@ -1,0 +1,74 @@
+/* Emoji picker. Window chrome, search row and scrolling live in style.css —
+   only the group rail and the emoji grid belong here. */
+
+/* the emoji glyph reads small, so it runs larger than the other panel icons */
+.emoji-search-icon {
+    font-size: 18px;
+}
+
+/* ── Group filter column (right rail) ────────────────────────── */
+.group-inner {
+    padding: 2px 4px;
+}
+
+/* Icon-only square rail buttons — a fixed size keeps the window width
+   independent of the group label text */
+.group-button {
+    background-color: transparent;
+    border: 1px solid alpha(var(--color4), 0.18);
+    border-radius: 9px;
+    padding: 0;
+    font-size: 15px;
+    color: alpha(var(--foreground), 0.55);
+    box-shadow: none;
+    min-height: 34px;
+    min-width: 34px;
+    transition: background-color 140ms ease, border-color 140ms ease,
+                color 140ms ease;
+}
+
+.group-button:hover {
+    background-color: alpha(var(--color4), 0.12);
+    color: var(--foreground);
+}
+
+.group-button.group-active {
+    background-color: alpha(var(--color4), 0.18);
+    border-color: alpha(var(--color4), 0.50);
+    color: var(--color7);
+    box-shadow: 0 0 8px alpha(var(--color4), 0.15);
+}
+
+/* Uppercase section caption above the grid */
+.section-label {
+    font-size: 10px;
+    color: alpha(var(--foreground), 0.50);
+    padding: 2px 4px 5px 6px;
+}
+
+/* ── Emoji grid ──────────────────────────────────────────────── */
+.emoji-grid {
+    padding: 4px 2px;
+}
+
+.emoji-button {
+    border: 1px solid transparent;
+    border-radius: 9px;
+    min-width: 46px;
+    min-height: 46px;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.emoji-button:hover {
+    background-color: alpha(var(--color4), 0.12);
+}
+
+.emoji-button.emoji-selected {
+    background-color: alpha(var(--color4), 0.18);
+    border-color: alpha(var(--color4), 0.50);
+    box-shadow: 0 0 14px alpha(var(--color4), 0.18);
+}
+
+.emoji-char {
+    font-size: 21px;
+}

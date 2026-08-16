@@ -1,0 +1,39 @@
+
+[terminal.shell]
+program = "/bin/zsh"
+
+[font]
+size = 17.0
+
+[font.normal]
+family = "JetBrainsMono NF"
+style = "Regular"
+
+[font.bold]
+family = "JetBrainsMono NF"
+style = "Bold"
+
+[font.italic]
+family = "JetBrainsMono NF"
+style = "Italic"
+
+[window]
+dimensions = { columns = 120, lines = 35 }
+# glass look — matches the shell's ~85% surface opacity; Hyprland blurs it
+opacity = 0.85
+decorations = "None"
+padding = { x = 14, y = 12 }
+dynamic_padding = true
+
+[keyboard]
+bindings = [
+  { key = "=",  mods = "Control", action = "IncreaseFontSize" },
+  { key = "+",   mods = "Control", action = "IncreaseFontSize" },
+  { key = "-",  mods = "Control", action = "DecreaseFontSize" },
+  { key = "Key0",   mods = "Control", action = "ResetFontSize" },
+]
+
+[general]
+import = ["~/.cache/wal/colors-alacritty.toml"]
+
+[terminal]

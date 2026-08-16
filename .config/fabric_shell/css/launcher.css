@@ -1,0 +1,70 @@
+/* Launcher panel. Window chrome, search row and row selection live in
+   style.css — only what is specific to app rows belongs here. */
+
+.launcher-root {
+    padding: 14px 14px 0 14px;
+}
+
+.app-list {
+    padding: 2px 0;
+}
+
+.app-row {
+    padding: 8px 10px;
+}
+
+/* ── Icon tile ───────────────────────────────────────────────── */
+.app-icon-tile {
+    background-color: alpha(var(--color4), 0.12);
+    border-radius: 10px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 4px;
+}
+
+.app-button.app-selected .app-icon-tile {
+    background-color: alpha(var(--color4), 0.25);
+}
+
+/* ── Row text ────────────────────────────────────────────────── */
+.app-name {
+    font-size: 13.5px;
+    color: var(--foreground);
+    font-weight: 500;
+}
+
+.app-category {
+    font-size: 11px;
+    color: alpha(var(--foreground), 0.55);
+}
+
+/* ── Trailing "open ↵" hint, revealed only on the selected row ── */
+.app-hint {
+    font-size: 10.5px;
+    color: alpha(var(--foreground), 0.50);
+    padding: 2px 6px;
+    border-radius: 5px;
+    border: 1px solid alpha(var(--color4), 0.25);
+    background-color: alpha(var(--color4), 0.10);
+    opacity: 0;
+    transition: opacity 120ms ease;
+}
+
+.app-button.app-selected .app-hint {
+    color: var(--color7);
+    border-color: alpha(var(--color4), 0.45);
+    background-color: alpha(var(--color4), 0.20);
+    opacity: 1;
+}
+
+/* ── Footer hint bar ─────────────────────────────────────────── */
+.launcher-footer {
+    padding: 8px 10px 10px 10px;
+    border-top: 1px solid alpha(var(--color4), 0.20);
+    margin-top: 4px;
+}
+
+.hint {
+    font-size: 10.5px;
+    color: alpha(var(--foreground), 0.50);
+}

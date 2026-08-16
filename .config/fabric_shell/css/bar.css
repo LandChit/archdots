@@ -1,0 +1,188 @@
+/* Status bar islands. Shared typography lives in style.css. */
+
+/* ── Bar window (floating) ──────────────────────────────────── */
+.bar-window {
+    background-color: transparent;
+    background: rgba(0, 0, 0, 0);
+}
+
+/* Nuke any default GTK backgrounds on the CenterBox and its three inner boxes */
+.bar-content,
+.bar-content > *,
+.bar-content > * > * {
+    background-color: transparent;
+    background: rgba(0, 0, 0, 0);
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+}
+
+
+/* ── Island base ─────────────────────────────────────────────── */
+.island {
+    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.88);
+    border-radius: 11px;
+    border: 1px solid alpha(var(--color4), 0.28);
+    box-shadow: none;
+    min-height: 32px;
+    padding: 0 11px;
+    margin: 0 3px;
+    transition: background-color 140ms ease;
+}
+
+/* Strip default GTK padding from every direct child so islands stay 32px */
+.island > *,
+.island label,
+.island button {
+    padding: 0;
+    margin: 0;
+    min-height: 0;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+/* ── Left: title island ──────────────────────────────────────── */
+.title-island {
+    color: var(--foreground);
+    font-size: 12.5px;
+    padding: 0 13px;
+}
+
+/* ── Center: workspaces island ───────────────────────────────── */
+.workspaces-island {
+    padding: 0 6px;
+}
+
+/* HyprlandWorkspaces outer box */
+.workspaces-island > * {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 2px 2px;
+}
+
+/* Individual workspace buttons */
+.workspaces-island > * > * {
+    padding: 0;
+    margin: 0 2px;
+    min-width: 22px;
+    min-height: 22px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    font-size: 12px;
+    transition: all 140ms ease;
+    background-color: transparent;
+    box-shadow: none;
+}
+
+/* occupied workspace */
+.workspaces-island > * > .occupied {
+    background-color: alpha(var(--color4), 0.12);
+    color: alpha(var(--foreground), 0.85);
+}
+
+/* active workspace — accent-tinted */
+.workspaces-island > * > .active {
+    background-color: alpha(var(--color4), 0.30);
+    border-color: alpha(var(--color4), 0.55);
+    color: var(--color7);
+}
+
+/* The tray island moved to the control centre — see controlcenter.css */
+
+/* ── Right: resources island (vol · cpu · bat) ───────────────── */
+.resources-island {
+    padding: 0 10px;
+}
+
+/* Re-add horizontal spacing after the global island label reset */
+.resources-island label {
+    font-size: 12.5px;
+    color: var(--foreground);
+    padding: 0 5px;
+    margin: 0;
+}
+
+/* vertical divider between resources */
+.resources-island .res-divider {
+    color: alpha(var(--foreground), 0.30);
+    font-size: 10px;
+    padding: 0;
+    min-width: 4px;
+}
+
+/* ── Media island ────────────────────────────────────────────── */
+/* Only present while something is playing, so it can afford the accent. */
+.media-island {
+    padding: 0 10px;
+}
+
+.media-island .media-btn {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0 3px;
+    min-height: 0;
+    min-width: 0;
+}
+
+.media-island .media-btn:focus,
+.media-island .media-btn:active {
+    outline: none;
+    box-shadow: none;
+}
+
+.media-island .media-icon {
+    font-size: 13px;
+    color: alpha(var(--foreground), 0.70);
+    padding: 0;
+    transition: color 140ms ease;
+}
+
+.media-island .media-btn:hover .media-icon {
+    color: var(--color4);
+}
+
+.media-island .media-title {
+    font-size: 11.5px;
+    color: var(--foreground);
+    padding: 0 4px 0 6px;
+}
+
+/* ── Interactive meters ──────────────────────────────────────── */
+/* The EventBox wrapper owns the pointer events, so it — not the label —
+   is what GTK marks as hovered. */
+.island-hot {
+    background-color: transparent;
+    border-radius: 9px;
+    transition: background-color 140ms ease;
+}
+
+.resources-island .island-hot:hover {
+    background-color: alpha(var(--color4), 0.14);
+}
+
+/* ── Right: clock island (accent-tinted anchor) ──────────────── */
+/* Accent mixed over the dark island base so text stays readable on
+   any wallpaper — pure alpha-accent washed out over light walls. */
+.clock-island {
+    background-color: alpha(mix(var(--background), var(--color4), 0.35), 0.92);
+    border-color: alpha(var(--color4), 0.55);
+    box-shadow: none;
+    color: var(--color7);
+    font-size: 12.5px;
+    padding: 0 13px;
+}
+
+.clock-island label {
+    color: var(--color7);
+    padding: 0;
+}
+
+/* Hovering lands on the EventBox wrapper, so the tint is driven from there */
+.clock-island:hover,
+.island-hot:hover .clock-island {
+    background-color: alpha(mix(var(--background), var(--color4), 0.50), 0.94);
+}

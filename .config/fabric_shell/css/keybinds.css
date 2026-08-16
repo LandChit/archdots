@@ -1,0 +1,81 @@
+/* Keybind cheatsheet. Same scrim as powermenu.css and screenshot.css — it is
+   the same kind of full-screen surface. */
+
+/* ── Full-screen scrim ───────────────────────────────────────── */
+.keys-window {
+    background-color: rgba(8, 10, 14, 0.72);
+}
+
+.keys-root,
+.keys-columns {
+    background-color: transparent;
+}
+
+/* ── Header ──────────────────────────────────────────────────── */
+.keys-title {
+    font-size: 19px;
+    font-weight: 500;
+    color: var(--foreground);
+    letter-spacing: 0.5px;
+}
+
+.keys-hint {
+    font-size: 10.5px;
+    color: alpha(var(--foreground), 0.45);
+    letter-spacing: 0.3px;
+}
+
+/* ── Group card ──────────────────────────────────────────────── */
+.keys-group {
+    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.92);
+    border-radius: 18px;
+    border: 1px solid alpha(var(--color4), 0.28);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    padding: 14px 16px;
+}
+
+/* A prompt to add `desc` in the lua, not a feature — so it reads as unfinished */
+.keys-group.undescribed {
+    border-color: alpha(var(--foreground), 0.18);
+    background-color: alpha(var(--background), 0.88);
+}
+
+.keys-group-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color4);
+    letter-spacing: 0.6px;
+    padding-bottom: 4px;
+}
+
+.keys-group.undescribed .keys-group-title {
+    color: alpha(var(--foreground), 0.40);
+}
+
+/* ── Row ─────────────────────────────────────────────────────── */
+.keys-row {
+    padding: 2px 0;
+}
+
+.keys-label {
+    font-size: 11.5px;
+    color: alpha(var(--foreground), 0.82);
+}
+
+/* ── Key chips ───────────────────────────────────────────────── */
+.keys-chip {
+    background-color: alpha(var(--color4), 0.18);
+    border: 1px solid alpha(var(--color4), 0.38);
+    border-radius: 7px;
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+    padding: 1px 7px;
+    font-size: 10.5px;
+    color: var(--color7);
+}
+
+.keys-plus,
+.keys-or {
+    font-size: 9.5px;
+    color: alpha(var(--foreground), 0.35);
+}

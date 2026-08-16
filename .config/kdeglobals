@@ -1,5 +1,5 @@
 [General]
-TerminalApplication=foot
+TerminalApplication=alacritty
 
 [Icons]
 Theme=breeze-dark

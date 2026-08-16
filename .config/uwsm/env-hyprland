@@ -1,2 +1,23 @@
-# Force hyprland to run on integrated gpu
-export AQ_DRM_DEVICES="/dev/dri/card2:/dev/dri/card1"
+# Session environment for Hyprland, sourced by uwsm before the compositor starts.
+#
+# Nothing machine-specific belongs in this file. It is tracked, so any value
+# committed here is inherited by every machine that clones the repo — and for
+# the one variable that matters, AQ_DRM_DEVICES, an inherited value is worse
+# than none: a pin to card paths that do not exist locally makes aquamarine fail
+# to create a DRI screen, fall back to kms_swrast, and then die on
+# DRM_IOCTL_MODE_CREATE_DUMB.
+#
+# uwsm sources every file in `env-hyprland.d/` after this one (see `source_dir`
+# in /usr/lib/uwsm/prepare-env.sh), so that directory is where this machine's
+# values go. It is gitignored, and install.sh writes `env-hyprland.d/10-gpu.sh`
+# there when it finds more than one GPU:
+#
+#     export AQ_DRM_DEVICES="/dev/dri/card1:/dev/dri/card0"
+#
+# Integrated GPU first, so the desktop does not end up rendering on a discrete
+# card. With a single GPU there is nothing to choose between, and no file is
+# written at all.
+#
+# Card numbering is not stable across boots. If the session ever comes up on the
+# wrong GPU, re-run install.sh, or edit the drop-in to name a stable path from
+# /dev/dri/by-path/.

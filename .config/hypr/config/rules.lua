@@ -104,15 +104,31 @@ hl.window_rule({
     float = true,
 })
 
+
+
+steam_games = "^(?i)steam_app_.*"
+
 -- Games on work 4
 hl.window_rule({
     name = "steam",
     match = {
-        class = "^(?i)steam_app_.*"
+        class = steam_games
     },
     fullscreen = true,
     workspace = "4",
 })
+
+-- hl.on("window.close", function(window)
+--     if window.class == "steam_app_2225070" then
+--         hl.dsp.exec_cmd("pkill steam_app_2225070")
+
+--         hl.notification.create({
+--             text = "Window: " .. window.class .. "\n Title: " .. window.title,
+--             timeout = 4000,
+--             icon = "ok"
+--         })
+--     end
+-- end)
 
 hl.window_rule({
     name = "minecraft",
@@ -123,23 +139,24 @@ hl.window_rule({
     workspace = "4",
 })
 
-
--- hl.window_rule({
---     name = "Bitwarden",
---     match = {
---         -- class = "zen",
---         -- initial_title = "Zen Browser",
---         title = "^Extension:.*"
---     },
---     float = true
--- })
-
--- Layer rules
+-- Frosted glass for the fabric shell. The 0.7 alpha threshold keeps the
+-- ~0.85-alpha panel surfaces blurred while excluding the panels' CSS
+-- box-shadows (alpha <= 0.6) — blurring those painted a sharp frosted
+-- rectangle behind the rounded corners.
 hl.layer_rule(
     {
         name = "fabric",
-        match = { namespace = "fabric*" },
+        match = { namespace = "fabric-*" },
         blur = true,
-        ignore_alpha = 0,
+        ignore_alpha = 1,
+    }
+)
+
+hl.layer_rule(
+    {
+        name = "fabric-powermenu",
+        match = { namespace = "fabric-powermenu" },
+        blur = true,
+        ignore_alpha = 0.1,
     }
 )

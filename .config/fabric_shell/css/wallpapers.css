@@ -1,0 +1,57 @@
+/* Wallpaper picker. The window chrome, search row and footer come from
+   style.css — this sheet only dresses the rows. */
+
+.wall-button {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+.wall-button:focus,
+.wall-button:focus-visible,
+.wall-button:active {
+    outline: none;
+    box-shadow: none;
+}
+
+.wall-row {
+    border-radius: 12px;
+    border: 1px solid transparent;
+    padding: 6px 8px;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.wall-button:hover .wall-row {
+    background-color: alpha(var(--color4), 0.10);
+}
+
+/* Keyboard selection — the accent treatment every list in the shell shares */
+.wall-button.wall-selected .wall-row {
+    background-color: alpha(var(--color4), 0.18);
+    border-color: alpha(var(--color4), 0.50);
+    box-shadow: 0 0 18px alpha(var(--color4), 0.16);
+}
+
+/* The wallpaper already on screen */
+.wall-row.active {
+    border-color: alpha(var(--color4), 0.40);
+}
+
+.wall-thumb {
+    border-radius: 7px;
+}
+
+.wall-name {
+    font-size: 12.5px;
+    color: var(--foreground);
+}
+
+.wall-meta {
+    font-size: 10.5px;
+    color: alpha(var(--foreground), 0.45);
+}
+
+.wall-row.active .wall-meta {
+    color: var(--color4);
+}

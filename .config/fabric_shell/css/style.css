@@ -1,0 +1,138 @@
+/* Shared base for every fabric-shell surface.
+   common.build_css() always prepends this after the pywal palette, so no
+   sheet needs to @import it. Module sheets load after and win on conflict. */
+
+* {
+    font-family: "JetBrainsMono NF", "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    font-weight: 400;
+}
+
+/* ── Panel window (launcher / clipboard / emoji) ─────────────── */
+.window {
+    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.92);
+    border-radius: 18px;
+    border: 1px solid alpha(var(--color4), 0.28);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    margin: 0;
+    opacity: 1;
+    transition: opacity 180ms ease;
+}
+
+/* Slide-fade out — the panel adds .anim-out, waits, then hides */
+.window.anim-out {
+    opacity: 0;
+}
+
+.launcher-root {
+    padding: 13px 13px 0 13px;
+    margin-top: 0;
+    transition: margin-top 180ms ease;
+}
+
+.window.anim-out .launcher-root {
+    margin-top: -18px;
+}
+
+/* ── Scrolling ───────────────────────────────────────────────── */
+.app-scroll,
+.group-scroll {
+    background-color: transparent;
+}
+
+/* Scrollbars stay hidden — the lists are driven by the keyboard */
+scrollbar,
+scrollbar slider {
+    opacity: 0;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* ── Search row ──────────────────────────────────────────────── */
+.search-row {
+    background-color: alpha(var(--color4), 0.10);
+    border-radius: 13px;
+    border: 1px solid alpha(var(--color4), 0.25);
+    padding: 7px 12px;
+    margin-bottom: 8px;
+}
+
+.search-icon,
+.emoji-search-icon {
+    color: var(--color4);
+    font-size: 16px;
+    padding: 0 4px;
+    opacity: 0.85;
+}
+
+/* min-height: 0 kills the GTK theme's default entry height, which
+   otherwise makes the field far too tall */
+.search-entry {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    color: var(--foreground);
+    caret-color: var(--color4);
+    font-size: 13.5px;
+    padding: 2px 4px;
+    min-height: 0;
+}
+
+.search-entry:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+/* ── Row buttons ─────────────────────────────────────────────── */
+/* Every list row is a bare button wrapping a styled card, so the button
+   itself carries no chrome and never draws a focus ring. */
+.app-button,
+.clip-button,
+.emoji-button,
+.powermenu-btn {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+.app-button:focus,
+.app-button:focus-visible,
+.app-button:active,
+.clip-button:focus,
+.clip-button:focus-visible,
+.clip-button:active,
+.emoji-button:focus,
+.emoji-button:focus-visible,
+.emoji-button:active,
+.powermenu-btn:focus,
+.powermenu-btn:focus-visible,
+.powermenu-btn:active,
+.group-button:focus,
+.group-button:focus-visible,
+.group-button:active {
+    outline: none;
+    box-shadow: none;
+}
+
+/* ── Row cards ───────────────────────────────────────────────── */
+.app-row,
+.clip-item {
+    border-radius: 12px;
+    border: 1px solid transparent;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.app-button:hover .app-row,
+.clip-button:hover .clip-item {
+    background-color: alpha(var(--color4), 0.10);
+}
+
+/* Keyboard selection — the one accent treatment every list shares */
+.app-button.app-selected .app-row,
+.clip-button.clip-selected .clip-item {
+    background-color: alpha(var(--color4), 0.18);
+    border-color: alpha(var(--color4), 0.50);
+    box-shadow: 0 0 18px alpha(var(--color4), 0.16);
+}

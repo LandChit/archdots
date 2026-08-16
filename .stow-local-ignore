@@ -1,9 +1,22 @@
 
-# InstallScript
-installscript.sh
+# The installer runs from the repo; it is not a dotfile.
+install.sh
 
 .git
 .gitignore
 .gitmodules
 
+# Docs — they belong in the repo, not in $HOME
 README.md
+DEVELOPMENT.md
+
+# The picker reads ~/Pictures/wallpapers (fabric_shell/wallpapers.py), so a
+# ~/wallpapers symlink would be dead weight. install.sh copies these there.
+wallpapers
+
+# The container test harness. It is run from the repo, not linked into $HOME.
+archdots_docker
+
+# Agent/session state. Gitignored, and stow would otherwise scatter ~57
+# symlinks through ~/.omc.
+.omc

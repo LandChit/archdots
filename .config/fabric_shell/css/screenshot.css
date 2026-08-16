@@ -1,0 +1,76 @@
+/* Screenshot menu. Deliberately the same scrim and card treatment as
+   powermenu.css — they are the same kind of surface, so they should not
+   look like two different shells. */
+
+/* ── Full-screen scrim ───────────────────────────────────────── */
+.shot-window {
+    background-color: rgba(8, 10, 14, 0.62);
+}
+
+.shot-root,
+.shot-row {
+    background-color: transparent;
+}
+
+/* ── Card ────────────────────────────────────────────────────── */
+.shot-btn {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+.shot-btn:focus,
+.shot-btn:focus-visible,
+.shot-btn:active {
+    outline: none;
+    box-shadow: none;
+}
+
+.shot-card {
+    background-color: alpha(mix(var(--background), var(--color4), 0.22), 0.92);
+    border-radius: 20px;
+    border: 1px solid alpha(var(--color4), 0.28);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    min-width: 148px;
+    min-height: 148px;
+    padding: 20px 16px 16px 16px;
+    transition: background-color 140ms ease, border-color 140ms ease,
+                box-shadow 140ms ease;
+}
+
+.shot-btn:hover .shot-card {
+    background-color: alpha(var(--color4), 0.16);
+    border-color: alpha(var(--color4), 0.45);
+}
+
+/* ── Selected card ───────────────────────────────────────────── */
+.shot-card.shot-selected {
+    background-color: alpha(var(--color4), 0.18);
+    border-color: alpha(var(--color4), 0.50);
+    box-shadow: 0 0 28px alpha(var(--color4), 0.26),
+                0 20px 50px rgba(0, 0, 0, 0.55);
+}
+
+/* ── Contents ────────────────────────────────────────────────── */
+.shot-icon {
+    font-size: 34px;
+    color: var(--color4);
+}
+
+.shot-label {
+    font-size: 13px;
+    color: var(--foreground);
+}
+
+.shot-hint-small {
+    font-size: 10px;
+    color: alpha(var(--foreground), 0.45);
+}
+
+.shot-hint {
+    font-size: 11px;
+    color: alpha(var(--foreground), 0.50);
+    letter-spacing: 0.3px;
+}

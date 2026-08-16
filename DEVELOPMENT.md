@@ -551,6 +551,23 @@ terminal, sudo falls back to `SUDO_ASKPASS` on its own. In `--no-gui` mode
 neither applies — `SUDO` stays `(sudo)` and it prompts on the terminal, which is
 exactly where you are looking.
 
+**The helper opens `$ARCHDOTS_TTY`, never `/dev/tty`.** This is the part that
+bites, and it cost a failed install to find. `setsid` is what makes a child's
+sudo reach for the askpass program at all — but it works by taking the
+*controlling* terminal away, and `/dev/tty` is by definition that terminal.
+Inside a setsid child it cannot be opened at all: `No such device or address`.
+So the helper got no box, handed sudo an empty password, sudo retried three
+times and gave up, and makepkg reported `==> ERROR: Could not resolve all
+dependencies` — with no password prompt anywhere on screen, because the prompt
+was the thing that had failed. `--no-gui` was unaffected, which is what made it
+look like a dialog problem rather than a terminal one.
+
+The device is still perfectly openable *by path*. `current_tty()` resolves it
+once in the parent — `tty`, else `/proc/$$/fd/{1,2}`, else `ps -o tty=`, which
+between them cover being piped from curl — and exports the path for the helper.
+A helper that still cannot open a terminal exits non-zero rather than answering
+with an empty string, so sudo fails once and says why.
+
 Five details are load-bearing:
 
 - **whiptail's gauge renders only the first line** of an update and does no

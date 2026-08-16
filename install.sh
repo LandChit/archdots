@@ -468,9 +468,31 @@ SUDO=(sudo)          # becomes (sudo -A) once the helper exists
 ASKPASS_DIR=""
 ASKPASS_FLAG=""
 
+# Which terminal to draw on, by name rather than by /dev/tty.
+#
+# This matters more than it looks. The children that need a password run under
+# setsid — that is what makes their sudo use the helper at all — and setsid
+# takes the *controlling* terminal away, so /dev/tty inside the helper is "No
+# such device or address" and there is nowhere to put the box. The device itself
+# is still perfectly openable by path, so the path is what gets passed down.
+current_tty() {
+    local t fd
+    t="$(tty 2>/dev/null)" && [[ "$t" == /dev/* ]] && { printf '%s' "$t"; return 0; }
+    # Piped from curl, stdin is not the terminal — but stdout or stderr still is.
+    for fd in 1 2; do
+        t="$(readlink -f "/proc/$$/fd/$fd" 2>/dev/null)" || continue
+        [[ "$t" == /dev/pts/* || "$t" == /dev/tty[0-9]* ]] && { printf '%s' "$t"; return 0; }
+    done
+    t="$(ps -o tty= -p $$ 2>/dev/null | tr -d '[:space:]')"
+    [[ -n "$t" && "$t" != "?" ]] && { printf '/dev/%s' "$t"; return 0; }
+    return 1
+}
+
 sudo_askpass_setup() {
     [[ $UI == whiptail ]] || return 0
     have_tty || return 0
+    local term
+    term="$(current_tty)" || return 0
     ASKPASS_DIR="$(mktemp -d)" || return 0
     chmod 700 "$ASKPASS_DIR"
     ASKPASS_FLAG="$ASKPASS_DIR/asked"
@@ -478,8 +500,19 @@ sudo_askpass_setup() {
     cat > "$ASKPASS_DIR/askpass" <<'HELPER'
 #!/usr/bin/env bash
 # Written by archdots install.sh, and run by sudo instead of prompting on the
-# terminal. SIGSTOP rather than a kill: the gauge has to survive to be resumed,
-# and a stopped process cannot repaint over the box while it is up.
+# terminal.
+#
+# $ARCHDOTS_TTY, not /dev/tty: whoever called sudo here has been through setsid
+# and no longer has a controlling terminal, so /dev/tty cannot be opened at all.
+# If even that is unusable, exit rather than hand sudo an empty password — three
+# silent retries and a "Sorry, try again" tell nobody anything.
+T="${ARCHDOTS_TTY:-/dev/tty}"
+if [[ ! -r "$T" || ! -w "$T" ]]; then
+    printf 'archdots: no terminal to ask for a password on (%s)\n' "$T" >&2
+    exit 1
+fi
+# SIGSTOP rather than a kill: the gauge has to survive to be resumed, and a
+# stopped process cannot repaint over the box while it is up.
 [[ -n "${ARCHDOTS_GAUGE_PID:-}" ]] && kill -STOP "$ARCHDOTS_GAUGE_PID" 2>/dev/null
 [[ -n "${ARCHDOTS_ASKPASS_FLAG:-}" ]] && : > "$ARCHDOTS_ASKPASS_FLAG"
 pw="$(whiptail --backtitle "${ARCHDOTS_BACKTITLE:-archdots}" \
@@ -489,7 +522,7 @@ pw="$(whiptail --backtitle "${ARCHDOTS_BACKTITLE:-archdots}" \
 Installing packages needs root. Your password is not
 stored, and nothing is echoed as you type.
 
-Enter confirms · Esc cancels" 13 62 2>&1 1>/dev/tty </dev/tty)"
+Enter confirms · Esc cancels" 13 62 2>&1 1>"$T" <"$T")"
 [[ -n "${ARCHDOTS_GAUGE_PID:-}" ]] && kill -CONT "$ARCHDOTS_GAUGE_PID" 2>/dev/null
 printf '%s\n' "$pw"
 HELPER
@@ -498,11 +531,13 @@ HELPER
     export SUDO_ASKPASS="$ASKPASS_DIR/askpass"
     export ARCHDOTS_ASKPASS_FLAG="$ASKPASS_FLAG"
     export ARCHDOTS_BACKTITLE="$BACKTITLE"
+    export ARCHDOTS_TTY="$term"
     SUDO=(sudo -A)
     # makepkg and paru call plain `sudo` themselves, with no -A to add. Denying
     # them a controlling terminal is what sends *those* prompts to the helper
-    # too: with no tty to write to, sudo falls back to SUDO_ASKPASS.
-    CHILD_WRAP=(setsid)
+    # too: with no tty to write to, sudo falls back to SUDO_ASKPASS. -w so the
+    # exit status is the command's own even if setsid decides to fork first.
+    CHILD_WRAP=(setsid -w)
 }
 
 CHILD_WRAP=()

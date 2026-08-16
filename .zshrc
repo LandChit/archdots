@@ -1,5 +1,5 @@
 # your custom zshconfig (Add this to your home directory)
-source ~/.zsh_custom 
+source ~/.custom.zsh
 
 # Other
 export EDITOR=nano

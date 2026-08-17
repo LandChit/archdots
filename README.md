@@ -3,7 +3,7 @@
 My personal Arch + Hyprland desktop — the whole thing, ready to install.
 
 Everything you see is themed from your wallpaper. Pick a new picture and the
-bar, menus, borders and terminal all recolour to match, instantly.
+bar, menus, borders, terminal and your GTK apps all recolour to match.
 
 <hr>
 
@@ -40,7 +40,7 @@ looks like it belongs together.**
 
 ## At a glance
 
-| | |
+| Feature | What is used |
 |---|---|
 | **Compositor** | Hyprland — configured in Lua |
 | **Desktop shell** | `fabric_shell` — the bar, menus and notifications, written for this repo |
@@ -50,6 +50,7 @@ looks like it belongs together.**
 | **Login screen** | SDDM, `silent` theme |
 | **Shell** | zsh + oh-my-zsh |
 | **Colors** | pywal — everything follows the wallpaper |
+| **App theme** | `archdots` — GTK 3 hand-written, GTK 4 recolours libadwaita |
 
 <hr>
 
@@ -111,8 +112,7 @@ Media, volume and brightness keys work as expected, and show a little popup.
 > **The installer is new and has not yet been proven on real hardware.** It has
 > been tested end to end in a container — packages, linking, the shell build,
 > the login theme — but nobody has run it on a fresh machine and logged in yet.
-> Expect to fix something. Read it before you run it, and prefer a spare machine
-> or a VM over the laptop you need tomorrow.
+> Expect to fix something. Read it before you run it, and use a spare machine, or VM.
 
 You need Arch Linux with **NetworkManager** and **Pipewire** (both are options
 in `archinstall`). Then, as your normal user — not as root:
@@ -172,13 +172,24 @@ python -m venv ~/.config/fabric_shell/.venv
 # 3. wallpapers live here — the picker reads this folder
 mkdir -p ~/Pictures/wallpapers && cp ~/archdots/wallpapers/* ~/Pictures/wallpapers/
 wal -i ~/Pictures/wallpapers/<pick-one>
-cp ~/.cache/wal/colors-fabric.css ~/.config/fabric_shell/css/
 
-# 4. the desktop and the lock screen read this symlink, not a path in a config
+# 4. the rendered palettes are not tracked, so write them where each consumer
+#    looks. GTK gets its own format because GTK CSS has no var().
+cp ~/.cache/wal/colors-fabric.css ~/.config/fabric_shell/css/
+for d in ~/.themes/archdots/gtk-3.0 ~/.themes/archdots/gtk-4.0 ~/.config/gtk-4.0; do
+  cp ~/.cache/wal/colors-gtk.css "$d/colors.css"
+done
+
+# 5. the GTK 4 recolour has to sit *beside* the file that imports it — a flatpak
+#    mounts .config/gtk-4.0 inside its own per-app home, so a relative import
+#    reaching back to ~/.themes silently fails and every flatpak loses its colour
+cp ~/.themes/archdots/gtk-4.0/overrides.css ~/.config/gtk-4.0/
+
+# 6. the desktop and the lock screen read this symlink, not a path in a config
 mkdir -p ~/.local/state/archdots
 ln -sfn ~/Pictures/wallpapers/<pick-one> ~/.local/state/archdots/wallpaper
 
-# 5. only on a machine with two GPUs — put the integrated one first, so the
+# 7. only on a machine with two GPUs — put the integrated one first, so the
 #    desktop doesn't render on the discrete card. uwsm sources this directory.
 mkdir -p ~/.config/uwsm/env-hyprland.d
 echo 'export AQ_DRM_DEVICES="/dev/dri/card1:/dev/dri/card0"' \
@@ -196,7 +207,14 @@ stowed.
 
 ## Making it yours
 
-**Change the wallpaper and colors:** <kbd>SUPER</kbd> <kbd>W</kbd>.
+**Change the wallpaper and colors:** <kbd>SUPER</kbd> <kbd>W</kbd>. Apps already
+open keep their old colours until you restart them — GTK reads a theme once.
+
+**Retune the theme itself:** the colours are derived, not written down. Every
+surface, border and highlight comes from the wallpaper's palette by way of
+`mix()` and `alpha()`, so changing one line changes all of them consistently —
+`.themes/archdots/gtk-3.0/gtk.css` for GTK 3, `gtk-4.0/overrides.css` for GTK 4.
+The accent is `color4` throughout, the same one the bar and window borders use.
 
 **Change settings for your machine** — your monitors, your mouse, your
 graphics card — without touching the originals: put them in
@@ -281,11 +299,20 @@ org.gnome.TextEditor
 
 ## Good to know
 
-- The theme is hand-modified for transparency, so a few GTK apps look off in
-  places.
+- The GTK 3 half of the theme is hand-written and doesn't cover every widget, so
+  an unusual app may show a stray unstyled corner. GTK 4 apps are safe — that
+  half recolours libadwaita's own stylesheet rather than replacing it.
+- **Don't press Apply in nwg-look.** It rewrites `~/.config/gtk-4.0/settings.ini`
+  and replaces `gtk.css` with a symlink into `~/.themes`, which breaks the theme
+  until the next `install.sh`.
+- Flatpaks need `~/.themes` in their permissions to be themed at all. Most
+  request it already, and the global override grants it —
+  `flatpak override --user --show` to check.
+- Qt apps go through Kvantum and qt6ct instead, so they don't follow the
+  wallpaper the way GTK apps do.
 - Dolphin's list view is broken with this Qt theme — use icon view.
-- Some tray icons show a generic placeholder if the app ships an icon the theme
-  doesn't have.
+- Some tray icons show a generic placeholder if the app ships an icon the icon
+  theme doesn't have.
 - Bluetooth pairing still needs `bluetoothctl` in a terminal; connecting to an
   already-paired device is one click in the control centre.
 - The installer's monitor layout is a left-to-right guess. If your screens sit

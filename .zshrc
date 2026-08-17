@@ -2,6 +2,7 @@
 source ~/.custom.zsh
 
 # Other
+export TERM="alacritty"
 export EDITOR=nano
 alias py=python
 alias ssh="TERM=xterm-256color ssh"
@@ -14,8 +15,12 @@ alias protontricks='flatpak run com.github.Matoking.protontricks'
 alias protontricks-launch='flatpak run --command=protontricks-launch com.github.Matoking.protontricks'
 
 
-# Pywal — restore terminal palette on every new shell
-(cat ~/.cache/wal/sequences &)
+# Pywal — restore terminal palette on every new shell except vscode
+if [ "$TERM_PROGRAM" != "vscode" ]; then
+    (cat ~/.cache/wal/sequences &)
+    export TERM="alacritty"
+fi
+
 
 # oh my zsh
 export ZSH="$HOME/.oh-my-zsh"

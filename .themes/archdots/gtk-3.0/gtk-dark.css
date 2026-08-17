@@ -1,0 +1,4 @@
+/* The theme has no light variant — the palette is a dark wallpaper background
+   either way — so the dark request loads the same sheet. Apps that set
+   gtk-application-prefer-dark-theme land here rather than on nothing. */
+@import url("gtk.css");

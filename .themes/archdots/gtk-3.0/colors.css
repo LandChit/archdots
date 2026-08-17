@@ -1,0 +1,35 @@
+/* pywal → GTK palette.
+ *
+ * pywal renders this into ~/.cache/wal/colors-gtk.css on every wallpaper
+ * change; the wallpaper picker then copies it into both gtk-3.0/ and gtk-4.0/
+ * of the archdots theme, next to the gtk.css that imports it.
+ *
+ * This file holds nothing but the raw palette. Every semantic name the theme
+ * actually styles with (window_bg_color, accent_bg_color, …) is derived from
+ * these with mix()/alpha() in the theme's own gtk.css, so a palette change
+ * never needs the theme regenerated — only re-read.
+ *
+ * GTK CSS has no var(); named colours are @define-color / @name. That is the
+ * one reason this cannot simply be colors-fabric.css.
+ */
+
+@define-color background #0a0b0b;
+@define-color foreground #e3e4e2;
+@define-color cursor #e3e4e2;
+
+@define-color color0 #0a0b0b;
+@define-color color1 #575F65;
+@define-color color2 #6C6F6F;
+@define-color color3 #85847D;
+@define-color color4 #727A83;
+@define-color color5 #A3A29A;
+@define-color color6 #C4C2B9;
+@define-color color7 #e3e4e2;
+@define-color color8 #9e9f9e;
+@define-color color9 #575F65;
+@define-color color10 #6C6F6F;
+@define-color color11 #85847D;
+@define-color color12 #727A83;
+@define-color color13 #A3A29A;
+@define-color color14 #C4C2B9;
+@define-color color15 #e3e4e2;

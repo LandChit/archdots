@@ -34,6 +34,23 @@ WALLPAPER_POINTER = os.path.expanduser("~/.local/state/archdots/wallpaper")
 WAL_CACHE = os.path.expanduser("~/.cache/wal/" + COLORS_CSS)
 COUNTS_PATH = "~/.local/share/fabric-launcher/wallpaper-counts.json"
 
+# The GTK theme follows the wallpaper the same way the shell does, only it
+# cannot read colors-fabric.css: GTK's CSS has no var(), so pywal renders a
+# second template using @define-color instead. Both halves of the theme import
+# a colors.css sitting next to their gtk.css, and these are those two copies.
+#
+# There are three copies, not two, because GTK resolves a nested @import
+# against the *entry* file's directory rather than the importing file's. The
+# GTK 4 sheet is reached through ~/.config/gtk-4.0/gtk.css — the only file
+# libadwaita apps read — so its `@import url("colors.css")` looks for the
+# palette next to *that*, and the theme's own copy is never consulted.
+GTK_WAL_CACHE = os.path.expanduser("~/.cache/wal/colors-gtk.css")
+GTK_COLOR_TARGETS = (
+    os.path.expanduser("~/.themes/archdots/gtk-3.0/colors.css"),
+    os.path.expanduser("~/.themes/archdots/gtk-4.0/colors.css"),
+    os.path.expanduser("~/.config/gtk-4.0/colors.css"),
+)
+
 EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp", ".bmp")
 
 WIDTH = 540
@@ -243,11 +260,22 @@ class WallpaperPicker(Panel):
 
     @staticmethod
     def _sync_colors() -> bool:
-        """Copy pywal's palette into css/, which every window is watching."""
-        try:
-            shutil.copyfile(WAL_CACHE, os.path.join(CSS_DIR, COLORS_CSS))
-        except OSError as e:
-            print(f"[wallpaper] could not sync colours: {e}")
+        """Copy pywal's palettes to everything that reads them.
+
+        Two consumers, two formats. css/ is watched live by every shell window;
+        the GTK theme's colors.css is only re-read when an app starts or the
+        theme is re-selected, so GTK apps already open keep their old colours
+        until they are restarted. Each copy is reported separately — a missing
+        GTK theme should not stop the shell from recolouring itself.
+        """
+        for src, dest in (
+            (WAL_CACHE, os.path.join(CSS_DIR, COLORS_CSS)),
+            *((GTK_WAL_CACHE, t) for t in GTK_COLOR_TARGETS),
+        ):
+            try:
+                shutil.copyfile(src, dest)
+            except OSError as e:
+                print(f"[wallpaper] could not sync colours to {dest}: {e}")
         return False
 
     @staticmethod

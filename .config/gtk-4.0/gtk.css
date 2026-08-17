@@ -1,0 +1,25 @@
+/* The GTK 4 recolour for apps running on the host.
+ *
+ * Host apps already have libadwaita's stylesheet — libadwaita loads it itself
+ * and, on this machine, even forces gtk-theme-name to "Adwaita-empty" so a
+ * custom theme cannot displace it. All that is missing is the colour, so this
+ * imports the recolour alone. Importing the vendored adw-base.css here as well
+ * would re-add 3000 rules that are already loaded.
+ *
+ * Flatpaks never reach this file: ~/.config/gtk-4.0 is a stow symlink into
+ * ~/archdots and no sandbox mounts that, so the link dangles. They are served
+ * by ~/.themes/archdots/gtk-4.0/gtk.css instead, which bundles libadwaita's
+ * sheet along with the recolour.
+ *
+ * Two things to keep right about this file:
+ *
+ *   · Keep it a real file, not a symlink to the theme. It loads at GTK's user
+ *     priority, and a symlink here means anything writing to this path writes
+ *     through to the theme itself.
+ *   · colors.css is imported from *this* directory, not the theme's. GTK
+ *     resolves nested imports against the entry file's directory, so the
+ *     wallpaper picker syncs the palette here as well. overrides.css is safe
+ *     to reach across because it contains no imports of its own. */
+
+@import url("colors.css");
+@import url("../../.themes/archdots/gtk-4.0/overrides.css");

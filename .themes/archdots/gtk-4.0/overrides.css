@@ -1,0 +1,155 @@
+/* archdots — the GTK 4 recolour, and nothing else.
+ *
+ * This is the single source of truth for how libadwaita is retinted, shared by
+ * the two entry points that need it:
+ *
+ *   .themes/archdots/gtk-4.0/gtk.css   vendored libadwaita + this  (flatpaks)
+ *   .config/gtk-4.0/gtk.css            just this                   (host apps)
+ *
+ * The split exists because host apps already have libadwaita's stylesheet
+ * loaded by libadwaita itself, so importing the vendored copy there would
+ * duplicate 3000 rules to no effect; flatpaks cannot see ~/.config at all and
+ * must get the whole sheet through ~/.themes. See gtk.css for the long version.
+ *
+ * Deliberately no @import here. Both entry points import this file, and GTK
+ * resolves a nested @import against the *entry* file's directory rather than
+ * this one — so any import written here would resolve differently depending on
+ * who pulled it in. Keeping this file import-free makes it position-independent.
+ *
+ * Nothing structural belongs in this file either. libadwaita's metrics are
+ * load-bearing: overriding row padding here is what previously collapsed
+ * AdwActionRow from 50px to 36px.
+ */
+
+/* ── Palette → roles ─────────────────────────────────────────────────────── */
+/* Same derivation as the GTK 3 sheet, so the two halves agree. */
+
+@define-color accent               @color4;
+@define-color accent_hover         mix(@color4, @foreground, 0.18);
+@define-color on_accent            @color7;
+
+/* Surfaces are translucent so Hyprland's blur reads through them — the same
+   two-step the shell bar uses: mix toward the accent *first* so text stays
+   legible over a bright wallpaper, then drop the alpha. The bar's islands sit
+   at mix 0.22 / alpha 0.88 and `surface` matches them exactly. */
+@define-color window_bg            alpha(mix(@background, @color4, 0.10), 0.86);
+@define-color surface              alpha(mix(@background, @color4, 0.22), 0.88);
+@define-color surface_raised       alpha(mix(@background, @color4, 0.30), 0.93);
+@define-color surface_sunken       alpha(mix(@background, @color4, 0.04), 0.70);
+
+@define-color text_primary         @foreground;
+@define-color text_dim             alpha(@foreground, 0.70);
+
+/* Pinned rather than derived: these palettes are often near monochrome, and a
+   warning that reads as grey is not a warning. */
+@define-color success_base         #7fb08a;
+@define-color warning_base         #d9b872;
+@define-color error_base           #d97f8c;
+
+/* ── Recolouring libadwaita ──────────────────────────────────────────────── */
+/* libadwaita paints everything from these custom properties. Overriding the
+   variables — rather than the rules that use them — is the seam it actually
+   supports, and it is the whole of the theme. */
+
+:root {
+  --accent-bg-color: @accent;
+  --accent-fg-color: @on_accent;
+  --accent-color: @accent_hover;
+
+  --destructive-bg-color: @error_base;
+  --destructive-fg-color: @background;
+  --destructive-color: @error_base;
+
+  --success-bg-color: @success_base;
+  --success-fg-color: @background;
+  --success-color: @success_base;
+
+  --warning-bg-color: @warning_base;
+  --warning-fg-color: @background;
+  --warning-color: @warning_base;
+
+  --error-bg-color: @error_base;
+  --error-fg-color: @background;
+  --error-color: @error_base;
+
+  --window-bg-color: @window_bg;
+  --window-fg-color: @text_primary;
+
+  --view-bg-color: @surface_sunken;
+  --view-fg-color: @text_primary;
+
+  --headerbar-bg-color: @surface;
+  --headerbar-fg-color: @text_primary;
+  --headerbar-border-color: alpha(@accent, 0.28);
+  --headerbar-backdrop-color: @window_bg;
+  --headerbar-shade-color: alpha(@background, 0.36);
+  --headerbar-darker-shade-color: alpha(@background, 0.60);
+
+  --sidebar-bg-color: @surface_sunken;
+  --sidebar-fg-color: @text_primary;
+  --sidebar-backdrop-color: @window_bg;
+  --sidebar-border-color: alpha(@accent, 0.18);
+  --sidebar-shade-color: alpha(@background, 0.36);
+
+  --secondary-sidebar-bg-color: @window_bg;
+  --secondary-sidebar-fg-color: @text_primary;
+  --secondary-sidebar-backdrop-color: @window_bg;
+  --secondary-sidebar-border-color: alpha(@accent, 0.18);
+  --secondary-sidebar-shade-color: alpha(@background, 0.30);
+
+  --card-bg-color: @surface;
+  --card-fg-color: @text_primary;
+  --card-shade-color: alpha(@accent, 0.28);
+
+  --dialog-bg-color: @surface_raised;
+  --dialog-fg-color: @text_primary;
+
+  --popover-bg-color: @surface_raised;
+  --popover-fg-color: @text_primary;
+  --popover-shade-color: alpha(@background, 0.60);
+
+  --thumbnail-bg-color: @surface;
+  --thumbnail-fg-color: @text_primary;
+
+  --shade-color: alpha(@background, 0.45);
+  --scrollbar-outline-color: alpha(@background, 0.50);
+}
+
+/* ── The few shapes worth keeping ────────────────────────────────────────── */
+/* Cosmetic and additive only. Nothing here changes a size libadwaita depends
+   on for layout — that restraint is what the previous sheet got wrong. */
+
+/* Window corners follow Hyprland's `rounding = 12`. */
+window.csd {
+  border-radius: 12px;
+}
+
+/* The shell's selection treatment: an accent wash with a brighter hairline,
+   instead of libadwaita's flat fill. box-shadow rather than border, so the
+   row's geometry is untouched. */
+row:selected,
+row.activatable:selected {
+  background-color: alpha(@accent, 0.18);
+  box-shadow: inset 0 0 0 1px alpha(@accent, 0.50);
+}
+
+/* Window controls stay invisible until reached for, then take the traffic
+   lights on hover — the same rule the GTK 3 sheet follows. */
+windowcontrols > button:hover {
+  background-color: alpha(@accent, 0.10);
+}
+
+windowcontrols > button.close:hover {
+  background-color: @error_base;
+  color: @background;
+}
+
+windowcontrols > button.maximize:hover {
+  background-color: @success_base;
+  color: @background;
+}
+
+windowcontrols > button.minimize:hover {
+  background-color: @warning_base;
+  color: @background;
+}

@@ -1,0 +1,47 @@
+/* archdots — GTK 4 / libadwaita.
+ *
+ * Unlike the GTK 3 sheet, this is deliberately NOT a hand-written theme.
+ *
+ * GTK 4 loads exactly one theme stylesheet. Shipping a partial one does not
+ * *add* to libadwaita's — it replaces it, and every metric libadwaita defines
+ * goes with it: AdwActionRow's `row > box.header { min-height: 50px }`, the
+ * boxed-list card shape, popover padding, the dark tooltip. A hand-written
+ * sheet here is what collapsed Flatseal's rows from 50px to 36px and left its
+ * tooltips rendering light-on-white.
+ *
+ * Nor can the colours be delivered as user CSS instead. Flatpaks are the
+ * reason: ~/.config/gtk-4.0 is a stow symlink into ~/archdots, which no
+ * sandbox mounts, so a flatpak sees a dangling link and loads nothing — and
+ * granting xdg-config/gtk-4.0 does not help, because the link's target is
+ * still outside the sandbox. ~/.themes, by contrast, flatpak resolves and
+ * mounts as a matter of course (Flatseal already carries `~/.themes` in its
+ * permissions). The theme directory is the only channel that reaches them.
+ *
+ * So: vendor libadwaita's own stylesheet verbatim and recolour it. Every rule
+ * stays exactly as upstream wrote it; only the colour variables it paints from
+ * are replaced, which is the seam libadwaita actually supports — its whole
+ * sheet is written in terms of var(--window-bg-color) and friends.
+ *
+ * Host apps take a different path and load overrides.css on its own, because
+ * libadwaita has already given them these same rules. See overrides.css.
+ *
+ * adw-base.css is libadwaita 1.9.3's /org/gnome/Adwaita/styles/gtk.css, and
+ * assets/ holds the four SVGs it references by relative path. Both need
+ * refreshing after a libadwaita update:
+ *
+ *     cd ~/.themes/archdots/gtk-4.0
+ *     gresource extract /usr/lib/libadwaita-1.so.0 \
+ *         /org/gnome/Adwaita/styles/gtk.css > adw-base.css
+ *     for s in bullet check dash devel; do
+ *       gresource extract /usr/lib/libadwaita-1.so.0 \
+ *         "/org/gnome/Adwaita/styles/assets/$s-symbolic.svg" \
+ *         > "assets/$s-symbolic.svg"
+ *     done
+ *
+ * Order matters: colours first so the palette names exist, libadwaita second,
+ * then the recolour last so its :root wins on source order.
+ */
+
+@import url("colors.css");
+@import url("adw-base.css");
+@import url("overrides.css");

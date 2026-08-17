@@ -1,0 +1,1288 @@
+/* archdots — GTK 3 theme.
+ *
+ * Written from scratch. The Catppuccin build in .themes/ is referenced only
+ * for *which* names GTK and its consumers look up (@theme_bg_color, @borders,
+ * @wm_button_close_hover_bg, …); none of its rules or colours are used here.
+ *
+ * The palette comes from pywal via colors.css, which the wallpaper picker
+ * copies out of ~/.cache/wal/ next to this file. Everything below is derived
+ * from that palette with mix()/alpha(), so a new wallpaper recolours the whole
+ * theme without anything being regenerated.
+ *
+ * The look is the fabric shell's, ported to GTK's widget set:
+ *   · surfaces are the wallpaper background lifted 22% toward the accent
+ *   · one hairline border at alpha(accent, 0.28) around every raised surface
+ *   · selection is an accent wash at 0.18 with a 0.50 accent border
+ *   · hover is the same wash at 0.10
+ *   · radii step 14 / 12 / 9 / 7 from popover down to chip
+ */
+
+@import url("colors.css");
+
+/* ── Palette → roles ─────────────────────────────────────────────────────── */
+/* color4 is the accent everywhere in this setup: the shell's islands, the
+   Hyprland border and the launcher selection all key off it. */
+
+@define-color accent               @color4;
+@define-color accent_hover         mix(@color4, @foreground, 0.18);
+@define-color accent_active        mix(@color4, @background, 0.18);
+@define-color on_accent            @color7;
+
+/* The surface levels, translucent so Hyprland's blur reads through them — the
+   same two-step the shell bar uses: mix toward the accent *first* so text stays
+   legible over a bright wallpaper, then drop the alpha. `surface` matches the
+   bar's islands exactly (mix 0.22 / alpha 0.88).
+
+   GTK's alpha() *multiplies* an existing alpha rather than replacing it, so
+   these must not be wrapped in another alpha() where they are used, or the
+   surface quietly ends up more transparent than intended. */
+@define-color window_bg            alpha(mix(@background, @color4, 0.10), 0.86);
+@define-color surface              alpha(mix(@background, @color4, 0.22), 0.88);
+@define-color surface_raised       alpha(mix(@background, @color4, 0.30), 0.93);
+@define-color surface_sunken       alpha(mix(@background, @color4, 0.04), 0.70);
+
+@define-color border_subtle        alpha(@accent, 0.18);
+@define-color border_default       alpha(@accent, 0.28);
+@define-color border_strong        alpha(@accent, 0.50);
+
+@define-color wash_hover           alpha(@accent, 0.10);
+@define-color wash_active          alpha(@accent, 0.16);
+@define-color wash_selected        alpha(@accent, 0.18);
+
+@define-color text_primary         @foreground;
+@define-color text_dim             alpha(@foreground, 0.70);
+@define-color text_faint           alpha(@foreground, 0.45);
+
+/* Semantic colours. The pywal palettes this setup produces are often near
+   monochrome, so warning/error/success are pinned to fixed hues instead —
+   a red that reads as grey is a broken warning, not a subtle one. */
+@define-color success_color        #7fb08a;
+@define-color warning_color        #d9b872;
+@define-color error_color          #d97f8c;
+@define-color destructive_color    @error_color;
+
+/* ── Names GTK and third-party apps look up ──────────────────────────────── */
+
+@define-color theme_fg_color                   @text_primary;
+@define-color theme_text_color                 @text_primary;
+@define-color theme_bg_color                   @window_bg;
+@define-color theme_base_color                 @surface_sunken;
+@define-color theme_selected_bg_color          @accent;
+@define-color theme_selected_fg_color          @on_accent;
+
+@define-color theme_unfocused_fg_color         @text_dim;
+@define-color theme_unfocused_text_color       @text_dim;
+@define-color theme_unfocused_bg_color         @window_bg;
+@define-color theme_unfocused_base_color       @surface_sunken;
+@define-color theme_unfocused_selected_bg_color mix(@accent, @background, 0.35);
+@define-color theme_unfocused_selected_fg_color @text_primary;
+
+@define-color insensitive_fg_color             @text_faint;
+@define-color insensitive_bg_color             alpha(@surface, 0.50);
+@define-color insensitive_base_color           @surface_sunken;
+@define-color unfocused_insensitive_color      @text_faint;
+
+@define-color borders                          @border_default;
+@define-color unfocused_borders                @border_subtle;
+
+@define-color content_view_bg                  @surface_sunken;
+@define-color text_view_bg                     @surface_sunken;
+@define-color placeholder_text_color           @text_faint;
+@define-color link_color                       @accent_hover;
+@define-color visited_link_color               mix(@accent, @color5, 0.40);
+
+/* Window-manager names — xfwm4/metacity/budgie read these. */
+@define-color wm_title                         @text_primary;
+@define-color wm_unfocused_title               @text_dim;
+@define-color wm_highlight                     alpha(@foreground, 0.06);
+@define-color wm_border                        @border_default;
+@define-color wm_bg                            @surface;
+@define-color wm_unfocused_bg                  @window_bg;
+@define-color wm_button_icon                   @text_primary;
+@define-color wm_button_close_hover_bg         @error_color;
+@define-color wm_button_close_active_bg        shade(@error_color, 0.85);
+@define-color wm_button_max_hover_bg           @success_color;
+@define-color wm_button_max_active_bg          shade(@success_color, 0.85);
+@define-color wm_button_min_hover_bg           @warning_color;
+@define-color wm_button_min_active_bg          shade(@warning_color, 0.85);
+
+/* ── Global ──────────────────────────────────────────────────────────────── */
+
+* {
+  background-clip: padding-box;
+  outline-style: solid;
+  outline-width: 1px;
+  outline-offset: -2px;
+  outline-color: transparent;
+  -gtk-outline-radius: 7px;
+  -GtkScrolledWindow-scrollbar-spacing: 0;
+  -GtkWidget-text-handle-width: 20;
+  -GtkWidget-text-handle-height: 20;
+  -GtkDialog-button-spacing: 6;
+  -GtkDialog-action-area-border: 8;
+  -GtkTextView-error-underline-color: @error_color;
+  -gtk-secondary-caret-color: @accent;
+}
+
+*:focus-visible,
+*:focus:focus-visible {
+  outline-color: @border_strong;
+}
+
+/* ── Windows ─────────────────────────────────────────────────────────────── */
+
+window,
+.background {
+  background-color: @window_bg;
+  color: @text_primary;
+}
+
+window.background:backdrop,
+.background:backdrop {
+  color: @text_dim;
+}
+
+/* Client-side-decorated windows get the shell's rounded, hairlined shell. */
+window.csd {
+  border-radius: 12px;
+}
+
+decoration {
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px @border_default,
+              0 24px 56px rgba(0, 0, 0, 0.55);
+}
+
+decoration:backdrop {
+  box-shadow: 0 0 0 1px @border_subtle,
+              0 10px 26px rgba(0, 0, 0, 0.40);
+}
+
+/* Tooltips and menus are drawn as their own windows; they must not inherit
+   the rounded decoration shadow above or they gain a second frame. */
+tooltip.background,
+window.popup decoration {
+  box-shadow: none;
+}
+
+/* ── Header bars ─────────────────────────────────────────────────────────── */
+
+headerbar {
+  background-color: @surface;
+  color: @text_primary;
+  border-bottom: 1px solid @border_default;
+  padding: 0 7px;
+  min-height: 42px;
+}
+
+headerbar:backdrop {
+  background-color: @window_bg;
+  color: @text_dim;
+  border-bottom-color: @border_subtle;
+}
+
+headerbar .title {
+  font-weight: 500;
+  color: @text_primary;
+}
+
+headerbar .subtitle {
+  font-size: 90%;
+  color: @text_dim;
+}
+
+headerbar:backdrop .title,
+headerbar:backdrop .subtitle {
+  color: @text_dim;
+}
+
+window.csd headerbar:first-child {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+/* Window buttons — square-ish chips that only colour on hover, matching the
+   shell's "chrome stays invisible until you reach for it" rule. */
+headerbar button.titlebutton {
+  min-width: 24px;
+  min-height: 24px;
+  margin: 0 1px;
+  padding: 0;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  color: @text_dim;
+}
+
+headerbar button.titlebutton:hover {
+  background-color: @wash_hover;
+  color: @text_primary;
+}
+
+headerbar button.titlebutton.close:hover {
+  background-color: @wm_button_close_hover_bg;
+  color: @background;
+}
+
+headerbar button.titlebutton.close:active {
+  background-color: @wm_button_close_active_bg;
+}
+
+headerbar button.titlebutton.maximize:hover {
+  background-color: @wm_button_max_hover_bg;
+  color: @background;
+}
+
+headerbar button.titlebutton.minimize:hover {
+  background-color: @wm_button_min_hover_bg;
+  color: @background;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+
+button {
+  min-height: 26px;
+  min-width: 18px;
+  padding: 4px 12px;
+  border-radius: 9px;
+  border: 1px solid @border_default;
+  background-color: @surface;
+  background-image: none;
+  box-shadow: none;
+  color: @text_primary;
+  font-weight: 400;
+  transition: background-color 140ms ease,
+              border-color 140ms ease,
+              color 140ms ease;
+}
+
+button:hover {
+  background-color: @surface_raised;
+  border-color: @border_strong;
+}
+
+button:active,
+button:checked {
+  background-color: @wash_selected;
+  border-color: @border_strong;
+  color: @text_primary;
+}
+
+button:disabled {
+  background-color: @insensitive_bg_color;
+  border-color: @border_subtle;
+  color: @insensitive_fg_color;
+}
+
+button:backdrop {
+  background-color: @window_bg;
+  border-color: @border_subtle;
+  color: @text_dim;
+}
+
+/* Flat buttons carry no chrome at all until hovered — the shell's row-button
+   treatment, where the button is a hit target and the card is the visual. */
+button.flat,
+button.image-button.flat,
+button.text-button.flat {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+button.flat:hover {
+  background-color: @wash_hover;
+  border-color: transparent;
+}
+
+button.flat:active,
+button.flat:checked {
+  background-color: @wash_selected;
+  border-color: @border_default;
+}
+
+button.flat:disabled {
+  background-color: transparent;
+  border-color: transparent;
+  color: @insensitive_fg_color;
+}
+
+button.suggested-action {
+  background-color: @accent;
+  border-color: @accent;
+  color: @on_accent;
+}
+
+button.suggested-action:hover {
+  background-color: @accent_hover;
+  border-color: @accent_hover;
+}
+
+button.suggested-action:active {
+  background-color: @accent_active;
+}
+
+button.destructive-action {
+  background-color: @destructive_color;
+  border-color: @destructive_color;
+  color: @background;
+}
+
+button.destructive-action:hover {
+  background-color: shade(@destructive_color, 1.12);
+  border-color: shade(@destructive_color, 1.12);
+}
+
+button.destructive-action:active {
+  background-color: shade(@destructive_color, 0.88);
+}
+
+button.suggested-action:disabled,
+button.destructive-action:disabled {
+  background-color: @insensitive_bg_color;
+  border-color: @border_subtle;
+  color: @insensitive_fg_color;
+}
+
+/* Circular buttons keep the same chrome, just fully rounded. */
+button.circular {
+  border-radius: 9999px;
+  padding: 6px;
+  min-width: 28px;
+  min-height: 28px;
+}
+
+/* ── Linked groups ───────────────────────────────────────────────────────── */
+
+.linked:not(.vertical) > button,
+.linked:not(.vertical) > entry,
+.linked:not(.vertical) > combobox > box > button.combo {
+  border-radius: 0;
+  border-right-width: 0;
+}
+
+.linked:not(.vertical) > :first-child {
+  border-top-left-radius: 9px;
+  border-bottom-left-radius: 9px;
+}
+
+.linked:not(.vertical) > :last-child {
+  border-top-right-radius: 9px;
+  border-bottom-right-radius: 9px;
+  border-right-width: 1px;
+}
+
+.linked:not(.vertical) > :only-child {
+  border-radius: 9px;
+  border-right-width: 1px;
+}
+
+.linked.vertical > button,
+.linked.vertical > entry {
+  border-radius: 0;
+  border-bottom-width: 0;
+}
+
+.linked.vertical > :first-child {
+  border-top-left-radius: 9px;
+  border-top-right-radius: 9px;
+}
+
+.linked.vertical > :last-child {
+  border-bottom-left-radius: 9px;
+  border-bottom-right-radius: 9px;
+  border-bottom-width: 1px;
+}
+
+.linked.vertical > :only-child {
+  border-radius: 9px;
+  border-bottom-width: 1px;
+}
+
+/* ── Entries ─────────────────────────────────────────────────────────────── */
+/* Deliberately the shell's `.search-row`: an accent wash at 0.10 inside a
+   0.25 accent hairline, and a focus state that only strengthens the border. */
+
+entry,
+spinbutton:not(.vertical) {
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 9px;
+  border: 1px solid @border_default;
+  background-color: @wash_hover;
+  background-image: none;
+  box-shadow: none;
+  color: @text_primary;
+  caret-color: @accent;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+entry:focus,
+entry:focus-within,
+spinbutton:focus-within {
+  border-color: @border_strong;
+  background-color: @wash_active;
+  outline: none;
+  box-shadow: none;
+}
+
+entry:disabled {
+  background-color: @insensitive_bg_color;
+  border-color: @border_subtle;
+  color: @insensitive_fg_color;
+}
+
+entry:backdrop {
+  background-color: alpha(@accent, 0.06);
+  border-color: @border_subtle;
+  color: @text_dim;
+}
+
+entry image {
+  color: @text_dim;
+}
+
+entry image:hover {
+  color: @accent;
+}
+
+entry progress {
+  background-color: transparent;
+  border-bottom: 2px solid @accent;
+  border-radius: 0;
+}
+
+entry.error {
+  border-color: @error_color;
+}
+
+entry.warning {
+  border-color: @warning_color;
+}
+
+entry placeholder,
+entry text placeholder {
+  color: @placeholder_text_color;
+}
+
+/* Selection inside text widgets */
+entry selection,
+textview text selection,
+label selection {
+  background-color: @accent;
+  color: @on_accent;
+}
+
+entry selection:backdrop,
+textview text selection:backdrop {
+  background-color: mix(@accent, @background, 0.40);
+}
+
+/* ── Spin buttons ────────────────────────────────────────────────────────── */
+
+spinbutton button {
+  background-color: transparent;
+  border: none;
+  border-radius: 7px;
+  color: @text_dim;
+  min-width: 22px;
+  padding: 0 4px;
+}
+
+spinbutton button:hover {
+  background-color: @wash_hover;
+  color: @text_primary;
+}
+
+/* ── Combo boxes ─────────────────────────────────────────────────────────── */
+
+combobox arrow,
+button.combo arrow {
+  color: @text_dim;
+  min-width: 12px;
+  min-height: 12px;
+}
+
+combobox button.combo {
+  padding-right: 8px;
+}
+
+/* ── Views, lists and rows ───────────────────────────────────────────────── */
+
+.view,
+textview,
+textview text,
+iconview,
+treeview.view {
+  background-color: @theme_base_color;
+  color: @text_primary;
+}
+
+textview border {
+  background-color: @theme_base_color;
+  color: @text_faint;
+}
+
+.view:disabled,
+textview text:disabled {
+  color: @insensitive_fg_color;
+}
+
+/* Row cards. One shape for list rows, icon-view items and tree rows, so a
+   file manager, a settings list and a completion popup all read the same. */
+list {
+  background-color: transparent;
+  color: @text_primary;
+}
+
+/* Deliberately no `padding` here. A row gets its height from padding on the row
+   node itself, and this sheet outranks the app's own styling — so setting
+   padding does not add to it, it replaces it, and list rows collapse to
+   whatever is written here. Style the row's paint, leave its metrics alone. */
+list row,
+row.activatable {
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+row.activatable:hover {
+  background-color: @wash_hover;
+}
+
+row.activatable:active {
+  background-color: @wash_active;
+}
+
+list row:selected,
+row.activatable:selected {
+  background-color: @wash_selected;
+  border-color: @border_strong;
+  color: @text_primary;
+}
+
+list row:selected:hover,
+row.activatable:selected:hover {
+  background-color: alpha(@accent, 0.24);
+}
+
+list row:selected:backdrop {
+  background-color: alpha(@accent, 0.10);
+  border-color: @border_subtle;
+}
+
+list.separators row:not(:first-child) {
+  border-top: 1px solid @border_subtle;
+}
+
+/* Tree and icon views cannot take a border radius per row without artefacts
+   on the rubber band, so they get the wash without the hairline. */
+treeview.view:selected,
+treeview.view:selected:focus,
+iconview:selected,
+flowbox flowboxchild:selected,
+.view:selected {
+  background-color: @wash_selected;
+  color: @text_primary;
+}
+
+treeview.view:hover,
+iconview:hover {
+  background-color: @wash_hover;
+}
+
+treeview.view:selected:backdrop,
+.view:selected:backdrop {
+  background-color: alpha(@accent, 0.10);
+  color: @text_dim;
+}
+
+treeview.view {
+  border-left-color: @border_subtle;
+  border-top-color: @border_subtle;
+}
+
+treeview.view:selected:focus {
+  outline-color: transparent;
+}
+
+treeview.view.expander {
+  color: @text_dim;
+}
+
+treeview.view.expander:hover {
+  color: @accent;
+}
+
+treeview.view header button {
+  background-color: @surface;
+  border: none;
+  border-right: 1px solid @border_subtle;
+  border-bottom: 1px solid @border_default;
+  border-radius: 0;
+  padding: 3px 8px;
+  color: @text_dim;
+  font-weight: 500;
+}
+
+treeview.view header button:hover {
+  background-color: @surface_raised;
+  color: @text_primary;
+}
+
+flowbox flowboxchild {
+  border-radius: 12px;
+  padding: 3px;
+}
+
+flowbox flowboxchild:hover {
+  background-color: @wash_hover;
+}
+
+/* Rubber-band selection */
+rubberband,
+.rubberband {
+  background-color: alpha(@accent, 0.20);
+  border: 1px solid @border_strong;
+}
+
+/* ── Menus, popovers and tooltips ────────────────────────────────────────── */
+/* The shell's panel: a surface at 0.94, an accent hairline and a deep shadow. */
+
+popover.background,
+menu,
+.menu,
+.context-menu {
+  background-color: @surface_raised;
+  border: 1px solid @border_default;
+  border-radius: 14px;
+  padding: 6px;
+  color: @text_primary;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.50);
+}
+
+popover.background > arrow {
+  background-color: @surface_raised;
+  border: 1px solid @border_default;
+}
+
+/* GTK draws the popover shadow on the outer node; the contents node must not
+   repaint the background or the rounded corners are squared off again. */
+popover.background > contents,
+popover.background > stack {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+}
+
+menuitem,
+popover.background modelbutton,
+popover.background .menuitem {
+  min-height: 32px;
+  padding: 5px 10px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: @text_primary;
+  transition: background-color 120ms ease;
+}
+
+menuitem:hover,
+menuitem:selected,
+popover.background modelbutton:hover,
+popover.background modelbutton:selected {
+  background-color: @wash_selected;
+  border-color: @border_strong;
+  color: @text_primary;
+}
+
+menuitem:disabled,
+popover.background modelbutton:disabled {
+  color: @insensitive_fg_color;
+  background-color: transparent;
+}
+
+/* The accelerator is a plain sibling of the item's label with nothing between
+   them, so "Keyboard Shortcuts" and "Ctrl+?" render touching. The gap has to
+   come from here. */
+menuitem accelerator,
+modelbutton accelerator,
+modelbutton > accelerator {
+  color: @text_faint;
+  margin-left: 24px;
+}
+
+menu separator,
+popover.background separator {
+  background-color: @border_subtle;
+  margin: 4px 2px;
+  min-height: 1px;
+}
+
+menu arrow {
+  color: @text_dim;
+  min-width: 12px;
+  min-height: 12px;
+}
+
+tooltip {
+  background-color: transparent;
+}
+
+tooltip.background {
+  background-color: @surface_raised;
+  border: 1px solid @border_default;
+  border-radius: 9px;
+  color: @text_primary;
+  padding: 3px 7px;
+}
+
+tooltip label {
+  color: @text_primary;
+  padding: 0;
+}
+
+/* ── Notebooks ───────────────────────────────────────────────────────────── */
+
+notebook > header {
+  background-color: @window_bg;
+  border-color: @border_default;
+}
+
+notebook > header.top { border-bottom-style: solid; border-bottom-width: 1px; }
+notebook > header.bottom { border-top-style: solid; border-top-width: 1px; }
+notebook > header.left { border-right-style: solid; border-right-width: 1px; }
+notebook > header.right { border-left-style: solid; border-left-width: 1px; }
+
+notebook > header > tabs > tab {
+  min-height: 28px;
+  min-width: 28px;
+  padding: 4px 12px;
+  margin: 3px 2px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: @text_dim;
+  font-weight: 400;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+notebook > header > tabs > tab:hover {
+  background-color: @wash_hover;
+  color: @text_primary;
+}
+
+notebook > header > tabs > tab:checked {
+  background-color: @wash_selected;
+  border-color: @border_strong;
+  color: @text_primary;
+}
+
+notebook > header > tabs > tab:backdrop {
+  color: @text_faint;
+  background-color: transparent;
+}
+
+notebook > stack {
+  background-color: @window_bg;
+}
+
+/* ── Scrollbars ─────────────────────────────────────────────────────────── */
+/* Thin, unobtrusive, and only accent-tinted while grabbed. */
+
+scrollbar {
+  background-color: transparent;
+  border: none;
+}
+
+scrollbar trough {
+  background-color: transparent;
+  border: none;
+  margin: 2px;
+  border-radius: 9999px;
+}
+
+scrollbar slider {
+  min-width: 7px;
+  min-height: 7px;
+  margin: 2px;
+  border: none;
+  border-radius: 9999px;
+  background-color: alpha(@foreground, 0.22);
+  transition: background-color 140ms ease;
+}
+
+scrollbar slider:hover {
+  background-color: alpha(@foreground, 0.38);
+}
+
+scrollbar slider:active {
+  background-color: @accent;
+}
+
+scrollbar slider:disabled {
+  background-color: transparent;
+}
+
+scrollbar.overlay-indicator:not(.dragging):not(.hovering) slider {
+  background-color: alpha(@foreground, 0.30);
+  min-width: 3px;
+  min-height: 3px;
+}
+
+scrollbar button {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: transparent;
+}
+
+/* ── Switches ────────────────────────────────────────────────────────────── */
+
+switch {
+  min-width: 44px;
+  min-height: 24px;
+  border-radius: 9999px;
+  border: 1px solid @border_default;
+  background-color: @surface_sunken;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+switch:checked {
+  background-color: @accent;
+  border-color: @accent;
+}
+
+switch:disabled {
+  background-color: @insensitive_bg_color;
+  border-color: @border_subtle;
+}
+
+switch slider {
+  min-width: 20px;
+  min-height: 20px;
+  margin: 1px;
+  border-radius: 9999px;
+  border: none;
+  background-color: @foreground;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+switch:checked slider {
+  background-color: @on_accent;
+}
+
+switch:disabled slider {
+  background-color: @text_faint;
+  box-shadow: none;
+}
+
+/* GTK 3.20+ draws ON/OFF text nodes on some builds; hide them. */
+switch image,
+switch label {
+  color: transparent;
+}
+
+/* ── Check boxes and radios ──────────────────────────────────────────────── */
+
+check,
+radio {
+  min-width: 17px;
+  min-height: 17px;
+  padding: 0;
+  margin: 0 3px;
+  border: 1px solid @border_strong;
+  background-color: @surface_sunken;
+  background-image: none;
+  box-shadow: none;
+  color: @on_accent;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+check { border-radius: 6px; }
+radio { border-radius: 9999px; }
+
+check:hover,
+radio:hover {
+  background-color: @wash_hover;
+  border-color: @accent;
+}
+
+check:checked,
+check:indeterminate,
+radio:checked,
+radio:indeterminate {
+  background-color: @accent;
+  border-color: @accent;
+  color: @on_accent;
+}
+
+check:disabled,
+radio:disabled {
+  background-color: @insensitive_bg_color;
+  border-color: @border_subtle;
+  color: @insensitive_fg_color;
+}
+
+/* Rows of check/radio menu items should not draw the chrome twice. */
+menuitem check,
+menuitem radio,
+modelbutton check,
+modelbutton radio {
+  margin-right: 6px;
+}
+
+/* ── Scales ──────────────────────────────────────────────────────────────── */
+
+scale {
+  min-height: 14px;
+  min-width: 14px;
+  padding: 6px;
+}
+
+scale trough {
+  min-height: 4px;
+  min-width: 4px;
+  border: none;
+  border-radius: 9999px;
+  background-color: alpha(@foreground, 0.16);
+}
+
+scale trough:disabled {
+  background-color: @insensitive_bg_color;
+}
+
+scale highlight {
+  border-radius: 9999px;
+  background-color: @accent;
+}
+
+scale highlight:disabled {
+  background-color: @text_faint;
+}
+
+scale fill {
+  border-radius: 9999px;
+  background-color: alpha(@accent, 0.30);
+}
+
+scale slider {
+  min-width: 15px;
+  min-height: 15px;
+  margin: -6px;
+  border: 1px solid @border_strong;
+  border-radius: 9999px;
+  background-color: @surface_raised;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.40);
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+scale slider:hover {
+  background-color: @accent;
+  border-color: @accent;
+}
+
+scale slider:active {
+  background-color: @accent_active;
+}
+
+scale slider:disabled {
+  background-color: @insensitive_bg_color;
+  border-color: @border_subtle;
+  box-shadow: none;
+}
+
+scale marks,
+scale value {
+  color: @text_faint;
+}
+
+/* ── Progress and level bars ─────────────────────────────────────────────── */
+
+progressbar {
+  color: @text_dim;
+  font-size: 90%;
+}
+
+progressbar trough {
+  min-height: 5px;
+  min-width: 5px;
+  border: none;
+  border-radius: 9999px;
+  background-color: alpha(@foreground, 0.14);
+}
+
+progressbar progress {
+  min-height: 5px;
+  min-width: 5px;
+  border: none;
+  border-radius: 9999px;
+  background-color: @accent;
+}
+
+progressbar.osd trough { background-color: transparent; }
+
+levelbar block {
+  min-height: 5px;
+  min-width: 30px;
+  border: none;
+  border-radius: 9999px;
+}
+
+levelbar block.filled,
+levelbar.discrete block.filled {
+  background-color: @accent;
+}
+
+levelbar block.high  { background-color: @success_color; }
+levelbar block.low   { background-color: @warning_color; }
+levelbar block.full  { background-color: @success_color; }
+levelbar block.empty { background-color: alpha(@foreground, 0.14); }
+
+levelbar.discrete block {
+  margin: 0 1px;
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────────── */
+
+spinner {
+  color: @accent;
+  opacity: 1;
+}
+
+spinner:disabled {
+  color: @text_faint;
+}
+
+/* ── Sidebars, panes and separators ──────────────────────────────────────── */
+
+.sidebar,
+placessidebar,
+stacksidebar {
+  background-color: @surface_sunken;
+  border: none;
+  color: @text_primary;
+}
+
+.sidebar:backdrop {
+  color: @text_dim;
+}
+
+.sidebar list,
+placessidebar list {
+  background-color: transparent;
+}
+
+paned > separator {
+  min-width: 1px;
+  min-height: 1px;
+  background-color: @border_subtle;
+  background-image: none;
+}
+
+paned > separator:hover {
+  background-color: @border_strong;
+}
+
+paned.wide > separator {
+  min-width: 5px;
+  min-height: 5px;
+  background-color: transparent;
+  border-color: @border_subtle;
+}
+
+separator {
+  min-width: 1px;
+  min-height: 1px;
+  background-color: @border_subtle;
+}
+
+/* ── Toolbars, action bars and search bars ───────────────────────────────── */
+
+toolbar,
+actionbar > revealer > box,
+searchbar > revealer > box {
+  background-color: @surface;
+  border-color: @border_default;
+  padding: 5px;
+}
+
+actionbar > revealer > box {
+  border-top: 1px solid @border_default;
+}
+
+searchbar > revealer > box {
+  border-bottom: 1px solid @border_default;
+}
+
+toolbar.osd,
+.osd {
+  background-color: @surface_raised;
+  border: 1px solid @border_default;
+  border-radius: 14px;
+  color: @text_primary;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.50);
+}
+
+/* ── Info bars ───────────────────────────────────────────────────────────── */
+
+infobar {
+  border: none;
+}
+
+infobar > revealer > box {
+  border-radius: 12px;
+  border: 1px solid @border_default;
+  background-color: @surface;
+  padding: 7px 12px;
+  color: @text_primary;
+}
+
+infobar.info > revealer > box     { border-color: @border_strong; }
+infobar.question > revealer > box { border-color: @border_strong; }
+infobar.warning > revealer > box  { border-color: @warning_color; }
+infobar.error > revealer > box    { border-color: @error_color; }
+
+/* ── Dialogs and message dialogs ─────────────────────────────────────────── */
+
+messagedialog.background {
+  background-color: @surface;
+}
+
+messagedialog .dialog-action-area button {
+  border-radius: 9px;
+  padding: 7px 14px;
+}
+
+.dialog-action-box,
+dialog .dialog-vbox {
+  background-color: transparent;
+}
+
+/* ── Calendar ────────────────────────────────────────────────────────────── */
+
+calendar {
+  background-color: @theme_base_color;
+  border: 1px solid @border_default;
+  border-radius: 12px;
+  color: @text_primary;
+  padding: 3px;
+}
+
+calendar:selected {
+  background-color: @wash_selected;
+  border-radius: 7px;
+  color: @text_primary;
+}
+
+calendar.header {
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid @border_subtle;
+}
+
+calendar.button {
+  color: @text_dim;
+  background-color: transparent;
+  border: none;
+}
+
+calendar.button:hover {
+  color: @accent;
+}
+
+calendar.highlight {
+  color: @accent;
+  font-weight: 500;
+}
+
+calendar:indeterminate {
+  color: @text_faint;
+}
+
+/* ── Expanders, frames and misc containers ───────────────────────────────── */
+
+expander title > arrow,
+expander arrow {
+  color: @text_dim;
+  min-width: 14px;
+  min-height: 14px;
+}
+
+expander arrow:hover {
+  color: @accent;
+}
+
+frame > border,
+.frame {
+  border: 1px solid @border_default;
+  border-radius: 12px;
+  background-color: transparent;
+}
+
+scrolledwindow undershoot.top,
+scrolledwindow undershoot.bottom,
+scrolledwindow undershoot.left,
+scrolledwindow undershoot.right {
+  background-image: none;
+  border: none;
+}
+
+/* ── Text, labels and links ──────────────────────────────────────────────── */
+
+label {
+  caret-color: @accent;
+}
+
+label:disabled {
+  color: @insensitive_fg_color;
+}
+
+.dim-label,
+label.dim-label {
+  color: @text_dim;
+}
+
+link,
+*:link,
+button.link {
+  color: @link_color;
+  text-decoration-color: alpha(@link_color, 0.45);
+}
+
+*:visited {
+  color: @visited_link_color;
+}
+
+/* ── App-specific nudges ─────────────────────────────────────────────────── */
+/* Nautilus and Nemo paint their own path bars; without these they fall back
+   to their built-in chrome and stop matching the rest of the theme. */
+
+.nautilus-window .path-bar-box button,
+.nemo-window .nemo-pathbar button {
+  border-radius: 7px;
+  border-color: transparent;
+  background-color: transparent;
+}
+
+.nautilus-window .path-bar-box button:hover,
+.nemo-window .nemo-pathbar button:hover {
+  background-color: @wash_hover;
+}
+
+.nautilus-window .path-bar-box button:checked,
+.nemo-window .nemo-pathbar button:checked {
+  background-color: @wash_selected;
+  border-color: @border_strong;
+}
+
+/* Terminals draw their own palette; only the chrome around them is ours. */
+vte-terminal {
+  background-color: @background;
+  color: @foreground;
+}

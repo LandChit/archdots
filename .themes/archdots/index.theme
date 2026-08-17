@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=archdots
+Comment=Wallpaper-driven dark theme that follows pywal, matched to the fabric shell
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+GtkTheme=archdots
+IconTheme=breeze-dark
+CursorTheme=default
+ButtonLayout=:minimize,maximize,close

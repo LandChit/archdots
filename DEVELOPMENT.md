@@ -165,7 +165,7 @@ when a headset auto-connects before the shell is up. See
 `.themes/` ships the theme; `.config/gtk-3.0/settings.ini` is what chooses it:
 
 ```ini
-gtk-theme-name=catppuccin-mocha-pink-standard+default
+gtk-theme-name=archdots
 gtk-icon-theme-name=breeze-dark
 gtk-application-prefer-dark-theme=1
 ```
@@ -173,6 +173,62 @@ gtk-application-prefer-dark-theme=1
 Without that file GTK falls back to **Adwaita light**, and the result is a shell
 with white panels and grey-on-white text that looks broken rather than
 misconfigured — the pywal palette is applied correctly on top of a light base.
+
+### The GTK theme follows the wallpaper
+
+`.themes/archdots/` holds no colours of its own. The palette is pywal output:
+`wal/templates/colors-gtk.css` renders to `~/.cache/wal/colors-gtk.css`, and the
+wallpaper picker copies it in as `colors.css` beside each sheet, the same way it
+copies `colors-fabric.css` into the shell's `css/`.
+
+It needs its own template because **GTK CSS has no `var()`** — named colours are
+`@define-color` and `@name`, so the shell's `colors-fabric.css` cannot be reused.
+
+The two halves are built on opposite principles, and the reason matters:
+
+- **GTK 3** (`gtk-3.0/gtk.css`) is hand-written. There is no libadwaita
+  underneath, so a theme is expected to specify everything.
+- **GTK 4** (`gtk-4.0/`) vendors libadwaita's own stylesheet as `adw-base.css`
+  and only recolours it. GTK 4 loads exactly *one* theme stylesheet, so a
+  partial one does not add to libadwaita's — it **replaces** it, taking every
+  metric with it. A hand-written sheet here collapsed AdwActionRow from 50px to
+  36px, flattened boxed-list cards and left tooltips rendering light-on-white.
+  Refresh `adw-base.css` and `assets/` after a libadwaita update; the commands
+  are in the header of `gtk-4.0/gtk.css`.
+
+`gtk-4.0/overrides.css` is the actual theme: it sets the ~40 CSS custom
+properties libadwaita paints from (`--window-bg-color`, `--accent-bg-color`, …).
+Overriding those variables rather than the rules that use them is the seam
+libadwaita supports. **Nothing structural belongs there** — libadwaita's metrics
+are load-bearing.
+
+Which file an app reads depends on where it runs, and there are two paths:
+
+- **Host apps** load `~/.config/gtk-4.0/gtk.css`, which imports `overrides.css`
+  alone. libadwaita has already given them the rules — on this machine it even
+  forces `gtk-theme-name` to `Adwaita-empty` so a custom theme cannot displace
+  it — so only the colour is missing.
+- **Flatpaks** cannot see `~/.config` at all: it is a stow symlink into
+  `~/archdots`, which no sandbox mounts, so the link dangles. Granting
+  `xdg-config/gtk-4.0` does not help either, because the target is still
+  outside. They read `~/.themes/archdots/gtk-4.0/gtk.css`, which is why that one
+  bundles libadwaita's whole sheet. `~/.themes` works because flatpak resolves
+  and mounts it as a matter of course.
+
+Two traps worth remembering:
+
+- **Nested `@import` resolves against the entry file's directory**, not the
+  importing file's. That is why the picker syncs the palette to *three* places,
+  and why `overrides.css` contains no imports of its own — so it resolves the
+  same whichever entry point pulls it in.
+- **`alpha()` multiplies an existing alpha, it does not replace it.** Wrapping
+  an already-translucent surface in another `alpha()` quietly compounds.
+
+Icon names are worth checking rather than assuming — a lesson from the GTK 3
+sheet. GTK asks for `check-symbolic`, which breeze-dark does not ship, so a
+checked box rendered as a blank square until it named `object-select-symbolic`
+instead. And breeze-dark's `radio-symbolic` is a picture of a radio *receiver*,
+so the radio dot is drawn with a gradient rather than looked up at all.
 It is easy to miss because the file is not something you ever touch after
 setting it once, so a machine that has had it for years looks fine while a
 fresh install does not. `breeze-icons` and `adwaita-fonts` are in the core
@@ -409,8 +465,10 @@ flatpak list --app --columns=application
 
 ## Known rough edges
 
-- **GTK transparency is not uniform.** The catppuccin theme was hand-modified to
-  be transparent, so it is definitely broken in places.
+- **GTK transparency is not uniform.** The theme makes popovers, menus, tooltips
+  and OSD surfaces translucent but leaves app windows opaque, so an app that
+  paints its own chrome can still end up with an opaque panel next to a
+  translucent one.
 - **Dolphin's list view is broken** under Kvantum `KvGlass`. Use icon view.
 - **The GPU pin names DRM device paths, and those are not stable.**
   `env-hyprland.d/10-gpu.sh` forces Hyprland onto the iGPU by listing

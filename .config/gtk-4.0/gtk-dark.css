@@ -1,0 +1,6 @@
+/* Host variant: resolves to .config/gtk-4.0/gtk.css, the recolour-only sheet.
+   A real file, not a symlink to the theme — GTK resolves this relative import
+   against *this* directory, and a symlink here would also mean anything writing
+   to this path writes straight through into the theme. */
+
+@import url("gtk.css");

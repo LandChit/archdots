@@ -1823,6 +1823,10 @@ stage_gtk4_base() {
     tmp="$(mktemp)"
     if gresource extract "$lib" "$res/gtk.css" > "$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
         mv "$tmp" "$dir/adw-base.css"
+        # mktemp creates 0600 and mv keeps it, which would leave the stylesheet
+        # readable only by this user. Themes are read by other contexts — a
+        # flatpak's sandbox among them — so it has to be world-readable.
+        chmod 644 "$dir/adw-base.css"
         mkdir -p "$dir/assets"
         # The sheet names these four by relative path, so they travel with it.
         for asset in bullet check dash devel; do
@@ -1834,6 +1838,19 @@ stage_gtk4_base() {
     else
         rm -f "$tmp"
         warn "could not read $res/gtk.css — keeping the vendored copy"
+    fi
+
+    # The recolour has to sit *beside* .config/gtk-4.0/gtk.css rather than be
+    # imported across from ~/.themes. A flatpak mounts that directory inside its
+    # own per-app home, so a relative "../.." climbs to ~/.var/app/<app-id>/ and
+    # the import fails with nothing but a warning on stderr — the sheet then
+    # loads with no colours at all, and every flatpak sits on Adwaita blue while
+    # the host looks perfectly fine. Copying it in keeps both resolving locally.
+    local cfg="$HOME/.config/gtk-4.0"
+    if [[ -d "$cfg" && -f "$dir/overrides.css" ]]; then
+        cp "$dir/overrides.css" "$cfg/overrides.css"
+        chmod 644 "$cfg/overrides.css"
+        ok "recolour copied into .config/gtk-4.0/"
     fi
 }
 

@@ -208,12 +208,30 @@ Which file an app reads depends on where it runs, and there are two paths:
   alone. libadwaita has already given them the rules — on this machine it even
   forces `gtk-theme-name` to `Adwaita-empty` so a custom theme cannot displace
   it — so only the colour is missing.
-- **Flatpaks** cannot see `~/.config` at all: it is a stow symlink into
-  `~/archdots`, which no sandbox mounts, so the link dangles. Granting
-  `xdg-config/gtk-4.0` does not help either, because the target is still
-  outside. They read `~/.themes/archdots/gtk-4.0/gtk.css`, which is why that one
-  bundles libadwaita's whole sheet. `~/.themes` works because flatpak resolves
-  and mounts it as a matter of course.
+- **Flatpaks** get nothing from `~/.config` by default, and read
+  `~/.themes/archdots/gtk-4.0/gtk.css` instead — which is why that one bundles
+  libadwaita's whole sheet. `~/.themes` reaches them because the global flatpak
+  override grants it (`flatpak override --user --show`) and because most app
+  manifests request it themselves.
+
+`xdg-config/gtk-4.0` *can* be granted too, and the global override does grant
+it — flatpak resolves the stow symlink and mounts the real directory. But it
+mounts it inside the app's **per-app home**, and that has a sharp edge:
+
+```
+~/.var/app/<app-id>/.config/gtk-4.0/gtk.css      ← where the sandbox sees it
+```
+
+so a relative `../../.themes/…` import from that file climbs to
+`~/.var/app/<app-id>/` and fails. GTK reports it as a warning on stderr and
+carries on, loading the sheet **with no colours at all** — which looks exactly
+like "the theme did not apply to flatpaks", while the host stays perfect.
+Everything `.config/gtk-4.0/gtk.css` imports therefore lives beside it, copied
+in by `install.sh`; nothing there may reach across to `~/.themes`.
+
+`flatpak run --command=gjs --filesystem=home <app-id> probe.js` is the way to
+see this — the sandbox prints the failing import path, which no amount of
+looking at the host filesystem will reveal.
 
 Two traps worth remembering:
 

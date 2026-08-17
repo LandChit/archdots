@@ -1,25 +1,33 @@
-/* The GTK 4 recolour for apps running on the host.
+/* The GTK 4 recolour, loaded as user CSS.
  *
  * Host apps already have libadwaita's stylesheet — libadwaita loads it itself
- * and, on this machine, even forces gtk-theme-name to "Adwaita-empty" so a
- * custom theme cannot displace it. All that is missing is the colour, so this
- * imports the recolour alone. Importing the vendored adw-base.css here as well
- * would re-add 3000 rules that are already loaded.
+ * and even forces gtk-theme-name to "Adwaita-empty" so a custom theme cannot
+ * displace it. All that is missing is the colour, so this imports the recolour
+ * alone; importing the vendored adw-base.css here too would re-add 3000 rules
+ * that are already loaded.
  *
- * Flatpaks never reach this file: ~/.config/gtk-4.0 is a stow symlink into
- * ~/archdots and no sandbox mounts that, so the link dangles. They are served
- * by ~/.themes/archdots/gtk-4.0/gtk.css instead, which bundles libadwaita's
- * sheet along with the recolour.
+ * Flatpaks read this file as well, when xdg-config/gtk-4.0 is granted — and
+ * they get the full sheet from ~/.themes/archdots/gtk-4.0/ on top. The two
+ * overlap harmlessly: same variables, same values.
  *
  * Two things to keep right about this file:
  *
  *   · Keep it a real file, not a symlink to the theme. It loads at GTK's user
  *     priority, and a symlink here means anything writing to this path writes
- *     through to the theme itself.
- *   · colors.css is imported from *this* directory, not the theme's. GTK
- *     resolves nested imports against the entry file's directory, so the
- *     wallpaper picker syncs the palette here as well. overrides.css is safe
- *     to reach across because it contains no imports of its own. */
+ *     through to the theme itself. (nwg-look's Apply button does exactly that.)
+ *
+ *   · Both imports must resolve *inside this directory*. Nothing here may reach
+ *     across to ~/.themes with a relative path, however tempting. A flatpak
+ *     mounts this directory inside its own per-app home, so "../.." resolves to
+ *     ~/.var/app/<app-id>/ and the import fails with only a warning on stderr:
+ *
+ *         Failed to import: Error opening file /home/chit/.var/app/
+ *         com.github.tchx84.Flatseal/.themes/archdots/gtk-4.0/overrides.css
+ *
+ *     The sheet then loads with no colours at all, which is what left every
+ *     flatpak on Adwaita blue while the host looked right. install.sh copies
+ *     colors.css and overrides.css in beside this file so both resolve locally
+ *     wherever it is read from. */
 
 @import url("colors.css");
-@import url("../../.themes/archdots/gtk-4.0/overrides.css");
+@import url("overrides.css");

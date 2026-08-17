@@ -54,4 +54,10 @@ archdots_docker/artifacts
 .themes/archdots/gtk-4.0/colors.css
 .config/gtk-4.0/colors.css
 
+# Copied in from .themes/archdots/gtk-4.0/ by install.sh, for the same reason
+# the palette is: a flatpak mounts .config/gtk-4.0 inside its per-app home, so
+# gtk.css cannot import it across from ~/.themes with a relative path. The
+# theme's copy is the tracked original.
+.config/gtk-4.0/overrides.css
+
 .custom.zsh

@@ -1313,14 +1313,26 @@ stage_stow() {
     # fixable here — an ordinary file sitting where a link should go:
     #   * cannot stow <source> over existing target <path> since neither a
     #     link nor a directory and --adopt not specified
-    # Anything else (an absolute symlink in the package, say) needs a human, so
-    # collect the unrecognised lines rather than proceeding into a hard failure.
+    # A second shape is just as fixable, and nwg-look is what produces it:
+    #   * existing target is not owned by stow: <path>
+    # Pressing Apply in nwg-look rewrites the GTK settings and replaces
+    # .config/gtk-4.0/gtk.css with an absolute symlink into ~/.themes. Those are
+    # its files rather than stow's, so stow refuses to touch them — and being
+    # links rather than plain files, the pattern above does not catch them. They
+    # are safe to move aside for the same reason the others are: the backup keeps
+    # them, and nwg-look would only recreate them next time it runs.
+    #
+    # Anything else (an entry in the repo root that should not be stowed, say)
+    # needs a human, so collect the unrecognised lines rather than proceeding
+    # into a hard failure.
     local simulate line rel src backup
     local conflicts=() unhandled=()
     simulate="$(stow --simulate --verbose=1 --target="$HOME" . 2>&1 || true)"
     while IFS= read -r line; do
         [[ "$line" == *"  * "* ]] || continue
         if [[ "$line" =~ cannot\ stow\ .*\ over\ existing\ target\ (.+)\ since ]]; then
+            conflicts+=("${BASH_REMATCH[1]}")
+        elif [[ "$line" =~ existing\ target\ is\ not\ owned\ by\ stow:\ (.+)$ ]]; then
             conflicts+=("${BASH_REMATCH[1]}")
         else
             unhandled+=("${line#*\* }")
@@ -1731,16 +1743,97 @@ stage_theming() {
         note "run by hand: wal -i $WALLPAPER"
     else
         ok "palette generated from $(basename "$WALLPAPER")"
-        # Every shell window watches this copy, not pywal's cache.
-        local css_src="$HOME/.cache/wal/colors-fabric.css"
-        local css_dst="$HOME/.config/fabric_shell/css/colors-fabric.css"
-        if [[ -f "$css_src" ]]; then
-            cp "$css_src" "$css_dst"
-            ok "palette copied into fabric_shell/css/"
-            note "edited tracked file .config/fabric_shell/css/colors-fabric.css (palette)"
-        else
-            warn "$css_src missing — is .config/wal/templates/ stowed?"
-        fi
+
+        # pywal renders into ~/.cache/wal/; every consumer reads its own copy
+        # instead, and this is where those copies are made. All of them are
+        # gitignored, so none of this shows up in `git status` afterwards — the
+        # wallpaper picker rewrites exactly the same set on SUPER + W.
+        #
+        # Two formats, because GTK CSS has no var(): the shell compiles SCSS and
+        # uses var(--colorN), while GTK needs @define-color, so colors-gtk.css is
+        # a second template rather than a copy of the first.
+        #
+        # Three GTK destinations, not two. GTK resolves a nested @import against
+        # the *entry* file's directory rather than the importing file's, so the
+        # GTK 4 sheet reached through .config/gtk-4.0/gtk.css looks for its
+        # palette there — not next to itself in .themes/.
+        local pair src dst copied=0
+        for pair in \
+            "colors-fabric.css:$HOME/.config/fabric_shell/css/colors-fabric.css" \
+            "colors-gtk.css:$HOME/.themes/archdots/gtk-3.0/colors.css" \
+            "colors-gtk.css:$HOME/.themes/archdots/gtk-4.0/colors.css" \
+            "colors-gtk.css:$HOME/.config/gtk-4.0/colors.css"
+        do
+            src="$HOME/.cache/wal/${pair%%:*}"
+            dst="${pair#*:}"
+            if [[ ! -f "$src" ]]; then
+                warn "$src missing — is .config/wal/templates/ stowed?"
+                continue
+            fi
+            # The parent is a stowed symlink on a normal install, but a partial
+            # or --skip-stow run can leave it absent, and cp would fail there.
+            if [[ ! -d "$(dirname "$dst")" ]]; then
+                warn "$(dirname "$dst") missing — skipping its palette"
+                continue
+            fi
+            cp "$src" "$dst" && copied=$(( copied + 1 ))
+        done
+        ok "palette copied to $copied consumer(s)"
+    fi
+}
+
+# ── the vendored libadwaita stylesheet ──────────────────────────────────────
+#
+# GTK 4 loads exactly one theme stylesheet, so .themes/archdots/gtk-4.0/ cannot
+# be a partial sheet the way the GTK 3 one is: loading it *replaces*
+# libadwaita's rather than adding to it, and every metric libadwaita defines
+# goes with it — AdwActionRow collapses from 50px, boxed lists lose their card
+# shape, tooltips come back light-on-white. The theme therefore ships
+# libadwaita's own stylesheet and only recolours it.
+#
+# That copy has to match the libadwaita actually installed, so it is re-extracted
+# here on every install and update — which is exactly when libadwaita changes.
+# It is a tracked file, so a refresh does show up in `git status`; that is
+# deliberate, since a clone without it would leave flatpaks unstyled.
+
+stage_gtk4_base() {
+    step "GTK 4 base stylesheet"
+
+    local dir="$HOME/.themes/archdots/gtk-4.0"
+    local lib="/usr/lib/libadwaita-1.so.0"
+    local res="/org/gnome/Adwaita/styles"
+
+    if [[ ! -d "$dir" ]]; then
+        skip "$dir missing — was stow run?"
+        return 0
+    fi
+    if ! command -v gresource >/dev/null; then
+        warn "gresource not found (glib2-devel) — keeping the vendored copy"
+        return 0
+    fi
+    if [[ ! -f "$lib" ]]; then
+        warn "$lib not found — keeping the vendored copy"
+        return 0
+    fi
+
+    # Extract to a temporary file first: a failed extraction that truncated
+    # adw-base.css in place would leave every GTK 4 app unstyled until the next
+    # run, which is a far worse state than a slightly stale copy.
+    local tmp asset
+    tmp="$(mktemp)"
+    if gresource extract "$lib" "$res/gtk.css" > "$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
+        mv "$tmp" "$dir/adw-base.css"
+        mkdir -p "$dir/assets"
+        # The sheet names these four by relative path, so they travel with it.
+        for asset in bullet check dash devel; do
+            gresource extract "$lib" "$res/assets/$asset-symbolic.svg" \
+                > "$dir/assets/$asset-symbolic.svg" 2>/dev/null || true
+        done
+        ok "refreshed from $(pacman -Q libadwaita 2>/dev/null || echo libadwaita)"
+        note "edited tracked file .themes/archdots/gtk-4.0/adw-base.css (libadwaita)"
+    else
+        rm -f "$tmp"
+        warn "could not read $res/gtk.css — keeping the vendored copy"
     fi
 }
 
@@ -2033,6 +2126,7 @@ run_update() {
     stage_stow          # picks up whatever the update added, moved or renamed
     stage_venv upgrade  # requirements.txt may have moved to a newer fabric
     stage_wallpapers    # copies any new wallpapers into ~/Pictures/wallpapers
+    stage_gtk4_base     # update_packages may have moved libadwaita under us
     phase 97 100 "Finishing up"
     gauge_close
     restart_shell
@@ -2072,6 +2166,7 @@ run_install() {
     phase 97 98 "This machine's hardware"
     stage_machine
     phase 98 99 "Theming"
+    stage_gtk4_base
     stage_theming
     stage_dconf
     phase 99 100 "Services"

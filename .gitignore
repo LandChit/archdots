@@ -42,4 +42,16 @@ __pycache__/
 # Dont include generated files in testing
 archdots_docker/artifacts
 
+# pywal output. These are rendered from .config/wal/templates/ on every
+# wallpaper change, so tracking them meant four files turned up in `git status`
+# every time you pressed SUPER + W — the same churn the wallpaper pointer was
+# moved out of the repo to avoid. install.sh writes them in stage_theming, so a
+# fresh clone still has a palette before anything starts.
+#
+# The templates themselves stay tracked; only the rendered copies are ignored.
+.config/fabric_shell/css/colors-fabric.css
+.themes/archdots/gtk-3.0/colors.css
+.themes/archdots/gtk-4.0/colors.css
+.config/gtk-4.0/colors.css
+
 .custom.zsh

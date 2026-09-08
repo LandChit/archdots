@@ -27,7 +27,7 @@ is still on the list. [README.md](README.md) is the tour; this is the manual.
   hypr/            Hyprland — hyprland.lua + config/*.lua, hyprlock, hyprpaper
     config/custom/   per-machine overrides, loaded last (untracked)
   fabric_shell/    the desktop shell (Python + GTK3 layer-shell)
-  wal/templates/   pywal templates — the source of all theming
+  wal/templates/   pywal16 templates — the source of all theming
   alacritty/ eza/ fastfetch/ cliphist/ fontconfig/
   Kvantum/ qt6ct/ kdeglobals    Qt theming
   gtk-3.0/settings.ini          GTK theming — picks the theme in .themes/
@@ -172,11 +172,11 @@ gtk-application-prefer-dark-theme=1
 
 Without that file GTK falls back to **Adwaita light**, and the result is a shell
 with white panels and grey-on-white text that looks broken rather than
-misconfigured — the pywal palette is applied correctly on top of a light base.
+misconfigured — the pywal16 palette is applied correctly on top of a light base.
 
 ### The GTK theme follows the wallpaper
 
-`.themes/archdots/` holds no colours of its own. The palette is pywal output:
+`.themes/archdots/` holds no colours of its own. The palette is pywal16 output:
 `wal/templates/colors-gtk.css` renders to `~/.cache/wal/colors-gtk.css`, and the
 wallpaper picker copies it in as `colors.css` beside each sheet, the same way it
 copies `colors-fabric.css` into the shell's `css/`.
@@ -259,22 +259,74 @@ two disagreeing is what makes some windows light and others dark.
 
 
 
-There is no hardcoded palette. **pywal** generates colors from the current
+There is no hardcoded palette. **pywal16** generates colors from the current
 wallpaper, and templates in `.config/wal/templates/` push them everywhere:
 
 | Template | Feeds | How |
 |---|---|---|
 | `colors-hyprland.lua` | borders, shadows | `theme.lua` does `dofile` on `~/.cache/wal/colors-hyprland.lua` |
 | `colors-fabric.css` | the whole shell | copied into `fabric_shell/css/`, live-reloaded on change |
+| `colors-gtk.css` | GTK 3 + GTK 4 apps | copied next to each `gtk.css` (GTK CSS has no `var()`) |
 | `colors-alacritty.toml` | terminal | imported by the alacritty config |
 
 `color4` is the accent throughout — workspace highlight, selected-row glow,
-search caret, window border gradient. Every config falls back to a dark neutral
-palette when `~/.cache/wal/` is missing, so a fresh install works before the
-first `wal` run.
+search caret, window border. Every config falls back to a dark neutral palette
+when `~/.cache/wal/` is missing, so a fresh install works before the first `wal`
+run.
+
+**Hyprland is the one consumer that does not pick up a new palette on its own.**
+The shell watches `colors-fabric.css` with a `Gio.FileMonitor` and alacritty
+re-reads its import on write, but `theme.lua` `dofile`s the palette at
+*config-parse* time, so a freshly written one changes nothing until the config is
+parsed again. The picker therefore runs `hyprctl reload` after syncing. That is
+safe on every wallpaper change because everything in `autorun.lua` hangs off the
+`hyprland.start` event, which a reload does not re-fire — nothing is respawned
+and the shell is not restarted.
+
+The picker also waits for `wal` to **exit** before syncing rather than sleeping a
+fixed interval. A wallpaper pywal16 has no cached scheme for takes around three
+seconds to analyse; the old 900 ms guess copied the *previous* palette to every
+consumer, which looked exactly like the theming had failed to fire.
+
+#### Why pywal16, and what the extra colours buy
+
+`python-pywal` is unmaintained and was dropped from the Arch repos into the AUR.
+The replacement is [`python-pywal16`](https://github.com/eylles/pywal16), which
+keeps the `wal` command and the `~/.cache/wal/` layout, so the pipeline above is
+unchanged. Two things about it are load-bearing here:
+
+- **`--cols16 dual` is required.** Classic pywal generated 8 colours and copied
+  them into slots 9-15, so `color9` was literally `color1`. pywal16 generates a
+  distinct bright half instead, which is what `--accent-bright` and the
+  `*-bright` status tokens spend. Both callers pass the flag and must stay in
+  step: `WAL_ARGS` in `install.sh`, and `WAL_ARGS` in
+  `fabric_shell/wallpapers.py`. A run without it rewrites the palette with a
+  duplicated bright half and every state that relies on hue separation
+  collapses. `wal -R` needs no flag — it restores a cached scheme that already
+  carries its generation settings. Be aware that on a near-monochrome wallpaper
+  the distinct bright half is a much louder look than classic pywal's; dropping
+  the flag in both places goes back.
+- **Templates can call functions on a colour**, e.g. `{color4.lighten(10)}`.
+  Used for shades that should stay inside the wallpaper's own range — hover
+  states and the surface ramp — rather than jumping to another hue.
+
+Sheets should reach for the semantic names (`--accent`, `--accent-bright`,
+`--surface`, `--text-muted`, …) rather than `--colorN`, so a palette change is
+absorbed in one place. Two traps when editing a template:
+
+- Percent arguments are **integers**. pywal16 strips `.` from the argument, so
+  `darken(0.3)` silently means 3%, not 30%.
+- `saturate()` **sets** saturation to the value given rather than adjusting it
+  (`s = amount` in pywal16's `util.py`), which pins a colour independent of the
+  wallpaper. Use `lighten`/`darken` instead.
+
+Colours that must not follow the wallpaper stay hardcoded on purpose — the
+critical-battery red `rgb(224, 96, 78)` in `battery.css`, `osd.css` and
+`notifications.css` has to read as alarming on every palette, so it is
+deliberately not a `--colorN`.
 
 The wallpaper picker (`SUPER` + `W`) sets the wallpaper on every monitor, runs
-pywal, copies the palette into `fabric_shell/css/`, and re-points
+pywal16, copies the palette into `fabric_shell/css/`, and re-points
 `~/.local/state/archdots/wallpaper` so the choice survives a reboot
 ([below](#the-wallpaper-is-a-pointer)).
 
@@ -774,7 +826,7 @@ Everything the script generates is gitignored or outside the repo altogether —
 `config/custom/monitor.lua`, `env-hyprland.d/10-gpu.sh`, the wallpaper pointer —
 so an install leaves the worktree clean and nothing detected here can be pushed
 onto anybody else. The one tracked file still written is
-`fabric_shell/css/colors-fabric.css`, the pywal palette, which the picker
+`fabric_shell/css/colors-fabric.css`, the pywal16 palette, which the picker
 rewrites too.
 
 The generated layout places monitors left to right at 1920 intervals, which is a
@@ -837,9 +889,8 @@ changed. `./install.sh install --skip-packages` is the way to redo them after a
 hardware change.
 
 **The stash is the whole trick.** The machine-specific values are out of the
-repo now, but `colors-fabric.css` is still a tracked file that pywal rewrites
-on every wallpaper change, so an installed clone can be dirty for reasons its
-owner never chose — and `git pull --ff-only` refuses to run in a dirty tree. `update_repo` stashes with `-u`, pulls, then pops. If
+repo now, and the rendered palettes are gitignored, but an installed clone can
+still be dirty for reasons its owner never chose — and `git pull --ff-only` refuses to run in a dirty tree. `update_repo` stashes with `-u`, pulls, then pops. If
 the pop conflicts the stash is **kept**, the run continues, and the summary says
 where to find it; losing a machine's GPU pin to a silent `stash drop` would be
 much worse than a merge conflict.
@@ -851,7 +902,7 @@ upgrading the system is the user's decision, not a side effect of updating some
 dotfiles.
 
 `restart_shell` mirrors `hypr/config/helpers/shell.lua` — kill both long-lived
-modules, re-sync the pywal colours, start them again, all in one shell so that
+modules, re-sync the pywal16 colours, start them again, all in one shell so that
 shell's own command line is what its own `pkill` sees. It runs under `setsid`,
 or the new daemon would be a child of the installer and die with it. It only
 offers when a shell is actually running, and skipping it is fine: the keybind

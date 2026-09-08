@@ -49,7 +49,7 @@ looks like it belongs together.**
 | **Browser** | zen-browser |
 | **Login screen** | SDDM, `silent` theme |
 | **Shell** | zsh + oh-my-zsh |
-| **Colors** | pywal — everything follows the wallpaper |
+| **Colors** | pywal16 — everything follows the wallpaper, 16 distinct colours |
 | **App theme** | `archdots` — GTK 3 hand-written, GTK 4 recolours libadwaita |
 
 <hr>
@@ -171,7 +171,9 @@ python -m venv ~/.config/fabric_shell/.venv
 
 # 3. wallpapers live here — the picker reads this folder
 mkdir -p ~/Pictures/wallpapers && cp ~/archdots/wallpapers/* ~/Pictures/wallpapers/
-wal -i ~/Pictures/wallpapers/<pick-one>
+# --cols16 dual is what makes colours 8-15 distinct rather than copies of 0-7;
+# the templates and every sheet downstream depend on it.
+wal -i ~/Pictures/wallpapers/<pick-one> --cols16 dual
 
 # 4. the rendered palettes are not tracked, so write them where each consumer
 #    looks. GTK gets its own format because GTK CSS has no var().
@@ -242,7 +244,7 @@ without; everything below it is optional and can be declined.
 ```
 hyprland hyprpaper hyprlock hyprpolkitagent xdg-desktop-portal-hyprland
 xdg-desktop-portal-gtk uwsm sddm alacritty dolphin
-python-pywal python-gobject gtk3 gtk-layer-shell libdbusmenu-gtk3 python-pip
+python-gobject gtk3 gtk-layer-shell libdbusmenu-gtk3 python-pip
 cliphist wl-clipboard grim slurp brightnessctl playerctl libnotify
 pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol
 networkmanager bluez bluez-utils blueman
@@ -255,6 +257,18 @@ base-devel cairo gobject-introspection pkgconf
 calls all four on every login — `alias cd="z"` means a missing zoxide breaks
 `cd` itself. `base-devel`, `cairo`, `gobject-introspection` and `pkgconf` are
 there because pip compiles pycairo and PyGObject from source.
+
+One core package is not in the official repos:
+
+```
+python-pywal16          # AUR — paru -S python-pywal16
+```
+
+It is the maintained fork of `python-pywal`, which is unmaintained and was
+itself dropped from the repos into the AUR. It both conflicts with and provides
+`python-pywal`, so installing it replaces an existing pywal without a separate
+removal step. `install.sh` builds `paru` and installs this regardless of whether
+the optional AUR packages are wanted, because there is no palette without it.
 
 ### Fonts
 

@@ -221,7 +221,9 @@ class NotificationPopups(Window):
             anchor="top right",
             margin="10px 10px 0px 0px",
             exclusivity="none",
-            keyboard_mode="on-demand",
+            # popups arrive unprompted and read no keys, so an on-demand
+            # grab would only pull focus off whatever the user is typing in
+            keyboard_mode="none",
             visible=False,
         )
         self.add_style_class("notif-window")

@@ -71,9 +71,11 @@ class SafeTrayItem(SystemTrayItem):
     def do_update_properties(self, *_):
         item = self._item
 
-        # NeedsAttention swaps in the attention icon, as fabric's own code does
+        # NeedsAttention swaps in the attention icon, as fabric's own code does.
+        # Compared case-insensitively: fabric lowercases `status` as of 46f847c,
+        # so a literal "NeedsAttention" match silently never fires on newer builds.
         try:
-            attention = item.status == "NeedsAttention"
+            attention = (item.status or "").lower() == "needsattention"
         except Exception:
             attention = False
 

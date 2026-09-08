@@ -1,1 +1,1 @@
-fabric @ git+https://github.com/Fabric-Development/fabric.git@85cacf660b1a324525a4dd9b512521e55ef7f89b
+fabric @ git+https://github.com/Fabric-Development/fabric.git@46f847ccdb607261e49271e3197ff69cc9fb9431

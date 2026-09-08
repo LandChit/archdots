@@ -1,5 +1,5 @@
-# chit.zsh-theme — pywal-driven prompt for the floating-glass setup.
-# Colors reference ANSI palette slots, which pywal repaints via
+# chit.zsh-theme — pywal16-driven prompt for the floating-glass setup.
+# Colors reference ANSI palette slots, which pywal16 repaints via
 # ~/.cache/wal/sequences (sourced in .zshrc), so the prompt re-themes
 # automatically with every wallpaper change. Accent = color4, like the shell.
 #

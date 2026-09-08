@@ -37,7 +37,7 @@ end
 
 local SYNC_COLORS = "wal -R && cp $HOME/.cache/wal/colors-fabric.css $R/css/colors-fabric.css"
 
--- Kill whatever fabric_shell is running, refresh the pywal colors, start it
+-- Kill whatever fabric_shell is running, refresh the pywal16 colors, start it
 -- again. Everything goes through a single exec_cmd so the order is guaranteed.
 function M.restart()
     hl.exec_cmd(

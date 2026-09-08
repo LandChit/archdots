@@ -1,7 +1,7 @@
 """Shared plumbing for the fabric shell.
 
 Holds the three things every module needs: stylesheet loading that follows
-pywal, persisted usage counters, and the overlay/panel base classes the
+pywal16, persisted usage counters, and the overlay/panel base classes the
 launcher, clipboard, emoji picker and power menu are built on.
 """
 
@@ -41,8 +41,8 @@ def _read(name: str) -> str:
 
 
 def build_css(*sheets: str) -> str:
-    """Concatenate the pywal palette, the shared base sheet and `sheets`."""
-    # pywal writes a `url(...)` wallpaper line into the palette that GTK cannot
+    """Concatenate the pywal16 palette, the shared base sheet and `sheets`."""
+    # pywal16 writes a `url(...)` wallpaper line into the palette that GTK cannot
     # resolve from here, so it is dropped before anything is concatenated.
     colors = "\n".join(
         line for line in _read(COLORS_CSS).splitlines() if "url(" not in line
@@ -63,7 +63,7 @@ def _watch_palette(refresh) -> None:
 
 
 def style_application(app: Application, *sheets: str) -> None:
-    """Style `app` from `sheets`, restyling whenever pywal rewrites the palette."""
+    """Style `app` from `sheets`, restyling whenever pywal16 rewrites the palette."""
     def refresh(*_):
         app.set_stylesheet_from_string(build_css(*sheets), base_path=CSS_DIR)
 

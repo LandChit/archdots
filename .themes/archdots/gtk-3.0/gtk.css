@@ -4,7 +4,7 @@
  * for *which* names GTK and its consumers look up (@theme_bg_color, @borders,
  * @wm_button_close_hover_bg, …); none of its rules or colours are used here.
  *
- * The palette comes from pywal via colors.css, which the wallpaper picker
+ * The palette comes from pywal16 via colors.css, which the wallpaper picker
  * copies out of ~/.cache/wal/ next to this file. Everything below is derived
  * from that palette with mix()/alpha(), so a new wallpaper recolours the whole
  * theme without anything being regenerated.
@@ -53,7 +53,7 @@
 @define-color text_dim             alpha(@foreground, 0.70);
 @define-color text_faint           alpha(@foreground, 0.45);
 
-/* Semantic colours. The pywal palettes this setup produces are often near
+/* Semantic colours. The pywal16 palettes this setup produces are often near
    monochrome, so warning/error/success are pinned to fixed hues instead —
    a red that reads as grey is a broken warning, not a subtle one. */
 @define-color success_color        #7fb08a;

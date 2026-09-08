@@ -36,7 +36,7 @@ source $ZSH/oh-my-zsh.sh
 # Set up fzf key bindings and fuzzy completion
 eval "$(fzf --zsh)"
 
-# --- setup fzf theme (colors come from pywal via colors.sh sourced below) ---
+# --- setup fzf theme (colors come from pywal16 via colors.sh sourced below) ---
 
 # -- Use fd instead of fzf --
 

@@ -1,16 +1,23 @@
-/* pywal → GTK palette.
+/* pywal16 → GTK palette.
  *
- * pywal renders this into ~/.cache/wal/colors-gtk.css on every wallpaper
+ * pywal16 renders this into ~/.cache/wal/colors-gtk.css on every wallpaper
  * change; the wallpaper picker then copies it into both gtk-3.0/ and gtk-4.0/
  * of the archdots theme, next to the gtk.css that imports it.
  *
- * This file holds nothing but the raw palette. Every semantic name the theme
- * actually styles with (window_bg_color, accent_bg_color, …) is derived from
- * these with mix()/alpha() in the theme's own gtk.css, so a palette change
- * never needs the theme regenerated — only re-read.
+ * Mirrors colors-fabric.css: same palette, same semantic names, so GTK apps and
+ * the shell are talking about the same colours. GTK CSS has no var(); named
+ * colours are @define-color / @name, which is the one reason this cannot simply
+ * be colors-fabric.css. It is also why the derived shades are computed here by
+ * pywal16 rather than with mix()/alpha() in the theme: GTK 3's mix() cannot be
+ * used inside another @define-color.
  *
- * GTK CSS has no var(); named colours are @define-color / @name. That is the
- * one reason this cannot simply be colors-fabric.css.
+ * Generated with --cols16 dual, so colors 8-15 are distinct rather than copies
+ * of 0-7 — see colors-fabric.css for the reasoning.
+ *
+ * NOTE: lighten()/darken() take an integer percent — pywal16 strips '.' from
+ * the argument, so `darken(0.3)` silently means 3%, not 30%. saturate() *sets*
+ * saturation rather than adjusting it, pinning a colour regardless of the
+ * wallpaper. Avoid it.
  */
 
 @define-color background {background};
@@ -33,3 +40,29 @@
 @define-color color13 {color13};
 @define-color color14 {color14};
 @define-color color15 {color15};
+
+/* ── semantic names ─────────────────────────────────────────────────── */
+
+@define-color accent {color4};
+@define-color accent_bright {color12};
+@define-color accent_hover {color4.lighten(10)};
+@define-color accent_active {color4.darken(10)};
+
+@define-color text {foreground};
+@define-color text_strong {color15};
+@define-color text_muted {color8};
+@define-color text_dim {foreground.darken(30)};
+
+@define-color surface {background.lighten(6)};
+@define-color surface_raised {background.lighten(12)};
+@define-color surface_overlay {background.lighten(18)};
+@define-color border_color {color8.darken(10)};
+
+@define-color error {color1};
+@define-color error_bright {color9};
+@define-color success {color2};
+@define-color success_bright {color10};
+@define-color warning {color3};
+@define-color warning_bright {color11};
+@define-color info {color6};
+@define-color info_bright {color14};

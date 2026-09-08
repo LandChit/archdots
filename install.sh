@@ -49,7 +49,7 @@ PKG_CORE=(
     hyprland hyprpaper hyprlock hyprpolkitagent
     xdg-desktop-portal-hyprland xdg-desktop-portal-gtk uwsm sddm
     alacritty dolphin
-    python-pywal python-gobject gtk3 gtk-layer-shell python-pip
+    python-gobject gtk3 gtk-layer-shell python-pip
     # fabric.system_tray does gi.require_version("DbusmenuGtk3", "0.4") at
     # import time, and daemon.py imports it through controlcenter -> tray. Miss
     # this and *every* overlay dies with the daemon — launcher, clipboard,
@@ -92,6 +92,18 @@ PKG_FONTS=(
 
 PKG_UTILS=(
     tlp fd htop nvtop fastfetch tmux unzip wget curl smartmontools ark
+)
+
+# AUR packages the desktop genuinely needs. Kept apart from PKG_AUR because
+# that list is optional and declinable, and these are not: without pywal16 there
+# is no palette and every surface falls back to its hardcoded colours.
+#
+# python-pywal16 is the maintained fork of python-pywal, which is unmaintained
+# and was dropped from the official repos into the AUR at 3.3.0. pywal16 both
+# conflicts with and provides python-pywal, so paru swaps a pre-existing
+# python-pywal out on its own — no manual removal step is needed.
+PKG_AUR_CORE=(
+    python-pywal16
 )
 
 PKG_AUR=(
@@ -1090,7 +1102,7 @@ Remove them?" y; then
     if (( WANT_UTILS )) && confirm "Install the utility packages (${#PKG_UTILS[@]})?
 
 ${PKG_UTILS[*]}" y; then
-        phase 42 48 "Utilities"
+        phase 42 46 "Utilities"
         step "Utilities"
         pac_install "Utilities" "${PKG_UTILS[@]}"
         ok "installed"
@@ -1098,16 +1110,27 @@ ${PKG_UTILS[*]}" y; then
         skip "utilities"
     fi
 
-    if (( WANT_AUR )) && confirm "Install paru and the AUR packages (${#PKG_AUR[@]})?
+    # Not optional, and not part of the AUR question below. The palette is core
+    # to the desktop, and its only source is an AUR package now, so paru has to
+    # be built even for someone who declines the optional AUR list.
+    phase 46 47 "paru"
+    step "paru"
+    ensure_paru
+
+    phase 47 48 "Theming engine"
+    step "Theming engine"
+    run_logged "Theming engine" paru -S --needed --noconfirm "${PKG_AUR_CORE[@]}" || {
+        warn "python-pywal16 could not be built — the desktop starts unthemed"
+        note "retry: paru -S ${PKG_AUR_CORE[*]}"
+    }
+    ok "done"
+
+    if (( WANT_AUR )) && confirm "Install the optional AUR packages (${#PKG_AUR[@]})?
 
 ${PKG_AUR[*]}
 
-paru is built from source, which takes a few minutes." y; then
-        phase 48 54 "paru"
-        step "paru"
-        ensure_paru
-
-        phase 54 64 "AUR packages"
+These are built from source, which takes a few minutes." y; then
+        phase 48 64 "AUR packages"
         step "AUR packages"
         # One failed build should not lose the rest of the install.
         run_logged "AUR packages" paru -S --needed --noconfirm "${PKG_AUR[@]}" || {
@@ -1726,25 +1749,36 @@ hl.workspace_rule({ workspace = \"1\", monitor = \"$primary\", default = true, p
 
 }
 
-# ── first pywal run ─────────────────────────────────────────────────────────
+# ── first pywal16 run ───────────────────────────────────────────────────────
 #
 # Without this the shell starts on its hardcoded fallback palette and nothing is
 # themed from the wallpaper.
+#
+# --cols16 dual is what makes colors 8-15 real colours instead of copies of 0-7,
+# which the templates and every sheet downstream rely on. It has to match the
+# flag the wallpaper picker uses (fabric_shell/wallpapers.py) — a run without it
+# would quietly rewrite the palette with a duplicated bright half.
+#
+# Note that on a near-monochrome wallpaper the distinct bright half is a much
+# louder look than classic pywal's; that is the intent, not a bug. Drop the flag
+# in both places to go back.
+
+WAL_ARGS=(--cols16 dual)
 
 stage_theming() {
     step "Theming"
     if [[ -z "$WALLPAPER" ]]; then
         skip "no wallpaper to theme from"
     elif ! command -v wal >/dev/null; then
-        warn "python-pywal not installed — skipping"
-        note "run once pywal is installed: wal -i $WALLPAPER"
-    elif ! wal -i "$WALLPAPER" -n -q; then
-        warn "pywal failed — the shell will start on its fallback palette"
-        note "run by hand: wal -i $WALLPAPER"
+        warn "python-pywal16 not installed — skipping"
+        note "run once pywal16 is installed: wal -i $WALLPAPER ${WAL_ARGS[*]}"
+    elif ! wal -i "$WALLPAPER" "${WAL_ARGS[@]}" -n -q; then
+        warn "pywal16 failed — the shell will start on its fallback palette"
+        note "run by hand: wal -i $WALLPAPER ${WAL_ARGS[*]}"
     else
         ok "palette generated from $(basename "$WALLPAPER")"
 
-        # pywal renders into ~/.cache/wal/; every consumer reads its own copy
+        # pywal16 renders into ~/.cache/wal/; every consumer reads its own copy
         # instead, and this is where those copies are made. All of them are
         # gitignored, so none of this shows up in `git status` afterwards — the
         # wallpaper picker rewrites exactly the same set on SUPER + W.
@@ -1960,7 +1994,7 @@ stage_services() {
 #
 # Only meaningful during an update, and only when a session is up. The command
 # mirrors hypr/config/helpers/shell.lua: kill both long-lived modules, refresh
-# the pywal colours, start them again — all inside one shell, so that shell's
+# the pywal16 colours, start them again — all inside one shell, so that shell's
 # own command line is what its own pkill sees rather than the processes it is
 # about to spawn.
 
@@ -2027,7 +2061,7 @@ update_repo() {
     local before after dirty stashed=0 count
     before="$(git -C "$REPO_ROOT" rev-parse --short HEAD)"
 
-    # The machine-specific values live outside the repo now, but the pywal
+    # The machine-specific values live outside the repo now, but the pywal16
     # palette is still copied into the tracked colors-fabric.css, so an
     # installed clone can be dirty for reasons the user did not choose. Stash
     # whatever is there across the pull and put it back afterwards; git would
@@ -2105,6 +2139,16 @@ This is 'pacman -S --needed' over the package lists: already-installed packages 
 
     if (( WANT_UTILS )); then
         pac_install "Utilities" "${PKG_UTILS[@]}" && ok "utilities up to date"
+    fi
+
+    # PKG_AUR_CORE carries the theming engine, so it is refreshed whether or not
+    # the optional AUR list is wanted — the same reason it is mandatory above.
+    if command -v paru >/dev/null; then
+        run_logged "Theming engine" paru -S --needed --noconfirm "${PKG_AUR_CORE[@]}" \
+            && ok "theming engine up to date" \
+            || warn "python-pywal16 could not be updated — continuing"
+    else
+        skip "paru not installed — python-pywal16 left alone"
     fi
 
     if (( WANT_AUR )) && command -v paru >/dev/null; then

@@ -3,7 +3,7 @@
 Picking one does three things:
 
     1. tells hyprpaper to show it, on every monitor
-    2. runs pywal over it and copies the palette into css/, which every window
+    2. runs pywal16 over it and copies the palette into css/, which every window
        is already watching, so the whole shell recolours without a restart
     3. re-points ~/.local/state/archdots/wallpaper at it, so the choice survives
        a reboot
@@ -32,10 +32,14 @@ WALLPAPER_DIR = os.path.expanduser("~/Pictures/wallpapers")
 # outside the repo, where it belongs.
 WALLPAPER_POINTER = os.path.expanduser("~/.local/state/archdots/wallpaper")
 WAL_CACHE = os.path.expanduser("~/.cache/wal/" + COLORS_CSS)
+
+# Palette generation flags, kept identical to install.sh's WAL_ARGS.
+# --cols16 dual makes colors 8-15 distinct colours instead of copies of 0-7.
+WAL_ARGS = "--cols16 dual"
 COUNTS_PATH = "~/.local/share/fabric-launcher/wallpaper-counts.json"
 
 # The GTK theme follows the wallpaper the same way the shell does, only it
-# cannot read colors-fabric.css: GTK's CSS has no var(), so pywal renders a
+# cannot read colors-fabric.css: GTK's CSS has no var(), so pywal16 renders a
 # second template using @define-color instead. Both halves of the theme import
 # a colors.css sitting next to their gtk.css, and these are those two copies.
 #
@@ -251,8 +255,9 @@ class WallpaperPicker(Panel):
             # an empty monitor name means "every monitor" to hyprpaper
             exec_shell_command_async(f'hyprctl hyprpaper wallpaper "{monitor},{path}"')
 
-        # pywal regenerates the palette; the copy is what the shell watches
-        exec_shell_command_async(f'wal -i "{path}" -n -q')
+        # pywal16 regenerates the palette; the copy is what the shell watches.
+        # Flags have to stay in step with install.sh's WAL_ARGS.
+        exec_shell_command_async(f'wal -i "{path}" {WAL_ARGS} -n -q')
         GLib.timeout_add(COLOR_SYNC_DELAY_MS, self._sync_colors)
 
         self._persist(path)
@@ -260,7 +265,7 @@ class WallpaperPicker(Panel):
 
     @staticmethod
     def _sync_colors() -> bool:
-        """Copy pywal's palettes to everything that reads them.
+        """Copy pywal16's palettes to everything that reads them.
 
         Two consumers, two formats. css/ is watched live by every shell window;
         the GTK theme's colors.css is only re-read when an app starts or the

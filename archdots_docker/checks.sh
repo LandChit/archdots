@@ -264,7 +264,7 @@ GTKPY
 
 # ── does the shell re-theme in place? ───────────────────────────────────────
 # Exactly what the wallpaper picker does internally: regenerate the palette with
-# pywal, then copy it into css/. Everything else is common._watch_palette's job.
+# pywal16, then copy it into css/. Everything else is common._watch_palette's job.
 # If the bar does not change colour after this, the Gio.FileMonitor is dead —
 # which is the failure that used to require restarting the shell.
 if [ -n "${nested:-}" ] && command -v grim >/dev/null; then
@@ -278,7 +278,9 @@ if [ -n "${nested:-}" ] && command -v grim >/dev/null; then
     other="$(find "$HOME/Pictures/wallpapers" -maxdepth 1 -type f ! -name "$(basename "$current")" | head -1)"
     printf "    %-28s %s\n" "palette before:" "$before"
     printf "    %-28s %s\n" "switching to:" "$(basename "$other")"
-    wal -i "$other" -n -q >/dev/null 2>&1
+    # --cols16 dual must match install.sh and wallpapers.py, or this test
+    # regenerates the palette in a shape the real picker never produces.
+    wal -i "$other" --cols16 dual -n -q >/dev/null 2>&1
     cp "$HOME/.cache/wal/colors-fabric.css" "$HOME/.config/fabric_shell/css/colors-fabric.css"
     sleep 4
     after="$(grep -E '^\s+--background:' "$HOME/.config/fabric_shell/css/colors-fabric.css" | tr -d ' ')"

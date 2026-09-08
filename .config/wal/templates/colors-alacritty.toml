@@ -1,3 +1,14 @@
+# pywal16 → alacritty. Imported by ~/.config/alacritty/alacritty.toml, which
+# live-reloads it on write, so a wallpaper change repaints open terminals.
+#
+# Generated with --cols16 dual, so [colors.bright] is a genuinely distinct
+# bright half rather than copies of the normal colours, and [colors.dim] is
+# derived with pywal16's colour functions.
+#
+# NOTE: lighten()/darken() take an integer percent — pywal16 strips '.' from the
+# argument, so `darken(0.3)` silently means 3%, not 30%. saturate() *sets*
+# saturation rather than adjusting it; it is deliberately not used.
+
 [colors.primary]
 background = '{background}'
 foreground = '{foreground}'
@@ -22,9 +33,23 @@ magenta = '{color13}'
 cyan    = '{color14}'
 white   = '{color15}'
 
+[colors.dim]
+black   = '{color0.darken(20)}'
+red     = '{color1.darken(20)}'
+green   = '{color2.darken(20)}'
+yellow  = '{color3.darken(20)}'
+blue    = '{color4.darken(20)}'
+magenta = '{color5.darken(20)}'
+cyan    = '{color6.darken(20)}'
+white   = '{color7.darken(20)}'
+
 [colors.cursor]
 text   = '{background}'
-cursor = '{color4}'
+cursor = '{cursor}'
+
+[colors.vi_mode_cursor]
+text   = '{background}'
+cursor = '{color12}'
 
 [colors.selection]
 text       = '{foreground}'

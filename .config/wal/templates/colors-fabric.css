@@ -1,6 +1,29 @@
+/* pywal16 → fabric shell palette.
+ *
+ * Rendered to ~/.cache/wal/colors-fabric.css on every wallpaper change; the
+ * picker (SUPER + W) copies it into fabric_shell/css/, which common.build_css()
+ * prepends to every sheet. Fabric's compile_css() understands var(), alpha()
+ * and mix(), so this file is pure tokens and the sheets do the styling.
+ *
+ * The palette is generated with --cols16 dual, so colors 8-15 are genuinely
+ * distinct rather than copies of 0-7 — that is what the bright-half tokens
+ * below spend. On a near-monochrome wallpaper this is a noticeably louder look
+ * than classic pywal's; that is the intent.
+ *
+ * pywal16's template engine also lets a template call functions on a colour, so
+ * shades that stay inside the wallpaper's own range (hover, surfaces) are
+ * derived here rather than hand-mixed in every sheet.
+ *
+ * NOTE: lighten()/darken() take an integer percent — pywal16 strips '.' from
+ * the argument, so `darken(0.3)` silently means 3%, not 30%. saturate() is not
+ * a relative adjustment: it *sets* saturation to the given value (util.py
+ * `s = amount`), which pins a colour regardless of the wallpaper. Avoid it.
+ */
+
 :vars {{
     --background: {background};
     --foreground: {foreground};
+    --cursor: {cursor};
 
     --color0: {color0};
     --color1: {color1};
@@ -18,4 +41,41 @@
     --color13: {color13};
     --color14: {color14};
     --color15: {color15};
+
+    /* ── semantic tokens ──────────────────────────────────────────────
+       Names the sheets should reach for. Re-point one of these and every
+       surface follows; reach past them to --colorN and it will not. */
+
+    /* accent ramp. color4 is the archdots accent; color12 is its bright
+       counterpart, which only exists as a separate colour under --cols16.
+       hover/active are derived shades, so they track the accent exactly. */
+    --accent: {color4};
+    --accent-bright: {color12};
+    --accent-hover: {color4.lighten(10)};
+    --accent-active: {color4.darken(10)};
+    --accent-glow: {color12.lighten(15)};
+
+    --text: {foreground};
+    --text-strong: {color15};
+    --text-muted: {color8};
+    --text-dim: {foreground.darken(30)};
+
+    /* surfaces, lifted off the wallpaper background by increasing amounts */
+    --surface: {background.lighten(6)};
+    --surface-raised: {background.lighten(12)};
+    --surface-overlay: {background.lighten(18)};
+    --border: {color8.darken(10)};
+
+    /* status. The distinct bright half gives each a usable pair, so a badge
+       and its hover state are no longer the same colour. Genuinely critical
+       UI (the battery warning) still keeps a fixed red on purpose — these
+       follow the wallpaper and can land close to neutral. */
+    --error: {color1};
+    --error-bright: {color9};
+    --success: {color2};
+    --success-bright: {color10};
+    --warning: {color3};
+    --warning-bright: {color11};
+    --info: {color6};
+    --info-bright: {color14};
 }}

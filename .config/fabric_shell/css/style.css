@@ -1,5 +1,5 @@
 /* Shared base for every fabric-shell surface.
-   common.build_css() always prepends this after the pywal palette, so no
+   common.build_css() always prepends this after the pywal16 palette, so no
    sheet needs to @import it. Module sheets load after and win on conflict. */
 
 * {
@@ -126,13 +126,18 @@ scrollbar slider {
 
 .app-button:hover .app-row,
 .clip-button:hover .clip-item {
-    background-color: alpha(var(--color4), 0.10);
+    background-color: alpha(var(--accent), 0.10);
 }
 
-/* Keyboard selection — the one accent treatment every list shares */
+/* Keyboard selection — the one accent treatment every list shares.
+   A different *hue* from hover rather than the same colour at a higher alpha:
+   --accent-bright is color12, a real colour under --cols16 dual instead of a
+   copy of color4. That matters when the mouse is resting over one row while
+   the keyboard has selected another — with a single-hue treatment the two are
+   told apart only by opacity. */
 .app-button.app-selected .app-row,
 .clip-button.clip-selected .clip-item {
-    background-color: alpha(var(--color4), 0.18);
-    border-color: alpha(var(--color4), 0.50);
-    box-shadow: 0 0 18px alpha(var(--color4), 0.16);
+    background-color: alpha(var(--accent-bright), 0.18);
+    border-color: alpha(var(--accent-bright), 0.50);
+    box-shadow: 0 0 18px alpha(var(--accent-glow), 0.16);
 }

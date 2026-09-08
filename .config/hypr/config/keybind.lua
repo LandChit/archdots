@@ -91,6 +91,15 @@ for i = 1, 10 do
         { desc = "Workspace: Move window to workspace" })
 end
 
+-- Switch to the next workspace by scrolling down
+hl.bind(mainMod .. " + mouse_down",
+    hl.dip and hl.dsp.focus({ workspace = "e+1" }) or
+    hl.dsp.focus({ workspace = "e+1" }), { desc = "Workspace: Scroll to next workspace" })
+
+-- Switch to the previous workspace by scrolling up
+hl.bind(mainMod .. " + mouse_up",
+    hl.dsp.focus({ workspace = "e-1" }), { desc = "Workspace: Scroll to previous workspace" })
+
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),
     { mouse = true, desc = "Window: Drag to move" })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(),

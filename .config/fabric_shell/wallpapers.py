@@ -63,7 +63,8 @@ LIST_HEIGHT = 460
 THUMB_WIDTH = 96
 THUMB_HEIGHT = 54
 
-# pywal has to finish writing before the palette is worth copying
+# Fallback only, for the unlikely case that wal could not be spawned and no
+# process is available to wait on. The normal path waits for wal to exit.
 COLOR_SYNC_DELAY_MS = 900
 
 
@@ -257,21 +258,42 @@ class WallpaperPicker(Panel):
 
         # pywal16 regenerates the palette; the copy is what the shell watches.
         # Flags have to stay in step with install.sh's WAL_ARGS.
-        exec_shell_command_async(f'wal -i "{path}" {WAL_ARGS} -n -q')
-        GLib.timeout_add(COLOR_SYNC_DELAY_MS, self._sync_colors)
+        #
+        # Sync when wal actually exits, not after a fixed delay. A wallpaper
+        # pywal16 has no cached scheme for takes ~3s to analyse — far past the
+        # old 900ms guess — so the first use of a newly added wallpaper copied
+        # the *previous* palette to every consumer and looked like the theming
+        # had simply not fired. exec_shell_command_async's own callback is
+        # per-stdout-line and `-q` prints nothing, so it never runs; the
+        # Gio.Subprocess it returns is what actually reports completion.
+        proc, _ = exec_shell_command_async(f'wal -i "{path}" {WAL_ARGS} -n -q')
+        if proc is not None:
+            proc.wait_async(None, lambda *_: self._sync_colors())
+        else:
+            GLib.timeout_add(COLOR_SYNC_DELAY_MS, self._sync_colors)
 
         self._persist(path)
         self._current = path
 
     @staticmethod
     def _sync_colors() -> bool:
-        """Copy pywal16's palettes to everything that reads them.
+        """Copy pywal16's palettes to everything that reads them, then reload
+        Hyprland so window borders follow too.
 
-        Two consumers, two formats. css/ is watched live by every shell window;
-        the GTK theme's colors.css is only re-read when an app starts or the
-        theme is re-selected, so GTK apps already open keep their old colours
-        until they are restarted. Each copy is reported separately — a missing
-        GTK theme should not stop the shell from recolouring itself.
+        Three consumers, three mechanisms. css/ is watched live by every shell
+        window; the GTK theme's colors.css is only re-read when an app starts or
+        the theme is re-selected, so GTK apps already open keep their old
+        colours until they are restarted. Each copy is reported separately — a
+        missing GTK theme should not stop the shell from recolouring itself.
+
+        Hyprland is the third. It reads the palette through `dofile` on
+        ~/.cache/wal/colors-hyprland.lua at config-parse time, so a freshly
+        written palette does nothing until the config is parsed again — the
+        borders keep the previous wallpaper's accent indefinitely. `hyprctl
+        reload` is what re-parses it. This is safe to call on every wallpaper
+        change: everything in autorun.lua hangs off the "hyprland.start" event,
+        which a reload does not re-fire, so nothing is respawned and the shell
+        is not restarted.
         """
         for src, dest in (
             (WAL_CACHE, os.path.join(CSS_DIR, COLORS_CSS)),
@@ -281,6 +303,8 @@ class WallpaperPicker(Panel):
                 shutil.copyfile(src, dest)
             except OSError as e:
                 print(f"[wallpaper] could not sync colours to {dest}: {e}")
+
+        exec_shell_command_async("hyprctl reload")
         return False
 
     @staticmethod

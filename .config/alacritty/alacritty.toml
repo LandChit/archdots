@@ -37,3 +37,8 @@ bindings = [
 import = ["~/.cache/wal/colors-alacritty.toml"]
 
 [terminal]
+
+
+[cursor.style]
+shape = "Beam"
+blinking = "On"

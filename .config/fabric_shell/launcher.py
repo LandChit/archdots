@@ -199,13 +199,13 @@ class Launcher(Panel):
         return lambda: subprocess.Popen([*TERMINAL, *cmd])
 
     def _app_icon(self, app) -> Image:
-        """The app's own pixbuf, else an absolute icon path, else a themed name."""
-        try:
-            if pixbuf := app.get_icon_pixbuf(size=ICON_SIZE):
-                return _pixbuf_icon(pixbuf)
-        except Exception:
-            pass
+        """An absolute icon path, else the themed icon, else a generic glyph.
 
+        Paths go first because fabric feeds them to `IconTheme.load_icon`,
+        which only knows names. `default_icon=None` matters too: fabric's
+        default substitutes "image-missing" instead of returning None, which
+        would hide every failure from the fallbacks below.
+        """
         icon_name = getattr(app, "icon_name", None) or ""
         if os.path.isabs(icon_name):
             try:
@@ -216,8 +216,12 @@ class Launcher(Panel):
                 )
             except Exception:
                 pass
-        elif icon_name:
-            return _named_icon(icon_name)
+        else:
+            try:
+                if pixbuf := app.get_icon_pixbuf(size=ICON_SIZE, default_icon=None):
+                    return _pixbuf_icon(pixbuf)
+            except Exception:
+                pass
 
         return _named_icon("application-x-executable")
 

@@ -245,7 +245,7 @@ without; everything below it is optional and can be declined.
 ### Core
 
 ```
-hyprland hyprpaper hyprlock hyprpolkitagent xdg-desktop-portal-hyprland
+hyprland hyprpaper hyprlock hypridle hyprpolkitagent xdg-desktop-portal-hyprland
 xdg-desktop-portal-gtk uwsm sddm alacritty dolphin
 python-gobject gtk3 gtk-layer-shell libdbusmenu-gtk3 python-pip
 cliphist wl-clipboard grim slurp brightnessctl playerctl libnotify

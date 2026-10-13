@@ -9,6 +9,7 @@ hl.on("hyprland.start", function()
 
 
     hl.exec_cmd("hyprpaper &")
+    hl.exec_cmd("hypridle &")   -- dim, lock, screens off, suspend: see ../hypridle.conf
     -- The polkit agent is a systemd user unit that install.sh enables. Starting
     -- it here as well covers a session that never reaches graphical-session.target,
     -- and it has to come after the import: the unit needs WAYLAND_DISPLAY.

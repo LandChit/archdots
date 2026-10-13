@@ -46,7 +46,7 @@ SDDM_THEME_VERSION="1.3.5"
 # lives further down, because a package that is merely nice to have should not
 # be able to fail an install.
 PKG_CORE=(
-    hyprland hyprpaper hyprlock hyprpolkitagent
+    hyprland hyprpaper hyprlock hypridle hyprpolkitagent
     xdg-desktop-portal-hyprland xdg-desktop-portal-gtk uwsm sddm
     alacritty dolphin
     python-gobject gtk3 gtk-layer-shell python-pip

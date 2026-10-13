@@ -1,6 +1,3 @@
-# your custom zshconfig (Add this to your home directory)
-source ~/.custom.zsh
-
 # Other
 export EDITOR=nano
 alias py=python
@@ -89,6 +86,14 @@ alias cat="bat"
 
 # Pywal — load color variables + override FZF colors with current palette
 source ~/.cache/wal/colors.sh
+
+# Your own settings: ~/.config/archdots/local/zshrc (not tracked, never
+# overwritten by updates). Sourced after everything else so it can override
+# it, but before the plugins below, so syntax highlighting still wraps any
+# widget it defines.
+# ~/.custom.zsh is the old location and is still read if it exists.
+[[ -r ~/.custom.zsh ]] && source ~/.custom.zsh
+[[ -r ~/.config/archdots/local/zshrc ]] && source ~/.config/archdots/local/zshrc
 
 # zsh plugins, from pacman (zsh-autosuggestions, zsh-syntax-highlighting).
 # Syntax highlighting goes last: it wraps every widget defined before it.

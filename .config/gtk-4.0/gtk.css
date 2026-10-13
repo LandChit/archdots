@@ -31,3 +31,6 @@
 
 @import url("colors.css");
 @import url("overrides.css");
+/* Your own rules. Untracked, created empty by install.sh, never overwritten.
+ * It sits in this directory for the flatpak reason above. */
+@import url("user.css");

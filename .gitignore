@@ -60,4 +60,7 @@ archdots_docker/artifacts
 # theme's copy is the tracked original.
 .config/gtk-4.0/overrides.css
 
+# The user's own GTK 4 rules, imported last by gtk.css. Never tracked.
+.config/gtk-4.0/user.css
+
 .custom.zsh

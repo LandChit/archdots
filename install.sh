@@ -1426,6 +1426,50 @@ stage_zsh() {
     fi
 }
 
+# ── the user's own files ────────────────────────────────────────────────────
+#
+# ~/.config/archdots/ holds everything the user edits by hand. Nothing in it is
+# tracked, and this stage only ever creates a file that is missing: a stub that
+# is already there is the user's, edited or not, and is never touched again.
+
+USER_DIR="$HOME/.config/archdots"
+
+# write_stub <path> <text> — create <path> with <text> unless it exists.
+write_stub() {
+    if [[ -e "$1" ]]; then
+        skip "${1/#$HOME/\~} already there"
+        return 0
+    fi
+    mkdir -p "$(dirname -- "$1")"
+    printf '%s\n' "$2" > "$1"
+    ok "created ${1/#$HOME/\~}"
+}
+
+stage_user_dir() {
+    step "Your own config files"
+    write_stub "$USER_DIR/local/zshrc" \
+'# Your zsh settings. Sourced near the end of ~/.zshrc, so anything here
+# overrides the defaults. This file is not tracked and updates never touch it.
+#
+# alias ll="eza -l"
+# export EDITOR=nvim'
+    write_stub "$USER_DIR/local/alacritty.toml" \
+'# Your alacritty settings. Imported last by ~/.config/alacritty/alacritty.toml,
+# so anything here wins. This file is not tracked and updates never touch it.
+#
+# [font]
+# size = 14.0'
+    # Inside ~/.config/gtk-4.0/ rather than $USER_DIR: gtk.css can only import
+    # from its own directory (flatpaks mount just that one).
+    write_stub "$HOME/.config/gtk-4.0/user.css" \
+'/* Your GTK 4 rules. Imported last by gtk.css, so anything here wins.
+ * This file is not tracked and updates never touch it. */'
+
+    if [[ -e "$HOME/.custom.zsh" ]]; then
+        note "~/.custom.zsh is still sourced; ~/.config/archdots/local/zshrc is the new place for it"
+    fi
+}
+
 # ── the shell's virtualenv ──────────────────────────────────────────────────
 
 stage_venv() {
@@ -2173,6 +2217,7 @@ run_update() {
     update_repo
     update_packages
     stage_stow          # picks up whatever the update added, moved or renamed
+    stage_user_dir      # creates any user stub a newer version added
     stage_venv upgrade  # requirements.txt may have moved to a newer fabric
     stage_wallpapers    # copies any new wallpapers into ~/Pictures/wallpapers
     stage_gtk4_base     # update_packages may have moved libadwaita under us
@@ -2208,6 +2253,7 @@ run_install() {
     stage_packages
     (( DO_PACKAGES )) && install_sddm_theme
     stage_stow
+    stage_user_dir
     stage_zsh
     stage_venv
     phase 96 97 "Wallpapers"

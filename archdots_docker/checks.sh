@@ -79,7 +79,7 @@ printf "  %-30s %s\n" "install.sh NOT stowed:" "$([ -e "$HOME/install.sh" ] && e
 printf "  %-30s %s\n" "wallpapers NOT stowed:" "$([ -e "$HOME/wallpapers" ] && echo LEAKED || echo ok)"
 printf "  %-30s %s\n" "wallpapers in Pictures:" "$(ls "$HOME/Pictures/wallpapers" 2>/dev/null | tr '\n' ' ')"
 printf "  %-30s %s\n" "oh-my-zsh:"             "$([ -d "$HOME/.oh-my-zsh" ] && echo yes || echo NO)"
-printf "  %-30s %s\n" "zsh plugin submodules:" "$(ls "$HOME/.ohmyzsh_custom/plugins/zsh-autosuggestions" 2>/dev/null | head -1 || echo EMPTY)"
+printf "  %-30s %s\n" "zsh plugins (pacman):"  "$([ -r /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ] && [ -r /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && echo yes || echo MISSING)"
 printf "  %-30s %s\n" "venv python:"           "$([ -x "$HOME/.config/fabric_shell/.venv/bin/python" ] && echo yes || echo no)"
 echo "  repo dirtied by machine config:"
 git -C "$REPO" status --short 2>/dev/null | sed 's/^/    /' | head -8

@@ -22,7 +22,7 @@ export ZSH="$HOME/.oh-my-zsh"
 ZSH_CUSTOM=~/.ohmyzsh_custom
 ZSH_THEME="chit"
 
-plugins=(git zsh-syntax-highlighting zsh-autosuggestions)
+plugins=(git)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -89,3 +89,10 @@ alias cat="bat"
 
 # Pywal — load color variables + override FZF colors with current palette
 source ~/.cache/wal/colors.sh
+
+# zsh plugins, from pacman (zsh-autosuggestions, zsh-syntax-highlighting).
+# Syntax highlighting goes last: it wraps every widget defined before it.
+[[ -r /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]] &&
+    source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+[[ -r /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] &&
+    source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh

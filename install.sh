@@ -7,7 +7,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/LandChit/archdots/main/install.sh | bash
 #   ./install.sh          # from inside an existing clone
 #
-# It clones the repo (with submodules) if it is not already in one, installs the
+# It clones the repo if it is not already in one, installs the
 # packages, stows the dotfiles, builds the shell's virtualenv, and writes the
 # handful of settings that are specific to *this* machine — GPU order, monitor
 # layout, wallpaper paths — after showing you each one.
@@ -66,6 +66,9 @@ PKG_CORE=(
     # shell renders white panels with unreadable text.
     breeze-icons adwaita-fonts
     zsh stow git
+    # .zshrc sources both from /usr/share/zsh/plugins/ (they used to be git
+    # submodules under .ohmyzsh_custom/plugins/).
+    zsh-autosuggestions zsh-syntax-highlighting
     # .zshrc calls all four unconditionally — `eval "$(zoxide init zsh)"` plus
     # `alias cd="z"`, `alias ls="eza …"`, `alias cat="bat"`, `eval "$(fzf --zsh)"`.
     # Leaving any of them out breaks the login shell, `cd` included.
@@ -905,18 +908,6 @@ locate_repo() {
     step "Locating the repository"
     if REPO_ROOT="$(find_repo_root)"; then
         ok "running from $REPO_ROOT"
-        if [[ -d "$REPO_ROOT/.git" ]]; then
-            # .ohmyzsh_custom carries the zsh plugins as submodules; a plain
-            # clone leaves those directories empty and zsh then starts without
-            # them.
-            if git -C "$REPO_ROOT" submodule status --recursive 2>/dev/null | grep -q '^-'; then
-                say "submodules are empty — initialising"
-                git -C "$REPO_ROOT" submodule update --init --recursive
-                ok "submodules initialised"
-            else
-                skip "submodules already present"
-            fi
-        fi
     else
         command -v git >/dev/null || {
             say "git is missing; installing it first"
@@ -925,13 +916,12 @@ locate_repo() {
         if [[ -e "$REPO_DIR" ]]; then
             if [[ -f "$REPO_DIR/.stow-local-ignore" ]]; then
                 ok "existing clone at $REPO_DIR"
-                git -C "$REPO_DIR" submodule update --init --recursive
             else
                 die "$REPO_DIR exists and is not an archdots clone. Move it, or pass --dir."
             fi
         else
             say "cloning $REPO_URL into $REPO_DIR"
-            git clone --recurse-submodules "$REPO_URL" "$REPO_DIR"
+            git clone "$REPO_URL" "$REPO_DIR"
             ok "cloned"
         fi
         REPO_ROOT="$REPO_DIR"
@@ -2090,8 +2080,6 @@ Stash them, pull, and put them back?" y; then
         warn "pull failed — resolve it by hand and re-run"
         note "git pull failed; the rest of the update ran against the old checkout"
     fi
-
-    git -C "$REPO_ROOT" submodule update --init --recursive && ok "submodules up to date"
 
     if (( stashed )); then
         if git -C "$REPO_ROOT" stash pop; then

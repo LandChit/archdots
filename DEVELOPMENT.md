@@ -34,7 +34,7 @@ is still on the list. [README.md](README.md) is the tour; this is the manual.
   uwsm/            session env (forces Hyprland onto the iGPU)
 .themes/           GTK theme
 .themes_sddm/      SDDM theme
-.ohmyzsh_custom/   zsh theme + plugins (git submodules)
+.ohmyzsh_custom/   zsh theme (the plugins come from pacman)
 wallpapers/
 .zshrc
 ```
@@ -766,7 +766,6 @@ Five details are load-bearing:
 
 | Step | Why it cannot be a symlink |
 |---|---|
-| `git clone --recurse-submodules` | `.ohmyzsh_custom` carries the zsh plugins as submodules; a plain clone leaves those directories empty |
 | Remove dunst / mako / swaync | they take `org.freedesktop.Notifications` at login and the shell's cards then never appear — see [above](#the-shell-is-the-notification-daemon) |
 | Build `.venv` | Fabric is not packaged for Arch |
 | oh-my-zsh | `.zshrc` sources it; installed with `--keep-zshrc` or the installer overwrites the symlink stow just made |

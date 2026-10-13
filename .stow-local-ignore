@@ -4,7 +4,6 @@ install.sh
 
 .git
 .gitignore
-.gitmodules
 
 # Docs — they belong in the repo, not in $HOME
 README.md

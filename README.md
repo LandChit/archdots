@@ -162,7 +162,7 @@ starts itself. Press <kbd>SUPER</kbd> <kbd>/</kbd> for the cheatsheet.
 
 ```bash
 # 1. install the packages listed below, then:
-git clone --recurse-submodules https://github.com/LandChit/archdots ~/archdots
+git clone https://github.com/LandChit/archdots ~/archdots
 cd ~/archdots && stow .
 
 # 2. build the desktop shell
@@ -249,7 +249,8 @@ cliphist wl-clipboard grim slurp brightnessctl playerctl libnotify
 pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol
 networkmanager bluez bluez-utils blueman
 qt6ct kvantum qt5-wayland qt6-wayland breeze-icons adwaita-fonts
-zsh stow git zoxide fzf eza bat kwallet-pam kwalletmanager
+zsh zsh-autosuggestions zsh-syntax-highlighting stow git
+zoxide fzf eza bat kwallet-pam kwalletmanager
 base-devel cairo gobject-introspection pkgconf
 ```
 

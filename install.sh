@@ -2022,6 +2022,22 @@ stage_services() {
             fi
         fi
     done
+
+    # User units: no sudo, and no question either. Without a polkit agent every
+    # "authentication required" prompt fails silently instead of asking.
+    for svc in hyprpolkitagent; do
+        if ! systemctl --user list-unit-files "$svc.service" &>/dev/null; then
+            skip "$svc not installed"
+        elif systemctl --user is-enabled "$svc" &>/dev/null; then
+            skip "$svc already enabled"
+        elif run_logged "Enabling $svc" systemctl --user enable "$svc.service"; then
+            ok "$svc enabled (user unit)"
+        else
+            # No user manager, e.g. in a container. autorun.lua starts it anyway.
+            warn "could not enable $svc"
+            note "enable it by hand: systemctl --user enable $svc.service"
+        fi
+    done
 }
 
 # ── restarting the running shell ────────────────────────────────────────────

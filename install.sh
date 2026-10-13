@@ -1340,6 +1340,10 @@ stage_stow() {
     # into a hard failure.
     local simulate line rel src backup
     local conflicts=() unhandled=()
+    # A real ~/.config, so stow links the folders inside it rather than folding
+    # ~/.config itself into one symlink to the repo. Folded, everything any app
+    # later creates there, ~/.config/archdots/ included, lands in the clone.
+    mkdir -p "$HOME/.config"
     simulate="$(stow --simulate --verbose=1 --target="$HOME" . 2>&1 || true)"
     while IFS= read -r line; do
         [[ "$line" == *"  * "* ]] || continue

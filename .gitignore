@@ -63,4 +63,8 @@ archdots_docker/artifacts
 # The user's own GTK 4 rules, imported last by gtk.css. Never tracked.
 .config/gtk-4.0/user.css
 
+# The user's own config folder. It belongs in $HOME, but on a home where stow
+# folded ~/.config into a single symlink it ends up in the clone instead.
+.config/archdots/
+
 .custom.zsh

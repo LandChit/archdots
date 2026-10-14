@@ -23,29 +23,36 @@ is still on the list. [README.md](README.md) is the tour; this is the manual.
 ## Repo layout
 
 ```
-.config/
-  hypr/            Hyprland — hyprland.lua + config/*.lua, hyprlock, hyprpaper
-    config/custom/   per-machine overrides, loaded last (untracked)
-  fabric_shell/    the desktop shell (Python + GTK3 layer-shell)
-  wal/templates/   pywal16 templates — the source of all theming
-  alacritty/ eza/ fastfetch/ cliphist/ fontconfig/
-  Kvantum/ qt6ct/ kdeglobals    Qt theming
-  gtk-3.0/settings.ini          GTK theming — picks the theme in .themes/
-  uwsm/            session env (forces Hyprland onto the iGPU)
-.themes/           GTK theme
-.themes_sddm/      SDDM theme
-.ohmyzsh_custom/   zsh theme (the plugins come from pacman)
-wallpapers/
-.zshrc
+home/                stowed into $HOME: `stow --dir=<repo> --target=$HOME home`
+  .config/
+    hypr/            Hyprland — hyprland.lua + config/*.lua, hyprlock, hyprpaper
+      config/custom/   old per-machine overrides location, still loaded (untracked)
+    fabric_shell/    the desktop shell (Python + GTK3 layer-shell)
+    wal/templates/   pywal16 templates — the source of all theming
+    alacritty/ eza/ fastfetch/ cliphist/ fontconfig/
+    Kvantum/ qt6ct/ kdeglobals    Qt theming
+    gtk-3.0/settings.ini          GTK theming — picks the theme in .themes/
+    uwsm/            session env (forces Hyprland onto the iGPU)
+  .themes/           GTK theme
+  .ohmyzsh_custom/   zsh theme (the plugins come from pacman)
+  .zshrc
+.themes_sddm/        SDDM theme (install.sh copies it into /usr/share/sddm)
+kvantum/             Kvantum theme sources
+wallpapers/          copied to ~/Pictures/wallpapers
+archdots_docker/     container test harness
+install.sh  README.md  DEVELOPMENT.md  CUSTOMIZING.md  TODO.md
 ```
 
-Everything is stowed into `$HOME` except what `.stow-local-ignore` lists —
-`install.sh`, the two markdown files, `wallpapers/` and git's own files.
-Anything added at the repo root that is *not* meant to land in `$HOME` has to be
-added there too.
+Only `home/` is stowed. Everything else at the repo root stays in the repo, so
+adding a file there needs no ignore list. The root `.stow-local-ignore` is not
+read by install.sh: it ignores everything, so an installer from before the move
+(which ran `stow .` at the root) links nothing.
+
+User settings are not in the repo at all: they live in `~/.config/archdots/`
+(see [CUSTOMIZING.md](CUSTOMIZING.md)).
 
 `wallpapers/` is on that list because the picker reads `~/Pictures/wallpapers`
-([`wallpapers.py:29`](.config/fabric_shell/wallpapers.py)), not the repo — a
+([`wallpapers.py:29`](home/.config/fabric_shell/wallpapers.py)), not the repo — a
 `~/wallpapers` symlink would just be dead weight. `install.sh` copies them
 across instead.
 
@@ -590,7 +597,7 @@ rewrite and still installed waybar, nwg-bar, yazi and **dunst**.
 
 It runs from either direction — piped from curl on a bare install, or `./install.sh`
 inside an existing clone. `find_repo_root()` tells the two apart by looking for
-`.stow-local-ignore` **and** `.config/fabric_shell`, a pair that exists nowhere
+`install.sh` **and** `home/.config/fabric_shell`, a pair that exists nowhere
 else; when piped there is no `BASH_SOURCE` path to resolve, so it clones and
 `exec`s the copy on disk with `ARCHDOTS_REEXEC=1` guarding against a loop.
 
@@ -762,7 +769,7 @@ Five details are load-bearing:
   last terminal row by hand scrolls newt's screen and breaks the box, so the
   `KEYS_*` strings go inside each dialog as its last line instead.
 
-### What it does beyond `stow .`
+### What it does beyond `stow home`
 
 | Step | Why it cannot be a symlink |
 |---|---|

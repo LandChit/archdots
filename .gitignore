@@ -32,41 +32,41 @@ __pycache__/
 # Per-machine Hyprland overrides. config/ holds the committed defaults; these
 # are loaded after them and are meant to differ on every machine, so they are
 # never committed. The folder's README.md is tracked on purpose.
-.config/hypr/config/custom/*.lua
+home/.config/hypr/config/custom/*.lua
 
 # The same idea for uwsm's session environment. env-hyprland is the committed
 # default and holds nothing machine-specific; uwsm sources everything in
 # env-hyprland.d/ after it, and install.sh writes this machine's GPU order there.
-.config/uwsm/env-hyprland.d/
+home/.config/uwsm/env-hyprland.d/
 
 # Dont include generated files in testing
 archdots_docker/artifacts
 
-# pywal16 output. These are rendered from .config/wal/templates/ on every
+# pywal16 output. These are rendered from home/.config/wal/templates/ on every
 # wallpaper change, so tracking them meant four files turned up in `git status`
 # every time you pressed SUPER + W — the same churn the wallpaper pointer was
 # moved out of the repo to avoid. install.sh writes them in stage_theming, so a
 # fresh clone still has a palette before anything starts.
 #
 # The templates themselves stay tracked; only the rendered copies are ignored.
-.config/fabric_shell/css/colors-fabric.css
-.themes/archdots/gtk-3.0/colors.css
-.themes/archdots/gtk-4.0/colors.css
-.config/gtk-4.0/colors.css
+home/.config/fabric_shell/css/colors-fabric.css
+home/.themes/archdots/gtk-3.0/colors.css
+home/.themes/archdots/gtk-4.0/colors.css
+home/.config/gtk-4.0/colors.css
 
 # Copied in from .themes/archdots/gtk-4.0/ by install.sh, for the same reason
 # the palette is: a flatpak mounts .config/gtk-4.0 inside its per-app home, so
 # gtk.css cannot import it across from ~/.themes with a relative path. The
 # theme's copy is the tracked original.
-.config/gtk-4.0/overrides.css
+home/.config/gtk-4.0/overrides.css
 
 # The user's own GTK rules. GTK 4: imported last by gtk.css. GTK 3: read by GTK
 # itself over the theme. Never tracked.
-.config/gtk-4.0/user.css
-.config/gtk-3.0/gtk.css
+home/.config/gtk-4.0/user.css
+home/.config/gtk-3.0/gtk.css
 
 # The user's own config folder. It belongs in $HOME, but on a home where stow
 # folded ~/.config into a single symlink it ends up in the clone instead.
-.config/archdots/
+home/.config/archdots/
 
 .custom.zsh

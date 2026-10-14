@@ -163,7 +163,7 @@ starts itself. Press <kbd>SUPER</kbd> <kbd>/</kbd> for the cheatsheet.
 ```bash
 # 1. install the packages listed below, then:
 git clone https://github.com/LandChit/archdots ~/archdots
-cd ~/archdots && stow .
+cd ~/archdots && stow --target="$HOME" home
 # your own config goes in these (untracked); gtk.css imports user.css and
 # warns on every GTK 4 app if it is missing
 mkdir -p ~/.config/archdots/local && touch ~/.config/gtk-4.0/user.css

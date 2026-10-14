@@ -23,8 +23,8 @@ cd "$REPO" || exit 1
 # A fresh clone has none of these. Without stripping them the test inherits the
 # host's machine-specific files and reports "monitor.lua already exists", which
 # is the opposite of what a new machine sees.
-rm -f  .config/hypr/config/custom/*.lua
-rm -rf .config/fabric_shell/.venv .omc .config/hypr/.omc
+rm -f  home/.config/hypr/config/custom/*.lua
+rm -rf home/.config/fabric_shell/.venv .omc home/.config/hypr/.omc
 
 # Files flagged assume-unchanged (`git ls-files -v` prints those lowercase) are
 # local-only by definition: git is told to ignore whatever the working tree
@@ -58,12 +58,12 @@ install_rc=$?
 
 # ── did stow link what it should? ───────────────────────────────────────────
 
-# stow folds: ~/.config is ONE symlink into the repo, so paths beneath it are
-# the repo files themselves. Test that they resolve there, not that each leaf
-# is individually a link.
+# stow folds: ~/.config/hypr and friends are each ONE symlink into the repo's
+# home/, so paths beneath them are the repo files themselves. Test that they
+# resolve there, not that each leaf is individually a link.
 resolves() {
     case "$(readlink -f "$1" 2>/dev/null)" in
-        "$REPO"/*) echo "ok" ;;
+        "$REPO"/home/*) echo "ok" ;;
         "")        echo "MISSING" ;;
         *)         echo "NOT IN REPO: $(readlink -f "$1")" ;;
     esac
@@ -76,6 +76,7 @@ printf "  %-30s %s\n" ".zshrc -> repo:"        "$(resolves "$HOME/.zshrc")"
 printf "  %-30s %s\n" "hypr config -> repo:"   "$(resolves "$HOME/.config/hypr/config/keybind.lua")"
 printf "  %-30s %s\n" "fabric_shell -> repo:"  "$(resolves "$HOME/.config/fabric_shell/bar.py")"
 printf "  %-30s %s\n" "install.sh NOT stowed:" "$([ -e "$HOME/install.sh" ] && echo LEAKED || echo ok)"
+printf "  %-30s %s\n" "repo-only NOT stowed:"  "$(for f in home kvantum .themes_sddm README.md archdots_docker; do [ -e "$HOME/$f" ] && printf 'LEAKED:%s ' "$f"; done; echo ok)"
 printf "  %-30s %s\n" "wallpapers NOT stowed:" "$([ -e "$HOME/wallpapers" ] && echo LEAKED || echo ok)"
 printf "  %-30s %s\n" "wallpapers in Pictures:" "$(ls "$HOME/Pictures/wallpapers" 2>/dev/null | tr '\n' ' ')"
 printf "  %-30s %s\n" "oh-my-zsh:"             "$([ -d "$HOME/.oh-my-zsh" ] && echo yes || echo NO)"

@@ -6,11 +6,6 @@ alias ssh="TERM=xterm-256color ssh"
 export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=lcd -Dswing.aatext=true' 
 
 
-# Gaming
-alias protontricks='flatpak run com.github.Matoking.protontricks'
-alias protontricks-launch='flatpak run --command=protontricks-launch com.github.Matoking.protontricks'
-
-
 # Pywal — restore terminal palette on every new shell
 (cat ~/.cache/wal/sequences &)
 

@@ -900,7 +900,7 @@ find_repo_root() {
     [[ -f "${BASH_SOURCE[0]}" ]] || return 1
     dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || return 1
     # A clone is identifiable by these two, which exist nowhere else.
-    [[ -f "$dir/.stow-local-ignore" && -d "$dir/.config/fabric_shell" ]] || return 1
+    [[ -f "$dir/install.sh" && -d "$dir/home/.config/fabric_shell" ]] || return 1
     printf '%s' "$dir"
 }
 
@@ -914,7 +914,9 @@ locate_repo() {
             "${SUDO[@]}" pacman -Sy --needed --noconfirm git
         }
         if [[ -e "$REPO_DIR" ]]; then
-            if [[ -f "$REPO_DIR/.stow-local-ignore" ]]; then
+            # home/ is the layout since the dotfiles moved there; a clone from
+            # before it has .stow-local-ignore at the root and is updated below.
+            if [[ -d "$REPO_DIR/home" || -f "$REPO_DIR/.stow-local-ignore" ]]; then
                 ok "existing clone at $REPO_DIR"
             else
                 die "$REPO_DIR exists and is not an archdots clone. Move it, or pass --dir."
@@ -1306,6 +1308,76 @@ Current=silent"
     fi
 }
 
+# ── the move to home/ ───────────────────────────────────────────────────────
+#
+# The dotfiles used to sit at the repo root and were stowed with `stow .`. They
+# live in home/ now, stowed with `stow --dir=<repo> home`. A clone that pulls
+# across that move needs two things put right before stow can run:
+#
+#   · Ignored files stay behind. git moves what it tracks, but config/custom/
+#     overrides, GTK user files, the rendered palette and the shell's venv are
+#     not tracked, so they are left at the old paths. Move each into home/.
+#   · The old symlinks in $HOME point at the old paths. stow only manages links
+#     into its own --dir, so it reports those as conflicts. Remove them, but
+#     only links that resolve to exactly the old location of something now in
+#     home/, or to a repo-only entry that `stow .` used to link.
+
+migrate_layout() {
+    local real moved=0 unlinked=0 top rel src dst link target
+    real="$(cd -- "$REPO_ROOT" && pwd -P)"
+
+    for top in .config .themes .ohmyzsh_custom; do
+        [[ -d "$real/$top" && ! -L "$real/$top" ]] || continue
+        while IFS= read -r -d '' src; do
+            rel="${src#"$real/"}"
+            dst="$real/home/$rel"
+            if [[ -e "$dst" || -L "$dst" ]]; then
+                warn "left at old path, home/$rel already exists: $rel"
+                note "compare $real/$rel with home/$rel by hand, then delete the old one"
+                continue
+            fi
+            mkdir -p "$(dirname -- "$dst")"
+            mv -- "$src" "$dst"
+            moved=$(( moved + 1 ))
+        # A .venv moves as one directory (thousands of files, and stage_venv
+        # rebuilds it if anything is off); everything else file by file.
+        done < <(find "$real/$top" \( -type d -name .venv -prune -print0 \) -o \( ! -type d -print0 \))
+        find "$real/$top" -depth -type d -empty -delete 2>/dev/null
+        [[ -d "$real/$top" ]] || ok "moved what was left in $top/ into home/"
+    done
+    (( moved )) && ok "$moved untracked file(s) moved from the old layout into home/"
+
+    # Links to anything under home/ that point at the same path without home/.
+    while IFS= read -r -d '' rel; do
+        rel="${rel#"$real/home/"}"
+        link="$HOME/$rel"
+        [[ -L "$link" ]] || continue
+        target="$(readlink -m -- "$link")"
+        if [[ "$target" == "$real/$rel" ]]; then
+            rm -- "$link"
+            unlinked=$(( unlinked + 1 ))
+        fi
+    done < <(find "$real/home" -mindepth 1 \( -name .venv -o -name .git \) -prune -o -print0)
+
+    # Repo-only entries that `stow .` linked into $HOME before the move.
+    for top in "$real"/* "$real"/.[!.]*; do
+        top="$(basename -- "$top")"
+        [[ "$top" == home ]] && continue
+        link="$HOME/$top"
+        [[ -L "$link" ]] || continue
+        target="$(readlink -m -- "$link")"
+        if [[ "$target" == "$real/$top" ]]; then
+            rm -- "$link"
+            unlinked=$(( unlinked + 1 ))
+        fi
+    done
+
+    if (( unlinked )); then
+        ok "removed $unlinked symlink(s) from the old layout"
+    fi
+    return 0
+}
+
 # ── stow ────────────────────────────────────────────────────────────────────
 
 stage_stow() {
@@ -1318,6 +1390,8 @@ stage_stow() {
     phase 80 84 "Linking the dotfiles into your home folder"
     step "Linking the dotfiles into \$HOME"
     command -v stow >/dev/null || die "stow is not installed (--skip-packages was used?)"
+
+    migrate_layout
 
     # stow refuses to overwrite a real file. Find those first so the failure is
     # a question rather than a wall of errors.
@@ -1344,7 +1418,7 @@ stage_stow() {
     # ~/.config itself into one symlink to the repo. Folded, everything any app
     # later creates there, ~/.config/archdots/ included, lands in the clone.
     mkdir -p "$HOME/.config"
-    simulate="$(stow --simulate --verbose=1 --target="$HOME" . 2>&1 || true)"
+    simulate="$(stow --simulate --verbose=1 --dir="$REPO_ROOT" --target="$HOME" home 2>&1 || true)"
     while IFS= read -r line; do
         [[ "$line" == *"  * "* ]] || continue
         if [[ "$line" =~ cannot\ stow\ .*\ over\ existing\ target\ (.+)\ since ]]; then
@@ -1387,7 +1461,7 @@ Move them to $backup and continue?" y; then
         fi
     fi
 
-    run_logged "Linking the dotfiles" stow --restow --target="$HOME" . \
+    run_logged "Linking the dotfiles" stow --restow --dir="$REPO_ROOT" --target="$HOME" home \
         || die "stow failed — see the log."
     ok "stowed into $HOME"
 }
@@ -2258,7 +2332,21 @@ run_update() {
 
     gauge_open "Updating archdots"
 
+    local self_before
+    self_before="$(sha256sum "$REPO_ROOT/install.sh" 2>/dev/null)"
     update_repo
+    # The pull may have changed this script. bash is still running the old copy,
+    # whose stages can be wrong for the new tree (the move to home/ is exactly
+    # that case), so start again on the new one. ARCHDOTS_UPDATE_REEXEC stops a
+    # loop (ARCHDOTS_REEXEC is the curl handover's, a different hop).
+    if [[ -z "${ARCHDOTS_UPDATE_REEXEC:-}" ]] &&
+        [[ "$(sha256sum "$REPO_ROOT/install.sh" 2>/dev/null)" != "$self_before" ]]; then
+        say "install.sh changed in the pull — continuing with the new version"
+        cleanup
+        # --update too, in case this run's mode came from the menu, not the args
+        ARCHDOTS_UPDATE_REEXEC=1 exec bash "$REPO_ROOT/install.sh" \
+            ${ARGS_ORIGINAL+"${ARGS_ORIGINAL[@]}"} --update
+    fi
     update_packages
     stage_stow          # picks up whatever the update added, moved or renamed
     stage_user_dir      # creates any user stub a newer version added

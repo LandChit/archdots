@@ -1,21 +1,8 @@
-
-# The installer runs from the repo; it is not a dotfile.
-install.sh
-
-.git
-.gitignore
-
-# Docs — they belong in the repo, not in $HOME
-README.md
-DEVELOPMENT.md
-
-# The picker reads ~/Pictures/wallpapers (fabric_shell/wallpapers.py), so a
-# ~/wallpapers symlink would be dead weight. install.sh copies these there.
-wallpapers
-
-# The container test harness. It is run from the repo, not linked into $HOME.
-archdots_docker
-
-# Agent/session state. Gitignored, and stow would otherwise scatter ~57
-# symlinks through ~/.omc.
-.omc
+# Not used by install.sh, which stows home/ with `stow --dir=<repo> home`.
+#
+# A guard for installers from before the dotfiles moved into home/: they run
+# `stow .` at the repo root, which would now link home/, the docs and the
+# installer itself into $HOME. This turns that into a no-op. Their links into
+# the old paths still break, so after pulling across the move run the new
+# ./install.sh update, which moves leftovers and relinks (README.md).
+.*

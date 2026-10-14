@@ -53,6 +53,11 @@ local function report(file, err)
         quote(message))
 end
 
+-- The log holds this load's failures only: `simplychit doctor` shows its last
+-- line, so an error fixed since the previous reload must not linger there.
+local reset = io.open(error_log, "w")
+if reset then reset:close() end
+
 for _, module in ipairs(modules) do
     for _, override in ipairs(override_dirs) do
         local path = override.dir .. module .. ".lua"

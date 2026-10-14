@@ -26,6 +26,7 @@ Singleton {
     property alias theme: adapter.theme
     property alias toasts: adapter.toasts
     property alias lock: adapter.lock
+    property alias idle: adapter.idle
 
     // Sets one key, given as a dotted path, in settings.json. Returns false and
     // leaves the file alone if it is not valid JSON: a hand edit in progress is
@@ -120,6 +121,24 @@ Singleton {
                 property string mode: "dark"
                 // a backend from `wal --backend`; some need extra Python packages
                 property string backend: "wal"
+            }
+
+            // Minutes idle before each step, on AC and on battery; 0 is never.
+            // Stay awake (SUPER+SHIFT+I) and apps that inhibit idle pause all
+            // of it. Locking before suspend is hypridle's job (hypridle.conf).
+            property JsonObject idle: JsonObject {
+                property JsonObject ac: JsonObject {
+                    property real dim: 2.5
+                    property real lock: 5
+                    property real screenOff: 5.5
+                    property real suspend: 30
+                }
+                property JsonObject battery: JsonObject {
+                    property real dim: 1
+                    property real lock: 2
+                    property real screenOff: 2.5
+                    property real suspend: 10
+                }
             }
 
             property JsonObject lock: JsonObject {

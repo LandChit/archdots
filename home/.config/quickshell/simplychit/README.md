@@ -10,7 +10,8 @@ shell.qml        entry point: what is on screen, and the IPC targets
 config/          Config (settings.json over defaults), Colours (pywal16)
 services/        state, no UI: Audio, Battery, Brightness, CalendarEvents, CpuTemp, Displays,
                  Events, Hypr, Idle, IdleTimers, Media, Notifs, Panels, Power,
-                 PowerProfile, SettingsCheck, SettingsState, Theme, UsageCounts
+                 PowerProfile, Recorder, SettingsCheck, SettingsState, Theme,
+                 UsageCounts
 widgets/         shared pieces: Panel, SearchPanel, ListPanel, ListRow,
                  CardMenu, Island, BarText, Hot, Toggle, Slider, InfoRow, …
 modules/         one folder per surface: bar, launcher, clipboard, emoji,
@@ -45,6 +46,7 @@ qs -c simplychit ipc call brightness up             # also down, set <percent>
 qs -c simplychit ipc call wallpaper set <path>      # also next, random, mode light|dark
 qs -c simplychit ipc call notifications toast "Title" "Body"
 qs -c simplychit ipc call notepad append "a line"   # adds to the notepad, saved at once
+qs -c simplychit ipc call recording toggle          # record a region, or stop; also screen, stop, status
 qs -c simplychit ipc call settings set bar.showCpu false
 qs -c simplychit ipc call settings open displays    # the settings app ('' = last page)
 qs -c simplychit ipc call displays revert           # also keep, refresh

@@ -99,6 +99,8 @@ PKG_UTILS=(
     khal vdirsyncer
     # themed from the wallpaper (simplychit sync-palette, stage_app_theming)
     btop
+    # screen recording from the screenshot menu and SUPER+SHIFT+R
+    wf-recorder
 )
 
 # AUR packages the desktop genuinely needs. Kept apart from PKG_AUR because

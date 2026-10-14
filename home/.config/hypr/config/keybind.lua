@@ -55,6 +55,7 @@ local binds = {
     -- the direct region/full binds above still work; this is the menu with
     -- window capture and a delayed shot as well
     { "screenshot-menu", mainMod .. " + PRINT", shell.toggle("screenshot"), "Shell: Screenshot menu" },
+    { "record", mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(shell.ipc("recording", "toggle")), "Shell: Record a region / stop recording" },
     { "settings", mainMod .. " + COMMA", hl.dsp.exec_cmd(shell.ipc("settings", "open", "''")), "Shell: Settings" },
     { "restart-shell", mainMod .. " + SHIFT + CONTROL + ALT + R", function() shell.restart() end, "Shell: Restart the shell" },
 

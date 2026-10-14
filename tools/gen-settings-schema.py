@@ -34,6 +34,7 @@ EXTRA = {
     "theme.mode": {"enum": ["dark", "light"]},
     "theme.backend": {"enum": ["wal", "colorthief", "colorz", "haishoku", "fast_colorthief",
                                "modern_colorthief", "okthief"]},
+    "recording.audio": {"enum": ["none", "desktop", "mic"]},
     "wallpaper.cycleMinutes": {"minimum": 0},
     "wallpaper.transitionMs": {"minimum": 0},
     "notifications.timeout": {"minimum": 0},

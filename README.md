@@ -90,7 +90,8 @@ keybind, generated from your own config.
 | <kbd>SUPER</kbd> <kbd>W</kbd> | Wallpaper picker |
 | <kbd>SUPER</kbd> <kbd>/</kbd> | Keybind cheatsheet |
 | <kbd>SUPER</kbd> <kbd>Shift</kbd> <kbd>N</kbd> | Notepad (saved to `~/.local/share/simplychit/notepad.md`) |
-| <kbd>SUPER</kbd> <kbd>PrtSc</kbd> | Screenshot menu |
+| <kbd>SUPER</kbd> <kbd>PrtSc</kbd> | Screenshot menu (also records the screen) |
+| <kbd>SUPER</kbd> <kbd>Shift</kbd> <kbd>R</kbd> | Record a region; again to stop (or click the red dot in the bar) |
 | <kbd>SUPER</kbd> <kbd>Esc</kbd> | Power menu |
 | <kbd>SUPER</kbd> <kbd>,</kbd> | Settings |
 | <kbd>SUPER</kbd> <kbd>Shift</kbd> <kbd>I</kbd> | Stay awake (no dim, lock or suspend) until pressed again |
@@ -322,7 +323,7 @@ empty boxes.
 
 ```
 tlp fd htop nvtop fastfetch tmux unzip wget curl smartmontools ark ddcutil
-khal vdirsyncer btop
+khal vdirsyncer btop wf-recorder
 ```
 
 `tlp` on laptops only; a desktop gets `power-profiles-daemon` instead (the

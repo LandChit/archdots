@@ -37,6 +37,8 @@ Singleton {
     readonly property color selection: alpha(accentBright, 0.18)
     readonly property color selectionBorder: alpha(accentBright, 0.50)
     readonly property color hover: alpha(accent, 0.10)
+    // Fixed, not from the palette: something is live (recording).
+    readonly property color alert: Qt.rgba(224 / 255, 96 / 255, 78 / 255, 1)
 
     function alpha(c: color, a: real): color {
         return Qt.rgba(c.r, c.g, c.b, a);

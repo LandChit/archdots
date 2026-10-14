@@ -33,6 +33,7 @@ Singleton {
     property alias input: adapter.input
     property alias keybinds: adapter.keybinds
     property alias displays: adapter.displays
+    property alias recording: adapter.recording
 
     // Sets one key, given as a dotted path, in settings.json. Returns false and
     // leaves the file alone if it is not valid JSON: a hand edit in progress is
@@ -219,6 +220,14 @@ Singleton {
                 property bool vpn: true
                 property bool nowPlaying: false
                 property bool dnd: true
+            }
+
+            // Screen recording (the screenshot menu, SUPER+SHIFT+R).
+            property JsonObject recording: JsonObject {
+                property string directory: "~/Videos/recordings"
+                // Sound in the recording: "none", "desktop" (what you hear)
+                // or "mic" (the default input).
+                property string audio: "none"
             }
 
             property JsonObject audio: JsonObject {

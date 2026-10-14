@@ -502,6 +502,27 @@
       "additionalProperties": false,
       "description": "Which events show a toast (TODO C9)."
     },
+    "recording": {
+      "type": "object",
+      "properties": {
+        "directory": {
+          "type": "string",
+          "default": "~/Videos/recordings"
+        },
+        "audio": {
+          "type": "string",
+          "default": "none",
+          "description": "Sound in the recording: \"none\", \"desktop\" (what you hear) or \"mic\" (the default input).",
+          "enum": [
+            "none",
+            "desktop",
+            "mic"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "description": "Screen recording (the screenshot menu, SUPER+SHIFT+R)."
+    },
     "audio": {
       "type": "object",
       "properties": {

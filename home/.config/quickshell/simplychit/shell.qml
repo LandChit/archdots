@@ -116,6 +116,28 @@ ShellRoot {
         }
     }
 
+    // qs -c simplychit ipc call recording toggle   (stop, or record a region)
+    IpcHandler {
+        target: "recording"
+
+        function region(): void {
+            Recorder.region();
+        }
+        function screen(): void {
+            Recorder.screen();
+        }
+        function stop(): void {
+            Recorder.stop();
+        }
+        function toggle(): void {
+            Recorder.toggle();
+        }
+        // "recording 1:05" or "idle", for scripts
+        function status(): string {
+            return Recorder.recording ? "recording " + Recorder.elapsed : "idle";
+        }
+    }
+
     // qs -c simplychit ipc call notepad append "call the plumber"
     IpcHandler {
         target: "notepad"

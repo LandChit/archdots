@@ -20,6 +20,19 @@ Island {
     readonly property var volumeIcons: [[34, "󰕿"], [67, "󰖀"], [10000, "󰕾"]]
     readonly property var batteryIcons: [[11, "󰂃"], [31, "󰁺"], [51, "󰁼"], [71, "󰁾"], [91, "󰂀"], [10000, "󰁹"]]
 
+    // recording: a click stops it
+    Hot {
+        visible: Recorder.recording
+        onClicked: Recorder.stop()
+
+        BarText {
+            text: "\u{f044a} " + Recorder.elapsed
+            leftPadding: 3
+            rightPadding: 3
+            color: Colours.alert
+        }
+    }
+
     // stay awake (SUPER+SHIFT+I) and do-not-disturb, only while on
     BarText {
         visible: Idle.inhibited

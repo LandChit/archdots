@@ -55,7 +55,7 @@ Island {
         visible: Config.bar.showBattery && Battery.available
         onClicked: mouse => {
             if (mouse.button === Qt.LeftButton)
-                Fabric.send("show", "battery");
+                Panels.toggle("battery");
         }
 
         BarText {

@@ -21,6 +21,7 @@ Singleton {
     property alias bar: adapter.bar
     property alias audio: adapter.audio
     property alias launcher: adapter.launcher
+    property alias battery: adapter.battery
 
     // Sets one key, given as a dotted path, in settings.json. Returns false and
     // leaves the file alone if it is not valid JSON: a hand edit in progress is
@@ -84,6 +85,16 @@ Singleton {
                 property string terminal: "alacritty"
                 // %s is the query.
                 property string searchUrl: "https://www.google.com/search?q=%s"
+            }
+
+            property JsonObject battery: JsonObject {
+                // Warnings while discharging, at or below these percentages.
+                property int lowPercent: 20
+                property int criticalPercent: 10
+                // At this level, after a 30 s countdown you can cancel:
+                // "suspend", "hibernate", "poweroff" or "none" (TODO C13).
+                property int actionPercent: 5
+                property string criticalAction: "suspend"
             }
 
             property JsonObject audio: JsonObject {

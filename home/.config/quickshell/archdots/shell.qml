@@ -5,6 +5,8 @@ import Quickshell
 import Quickshell.Io
 import qs.config
 import qs.modules.bar
+import qs.modules.battery
+import qs.modules.calendar
 import qs.modules.launcher
 import qs.modules.osd
 import qs.modules.powermenu
@@ -30,6 +32,8 @@ ShellRoot {
 
     Launcher {}
     PowerMenu {}
+    Calendar {}
+    BatteryCard {}
 
     Osd {
         id: osd

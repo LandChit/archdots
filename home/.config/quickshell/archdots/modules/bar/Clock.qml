@@ -23,7 +23,7 @@ Island {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: Fabric.send("toggle", "calendar")
+            onClicked: Panels.toggle("calendar")
         }
     }
 }

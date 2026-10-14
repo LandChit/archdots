@@ -67,6 +67,19 @@ the keys you set matter; everything else keeps its default. The file is
 created by the shell itself the first time it changes a setting (pinning an
 app, switching light mode); unknown keys and your own formatting are kept.
 
+A typo is not silent: a misspelt key or a value of the wrong kind shows a
+toast ("settings.json: 1 problem") as soon as you save, and
+`simplychit check-settings` lists every one, with the likely key for a typo.
+For completion and checking in your editor, add the schema as the first key
+(VS Code and any editor with a JSON language server read it):
+
+```json
+{
+  "$schema": "../quickshell/simplychit/config/settings.schema.json",
+  "bar": { "showCpu": false }
+}
+```
+
 Every key, with its default:
 
 ```json

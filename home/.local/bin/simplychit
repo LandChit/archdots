@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """simplychit — small command-line helpers for these dotfiles.
 
-    simplychit doctor [--json]   check that everything the desktop needs is there
-                               and running, and that the config parses
+    simplychit doctor [--json]          check that everything the desktop needs
+                                      is there and running, and the config
+    simplychit check-settings [--json]  check settings.json against its schema:
+                                      unknown keys, wrong types, bad values
 
 The settings app's About page shows the same checks (it runs --json).
 """
 
+import difflib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -18,6 +22,8 @@ SETTINGS = os.path.join(HOME, ".config/simplychit/settings.json")
 HYPR_LOG = os.path.join(HOME, ".cache/hypr-custom.log")
 # This script is stowed from <repo>/home/.local/bin/, so the repo is three up.
 REPO_HOME = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+# Generated from Config.qml (tools/gen-settings-schema.py).
+SCHEMA = os.path.join(REPO_HOME, ".config/quickshell/simplychit/config/settings.schema.json")
 
 
 def run(*cmd, timeout=3):
@@ -91,13 +97,17 @@ def checks():
     if not os.path.exists(SETTINGS):
         add("Config", "settings.json", "ok", "not created yet (everything is default)")
     else:
-        try:
-            with open(SETTINGS, encoding="utf-8") as f:
-                data = json.load(f)
-            add("Config", "settings.json", "ok" if isinstance(data, dict) else "fail",
-                "valid" if isinstance(data, dict) else "not a JSON object")
-        except ValueError as e:
-            add("Config", "settings.json", "fail", f"not valid JSON: {e}")
+        problems, error = settings_problems()
+        if error:
+            add("Config", "settings.json", "warn", f"could not check it: {error}")
+        elif not problems:
+            add("Config", "settings.json", "ok", "valid")
+        elif problems[0].startswith("not valid JSON"):
+            add("Config", "settings.json", "fail", problems[0])
+        else:
+            add("Config", "settings.json", "warn", f"{len(problems)} problem(s); `simplychit check-settings` lists them")
+            for p in problems[:5]:
+                add("Config", "  " + p.split(":")[0], "warn", p.split(":", 1)[1].strip())
     try:
         with open(HYPR_LOG, encoding="utf-8") as f:
             last = f.read().strip().splitlines()[-1:]
@@ -126,6 +136,85 @@ def checks():
     return out
 
 
+# ── settings.json against its schema ────────────────────────────────────────
+# Just the parts of JSON Schema the generated schema uses: type, properties,
+# additionalProperties, items, enum, minimum, maximum, pattern.
+
+KINDS = {
+    "boolean": ("true or false", lambda v: isinstance(v, bool)),
+    "integer": ("a whole number", lambda v: isinstance(v, int) and not isinstance(v, bool)),
+    "number": ("a number", lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)),
+    "string": ("text in quotes", lambda v: isinstance(v, str)),
+    "array": ("a list [ ... ]", lambda v: isinstance(v, list)),
+    "object": ("an object { ... }", lambda v: isinstance(v, dict)),
+}
+
+
+def validate(value, schema, path, problems):
+    kind = schema.get("type")
+    if kind and not KINDS[kind][1](value):
+        problems.append(f"{path}: should be {KINDS[kind][0]}, not {json.dumps(value)}")
+        return
+    if "enum" in schema and value not in schema["enum"]:
+        problems.append(f"{path}: {json.dumps(value)} is not one of " + ", ".join(json.dumps(e) for e in schema["enum"]))
+    if "minimum" in schema and value < schema["minimum"]:
+        problems.append(f"{path}: {value} is below the minimum, {schema['minimum']}")
+    if "maximum" in schema and value > schema["maximum"]:
+        problems.append(f"{path}: {value} is above the maximum, {schema['maximum']}")
+    if "pattern" in schema and not re.search(schema["pattern"], value):
+        problems.append(f"{path}: {json.dumps(value)} is not in the expected form (HH:MM)")
+    if kind == "array" and "items" in schema:
+        for i, item in enumerate(value):
+            validate(item, schema["items"], f"{path}[{i}]", problems)
+    if kind == "object":
+        props = schema.get("properties", {})
+        extra = schema.get("additionalProperties", True)
+        for key, item in value.items():
+            where = f"{path}.{key}" if path else key
+            if key in props:
+                validate(item, props[key], where, problems)
+            elif extra is False:
+                close = difflib.get_close_matches(key, props, n=1)
+                problems.append(f"{where}: unknown key, ignored" + (f" (did you mean {close[0]}?)" if close else ""))
+            elif isinstance(extra, dict):
+                validate(item, extra, where, problems)
+
+
+def settings_problems():
+    """(problems, error): what is wrong with settings.json, or why it could
+    not be checked at all."""
+    if not os.path.exists(SETTINGS):
+        return [], None
+    try:
+        with open(SETTINGS, encoding="utf-8") as f:
+            data = json.load(f)
+    except ValueError as e:
+        return [f"not valid JSON: {e}"], None
+    try:
+        with open(SCHEMA, encoding="utf-8") as f:
+            schema = json.load(f)
+    except (OSError, ValueError) as e:
+        return [], f"schema not readable ({e})"
+    problems = []
+    validate(data, schema, "", problems)
+    return problems, None
+
+
+def check_settings(as_json):
+    problems, error = settings_problems()
+    if as_json:
+        print(json.dumps({"problems": problems, "error": error}))
+    elif error:
+        print(f"could not check: {error}", file=sys.stderr)
+    elif problems:
+        print(f"{SETTINGS.replace(HOME, '~')}: {len(problems)} problem(s)")
+        for p in problems:
+            print(f"  {p}")
+    else:
+        print(f"{SETTINGS.replace(HOME, '~')}: fine")
+    return 1 if problems else 0
+
+
 def doctor(as_json):
     results = checks()
     if as_json:
@@ -150,6 +239,8 @@ def main():
         return 0
     if args[0] == "doctor":
         return doctor("--json" in args)
+    if args[0] == "check-settings":
+        return check_settings("--json" in args)
     print(f"simplychit: unknown command {args[0]!r}\n\n{__doc__.strip()}", file=sys.stderr)
     return 2
 

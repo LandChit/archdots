@@ -10,7 +10,7 @@ shell.qml        entry point: what is on screen, and the IPC targets
 config/          Config (settings.json over defaults), Colours (pywal16)
 services/        state, no UI: Audio, Battery, Brightness, CpuTemp, Displays,
                  Events, Hypr, Idle, IdleTimers, Media, Notifs, Panels, Power,
-                 PowerProfile, SettingsState, Theme, UsageCounts
+                 PowerProfile, SettingsCheck, SettingsState, Theme, UsageCounts
 widgets/         shared pieces: Panel, SearchPanel, ListPanel, ListRow,
                  CardMenu, Island, BarText, Hot, Toggle, Slider, InfoRow, …
 modules/         one folder per surface: bar, launcher, clipboard, emoji,

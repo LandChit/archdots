@@ -1,0 +1,527 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SimplyChit settings (~/.config/simplychit/settings.json)",
+  "description": "Generated from config/Config.qml by tools/gen-settings-schema.py; do not edit.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "bar": {
+      "type": "object",
+      "properties": {
+        "showMedia": {
+          "type": "boolean",
+          "default": true
+        },
+        "showCpu": {
+          "type": "boolean",
+          "default": true
+        },
+        "showBattery": {
+          "type": "boolean",
+          "default": true
+        },
+        "clockFormat": {
+          "type": "string",
+          "default": "hh:mm AP"
+        },
+        "emptyTitle": {
+          "type": "string",
+          "default": "Chit",
+          "description": "Shown in place of the window title when nothing is focused."
+        },
+        "titleChars": {
+          "type": "integer",
+          "default": 20,
+          "minimum": 1
+        },
+        "mediaChars": {
+          "type": "integer",
+          "default": 28,
+          "minimum": 1
+        },
+        "monitors": {
+          "type": "object",
+          "default": {},
+          "description": "Per screen (TODO C7): any bar key above, by monitor name, e.g. { \"HDMI-A-1\": { \"showMedia\": false } }"
+        },
+        "excluded": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Screens with no bar at all."
+        },
+        "left": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "workspaces",
+              "special",
+              "title",
+              "media",
+              "resources",
+              "clock"
+            ]
+          },
+          "default": [
+            "workspaces",
+            "special",
+            "title"
+          ],
+          "description": "Which islands, in order, on each side."
+        },
+        "right": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "workspaces",
+              "special",
+              "title",
+              "media",
+              "resources",
+              "clock"
+            ]
+          },
+          "default": [
+            "media",
+            "resources",
+            "clock"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "appearance": {
+      "type": "object",
+      "properties": {
+        "opacity": {
+          "type": "number",
+          "default": 1,
+          "description": "Multiplies the opacity of the bar's islands and the panels: 1 as designed, lower is more see-through (0.5 at least).",
+          "minimum": 0.5,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "launcher": {
+      "type": "object",
+      "properties": {
+        "favourites": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Desktop entry ids (firefox.desktop -> \"firefox\") pinned to the top, in this order. Ctrl+P in the launcher toggles one."
+        },
+        "hidden": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Never listed. Ctrl+H hides one; \"> unhide\" brings it back."
+        },
+        "searchUrl": {
+          "type": "string",
+          "default": "https://www.google.com/search?q=%s",
+          "description": "%s is the query."
+        }
+      },
+      "additionalProperties": false
+    },
+    "battery": {
+      "type": "object",
+      "properties": {
+        "lowPercent": {
+          "type": "integer",
+          "default": 20,
+          "description": "Warnings while discharging, at or below these percentages.",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "criticalPercent": {
+          "type": "integer",
+          "default": 10,
+          "minimum": 0,
+          "maximum": 100
+        },
+        "actionPercent": {
+          "type": "integer",
+          "default": 5,
+          "description": "At this level, after a 30 s countdown you can cancel: \"suspend\", \"hibernate\", \"poweroff\" or \"none\" (TODO C13).",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "criticalAction": {
+          "type": "string",
+          "default": "suspend",
+          "enum": [
+            "suspend",
+            "hibernate",
+            "poweroff",
+            "none"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "wallpaper": {
+      "type": "object",
+      "properties": {
+        "directory": {
+          "type": "string",
+          "default": "~/Pictures/wallpapers"
+        },
+        "cycleMinutes": {
+          "type": "integer",
+          "default": 0,
+          "description": "Change to another wallpaper from the folder every N minutes; 0 is off (TODO 16).",
+          "minimum": 0
+        },
+        "transitionMs": {
+          "type": "integer",
+          "default": 700,
+          "description": "Crossfade length when the wallpaper changes, in ms; 0 is a cut.",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "theme": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "default": "dark",
+          "description": "pywal16's palette from the wallpaper: \"dark\" or \"light\" (wal -l)",
+          "enum": [
+            "dark",
+            "light"
+          ]
+        },
+        "backend": {
+          "type": "string",
+          "default": "wal",
+          "description": "a backend from `wal --backend`; some need extra Python packages",
+          "enum": [
+            "wal",
+            "colorthief",
+            "colorz",
+            "haishoku",
+            "fast_colorthief",
+            "modern_colorthief",
+            "okthief"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "apps": {
+      "type": "object",
+      "properties": {
+        "terminal": {
+          "type": "string",
+          "default": "alacritty"
+        },
+        "browser": {
+          "type": "string",
+          "default": "zen-browser"
+        },
+        "fileManager": {
+          "type": "string",
+          "default": "dolphin"
+        },
+        "processManager": {
+          "type": "string",
+          "default": "flatpak run io.missioncenter.MissionCenter"
+        }
+      },
+      "additionalProperties": false,
+      "description": "What the launch keybinds run (hypr/config/keybind.lua reads these too); the terminal is also the launcher's, for apps that ask for one and for \"!\" commands with Shift."
+    },
+    "notifications": {
+      "type": "object",
+      "properties": {
+        "timeout": {
+          "type": "integer",
+          "default": 5,
+          "description": "Seconds a popup stays when the app does not say; critical ones stay until closed regardless.",
+          "minimum": 0
+        },
+        "schedule": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "from": {
+              "type": "string",
+              "default": "22:00",
+              "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+            },
+            "to": {
+              "type": "string",
+              "default": "07:00",
+              "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+            }
+          },
+          "additionalProperties": false,
+          "description": "Do not disturb between these times every day (\"HH:mm\")."
+        }
+      },
+      "additionalProperties": false
+    },
+    "input": {
+      "type": "object",
+      "properties": {
+        "kb_layout": {
+          "type": "string",
+          "default": "us"
+        },
+        "kb_variant": {
+          "type": "string",
+          "default": ""
+        },
+        "kb_options": {
+          "type": "string",
+          "default": ""
+        },
+        "sensitivity": {
+          "type": "number",
+          "default": 0,
+          "minimum": -1,
+          "maximum": 1
+        },
+        "touchpad": {
+          "type": "object",
+          "properties": {
+            "natural_scroll": {
+              "type": "boolean",
+              "default": true
+            },
+            "tap_to_click": {
+              "type": "boolean",
+              "default": true
+            },
+            "disable_while_typing": {
+              "type": "boolean",
+              "default": true
+            },
+            "scroll_factor": {
+              "type": "number",
+              "minimum": 0
+            },
+            "clickfinger_behavior": {
+              "type": "boolean",
+              "description": "two-finger click is a right click"
+            },
+            "drag_lock": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "kb_model": {
+          "type": "string",
+          "description": "xkb model (Hyprland's input.kb_model)"
+        },
+        "follow_mouse": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3,
+          "description": "Hyprland's input.follow_mouse"
+        },
+        "accel_profile": {
+          "type": "string",
+          "enum": [
+            "",
+            "flat",
+            "adaptive",
+            "custom"
+          ],
+          "description": "pointer acceleration"
+        },
+        "numlock_by_default": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Read by hypr/config/input.lua (only known keys, right types)."
+    },
+    "keybinds": {
+      "type": "object",
+      "properties": {
+        "remap": {
+          "type": "object",
+          "default": {},
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "disabled": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      },
+      "additionalProperties": false,
+      "description": "Read by hypr/config/keybind.lua: id -> keys, and ids to drop."
+    },
+    "displays": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "string",
+          "default": ""
+        },
+        "profiles": {
+          "type": "object",
+          "default": {}
+        }
+      },
+      "additionalProperties": false,
+      "description": "Written by the Displays page; read by hypr/config/monitor.lua."
+    },
+    "idle": {
+      "type": "object",
+      "properties": {
+        "ac": {
+          "type": "object",
+          "properties": {
+            "dim": {
+              "type": "number",
+              "default": 2.5,
+              "minimum": 0
+            },
+            "lock": {
+              "type": "number",
+              "default": 5,
+              "minimum": 0
+            },
+            "screenOff": {
+              "type": "number",
+              "default": 5.5,
+              "minimum": 0
+            },
+            "suspend": {
+              "type": "number",
+              "default": 30,
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "battery": {
+          "type": "object",
+          "properties": {
+            "dim": {
+              "type": "number",
+              "default": 1,
+              "minimum": 0
+            },
+            "lock": {
+              "type": "number",
+              "default": 2,
+              "minimum": 0
+            },
+            "screenOff": {
+              "type": "number",
+              "default": 2.5,
+              "minimum": 0
+            },
+            "suspend": {
+              "type": "number",
+              "default": 10,
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false,
+      "description": "Minutes idle before each step, on AC and on battery; 0 is never. Stay awake (SUPER+SHIFT+I) and apps that inhibit idle pause all of it. Locking before suspend is hypridle's job (hypridle.conf)."
+    },
+    "lock": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Off by default: hyprlock locks. On, the shell's own lock screen does (hypr/Scripts/lock.sh asks it first and falls back to hyprlock). Try `ipc call lock preview` first."
+        },
+        "pamConfig": {
+          "type": "string",
+          "default": "login",
+          "description": "the PAM service the password is checked against"
+        }
+      },
+      "additionalProperties": false
+    },
+    "toasts": {
+      "type": "object",
+      "properties": {
+        "charging": {
+          "type": "boolean",
+          "default": true
+        },
+        "locks": {
+          "type": "boolean",
+          "default": true
+        },
+        "keyboardLayout": {
+          "type": "boolean",
+          "default": true
+        },
+        "audioDevice": {
+          "type": "boolean",
+          "default": true
+        },
+        "vpn": {
+          "type": "boolean",
+          "default": true
+        },
+        "nowPlaying": {
+          "type": "boolean",
+          "default": false
+        },
+        "dnd": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "additionalProperties": false,
+      "description": "Which events show a toast (TODO C9)."
+    },
+    "audio": {
+      "type": "object",
+      "properties": {
+        "scrollStep": {
+          "type": "integer",
+          "default": 5,
+          "description": "Percentage points per scroll notch over the volume meter.",
+          "minimum": 1,
+          "maximum": 50
+        },
+        "maxVolume": {
+          "type": "number",
+          "default": 2.0,
+          "description": "1.0 is 100%; 2.0 matches the volume keys' wpctl -l 2.",
+          "minimum": 1,
+          "maximum": 3
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

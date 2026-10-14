@@ -84,6 +84,8 @@ printf "  %-30s %s\n" "zsh plugins (pacman):"  "$([ -r /usr/share/zsh/plugins/zs
 printf "  %-30s %s\n" "user folder files:"     "$(cd "$HOME/.config/simplychit" 2>/dev/null && find . -type f | sort | tr '\n' ' ' || echo MISSING)"
 printf "  %-30s %s\n" "user folder in repo:"   "$([ -e "$REPO/.config/simplychit" ] && echo LEAKED || echo ok)"
 printf "  %-30s %s\n" "no fabric_shell left:"  "$([ -e "$HOME/.config/fabric_shell" ] && echo LEFT || echo ok)"
+printf "  %-30s %s\n" "settings schema current:" "$(python3 "$REPO/tools/gen-settings-schema.py" --check 2>&1 && echo ok)"
+printf "  %-30s %s\n" "simplychit check-settings:" "$("$HOME/.local/bin/simplychit" check-settings 2>&1 | head -1)"
 echo "  repo dirtied by machine config:"
 git -C "$REPO" status --short 2>/dev/null | sed 's/^/    /' | head -8
 echo "==========================================================="

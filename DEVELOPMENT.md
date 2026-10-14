@@ -112,6 +112,14 @@ screens off and suspends after `idle.ac` / `idle.battery`; hypridle only locks
 before sleep and turns the screens on after. `simplychit doctor`
 (`home/.local/bin/simplychit`) checks the whole setup; the About page shows it.
 
+**Adding a setting:** declare it in `config/Config.qml` with its default and
+a comment, then run `tools/gen-settings-schema.py` to regenerate
+`config/settings.schema.json` (the docker checks fail when it is stale).
+Allowed values and ranges go in the script's `EXTRA` table; keys only
+Hyprland reads go in `HYPR_ONLY`. `simplychit check-settings` validates
+against that schema, and `services/SettingsCheck.qml` runs it whenever the
+file changes and toasts what it finds.
+
 ### The shell is the notification daemon
 
 It owns `org.freedesktop.Notifications`, so anything calling `notify-send` draws

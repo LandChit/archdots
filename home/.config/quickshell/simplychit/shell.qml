@@ -72,6 +72,7 @@ ShellRoot {
     // started for their side effects: event toasts, idle timeouts
     readonly property var events: Events
     readonly property var idleTimers: IdleTimers
+    readonly property var settingsCheck: SettingsCheck
     BatteryCard {}
 
     Osd {

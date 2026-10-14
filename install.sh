@@ -139,6 +139,7 @@ REPO_DIR="$REPO_DIR_DEFAULT"
 WANT_UTILS=1
 WANT_AUR=1
 WANT_FLATPAK=1
+WANT_GREETER=0          # --greeter: greetd + the shell's login screen (experimental)
 DO_PACKAGES=1
 DO_STOW=1
 DO_MACHINE=1
@@ -167,6 +168,8 @@ plain text, with every command's output on screen.
       --no-flatpak    Skip the flatpak applications.
       --no-utils      Skip the utility packages.
       --no-aur        Skip the AUR helper and every AUR package.
+      --greeter       Also set up greetd with the shell's login screen
+                      (experimental; asks before switching to it).
       --skip-packages Install nothing; only link, build and configure.
       --skip-stow     Do not run stow.
       --skip-machine  Do not touch machine-specific config (GPU, monitors,
@@ -195,6 +198,7 @@ while [[ $# -gt 0 ]]; do
         --no-flatpak)    WANT_FLATPAK=0 ;;
         --no-utils)      WANT_UTILS=0 ;;
         --no-aur)        WANT_AUR=0 ;;
+        --greeter)       WANT_GREETER=1 ;;
         --skip-packages) DO_PACKAGES=0 ;;
         --skip-stow)     DO_STOW=0 ;;
         # the fabric shell's virtualenv is gone; still accepted so older
@@ -1893,6 +1897,119 @@ retire_old_name() {
     return 0
 }
 
+# ── the greeter (opt-in, --greeter) ─────────────────────────────────────────
+#
+# greetd runs the shell's greeter.qml inside cage, so the login screen has the
+# lock screen's look and colours. Experimental: try it in a VM first. What it
+# writes, all root-owned and outside $HOME:
+#   /usr/share/simplychit/shell/      a copy of the shell (the greeter user
+#                                     cannot read your home)
+#   ~greeter/.cache/wal/colors.json   a copy of your palette
+#   ~greeter/.local/state/simplychit/ a copy of your wallpaper
+#   /etc/greetd/config.toml           the original kept as config.toml.simplychit-orig
+# An update refreshes the copies. The login screen itself is switched only on
+# a yes (default no, also under --yes); the old one stays installed and is
+# only disabled.
+
+GREETER_DIR="/usr/share/simplychit/shell"
+GREETD_CONF="/etc/greetd/config.toml"
+
+greeter_copy_files() {
+    local src="$REPO_ROOT/home/.config/quickshell/simplychit" gh wall ext
+    gh="$(getent passwd greeter | cut -d: -f6)"
+    if [[ -z "$gh" || "$gh" == / ]]; then
+        warn "no greeter user with a home (is greetd installed?)"
+        return 1
+    fi
+    "${SUDO[@]}" mkdir -p "$(dirname "$GREETER_DIR")" || return 1
+    "${SUDO[@]}" rm -rf -- "$GREETER_DIR.new"
+    "${SUDO[@]}" cp -r -- "$src" "$GREETER_DIR.new" || return 1
+    "${SUDO[@]}" rm -rf -- "$GREETER_DIR"
+    "${SUDO[@]}" mv -- "$GREETER_DIR.new" "$GREETER_DIR" || return 1
+
+    "${SUDO[@]}" mkdir -p "$gh/.cache/wal" "$gh/.local/state/simplychit"
+    if [[ -r "$HOME/.cache/wal/colors.json" ]]; then
+        "${SUDO[@]}" cp -- "$HOME/.cache/wal/colors.json" "$gh/.cache/wal/colors.json"
+    fi
+    wall="$(readlink -f "$WALLPAPER_POINTER" 2>/dev/null || true)"
+    if [[ -f "$wall" ]]; then
+        ext="${wall##*.}"
+        "${SUDO[@]}" cp -- "$wall" "$gh/.local/state/simplychit/wallpaper-image.$ext"
+        "${SUDO[@]}" ln -sfn "wallpaper-image.$ext" "$gh/.local/state/simplychit/wallpaper"
+    fi
+    "${SUDO[@]}" chown -R greeter:greeter "$gh/.cache" "$gh/.local"
+}
+
+stage_greeter() {
+    (( WANT_GREETER )) || return 0
+    step "Login screen: the SimplyChit greeter (experimental)"
+
+    pac_install "greetd and cage" greetd cage || {
+        warn "could not install greetd and cage — greeter skipped"
+        return 0
+    }
+    if greeter_copy_files; then
+        ok "greeter files in $GREETER_DIR, palette and wallpaper copied"
+    else
+        warn "could not set up the greeter's files — greeter skipped"
+        return 0
+    fi
+
+    local body current
+    body="# Written by SimplyChit install.sh (--greeter). The original, if there was
+# one, is config.toml.simplychit-orig next to this file.
+[terminal]
+vt = 1
+
+[default_session]
+command = \"cage -s -- qs -p $GREETER_DIR/greeter.qml\"
+user = \"greeter\""
+    if [[ -f "$GREETD_CONF" ]] && [[ "$("${SUDO[@]}" cat "$GREETD_CONF")" == "$body" ]]; then
+        skip "$GREETD_CONF already correct"
+    elif review_confirm "$GREETD_CONF" "$body" "Write it? (needs root)"; then
+        if [[ -f "$GREETD_CONF" && ! -e "$GREETD_CONF.simplychit-orig" ]]; then
+            "${SUDO[@]}" cp -- "$GREETD_CONF" "$GREETD_CONF.simplychit-orig"
+        fi
+        "${SUDO[@]}" mkdir -p "$(dirname "$GREETD_CONF")"
+        printf '%s\n' "$body" | "${SUDO[@]}" tee "$GREETD_CONF" >/dev/null
+        ok "wrote $GREETD_CONF"
+    else
+        skip "greetd config left alone — greeter not switched on"
+        return 0
+    fi
+    note "preview the greeter any time: qs -p ~/.config/quickshell/simplychit/greeter.qml (Esc closes it)"
+
+    if systemctl is-enabled greetd.service &>/dev/null; then
+        skip "greetd is already the login screen"
+        return 0
+    fi
+    # after stage_services, so this is whatever it left enabled
+    current="$(basename -- "$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null)" .service)"
+    [[ "$current" == . || "$current" == display-manager ]] && current=""
+    if interactive confirm "Switch the login screen to the SimplyChit greeter?
+
+Experimental: try it in a virtual machine first. If it fails, the next boot has no login screen, only a text console (Ctrl+Alt+F2). ${current:-The current login screen} stays installed and is only disabled. To go back, from that console:
+
+  sudo systemctl disable greetd && sudo systemctl enable ${current:-sddm} && sudo reboot" n; then
+        if [[ -n "$current" ]]; then
+            run_logged "Disabling $current" "${SUDO[@]}" systemctl disable "$current.service" || {
+                warn "could not disable $current — greetd not enabled"
+                return 0
+            }
+        fi
+        if run_logged "Enabling greetd" "${SUDO[@]}" systemctl enable greetd.service; then
+            ok "greetd is the login screen from the next boot"
+            note "greeter on from the next boot. Back: sudo systemctl disable greetd && sudo systemctl enable ${current:-sddm}"
+        else
+            warn "could not enable greetd"
+            [[ -n "$current" ]] && "${SUDO[@]}" systemctl enable "$current.service" &>/dev/null
+        fi
+    else
+        skip "login screen unchanged"
+        note "greeter set up, not switched on: sudo systemctl disable ${current:-sddm} && sudo systemctl enable greetd"
+    fi
+}
+
 # ── wallpapers ──────────────────────────────────────────────────────────────
 #
 # The picker reads ~/Pictures/wallpapers (wallpapers.py:29), so that is where the
@@ -2675,6 +2792,10 @@ run_update() {
     retire_old_name     # archdots -> SimplyChit, once
     stage_wallpapers    # copies any new wallpapers into ~/Pictures/wallpapers
     stage_gtk4_base     # update_packages may have moved libadwaita under us
+    if [[ -d "$GREETER_DIR" ]]; then
+        step "The greeter"
+        greeter_copy_files && ok "greeter refreshed (shell, palette, wallpaper)"
+    fi
     phase 97 100 "Finishing up"
     gauge_close
     restart_shell
@@ -2721,6 +2842,7 @@ run_install() {
     stage_dconf
     phase 99 100 "Services"
     stage_services
+    stage_greeter
     gauge_close
 
     step "Done"
@@ -2770,20 +2892,21 @@ choose_stages() {
     sel="$(wt --title "Custom install" --checklist \
         "Everything ticked here runs without asking again.
 
-$KEYS_LIST" 20 76 7 \
+$KEYS_LIST" 21 76 8 \
         packages "Install packages"                        "$(on_off $DO_PACKAGES)" \
         utils    "  the utility packages"                  "$(on_off $WANT_UTILS)" \
         aur      "  paru and the AUR packages"             "$(on_off $WANT_AUR)" \
         flatpak  "  the flatpak applications"              "$(on_off $WANT_FLATPAK)" \
         stow     "Link the dotfiles into \$HOME"           "$(on_off $DO_STOW)" \
-        machine  "Machine config: GPU, monitors, wallpaper" "$(on_off $DO_MACHINE)")" \
+        machine  "Machine config: GPU, monitors, wallpaper" "$(on_off $DO_MACHINE)" \
+        greeter  "Login screen: the greeter (experimental)" "$(on_off $WANT_GREETER)")" \
         || { say "cancelled"; exit 0; }
 
     # The tags are the same switches --help documents, so this checklist cannot
     # ask for anything the flags cannot. whiptail returns them quoted, space
     # separated.
     DO_PACKAGES=0; DO_STOW=0; DO_MACHINE=0
-    WANT_UTILS=0; WANT_AUR=0; WANT_FLATPAK=0
+    WANT_UTILS=0; WANT_AUR=0; WANT_FLATPAK=0; WANT_GREETER=0
     for tag in ${sel//\"/}; do
         case "$tag" in
             packages) DO_PACKAGES=1 ;;
@@ -2792,6 +2915,7 @@ $KEYS_LIST" 20 76 7 \
             flatpak)  WANT_FLATPAK=1 ;;
             stow)     DO_STOW=1 ;;
             machine)  DO_MACHINE=1 ;;
+            greeter)  WANT_GREETER=1 ;;
         esac
     done
 }

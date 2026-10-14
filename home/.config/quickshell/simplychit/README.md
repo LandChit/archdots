@@ -17,6 +17,8 @@ modules/         one folder per surface: bar, launcher, clipboard, emoji,
                  calendar, battery, control, notifications, osd, powermenu,
                  screenshot, keybinds, wallpaper, polkit, lock, settings
 settings.qml     the settings app on its own (qs -p …/settings.qml)
+greeter.qml      the login screen for greetd (install.sh --greeter); a preview
+                 when run by hand
 ```
 
 Imports go through Quickshell's `qs.` module paths (`import qs.config`).

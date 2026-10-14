@@ -56,7 +56,7 @@ looks like it belongs together.**
 | **Terminal** | alacritty |
 | **File manager** | dolphin |
 | **Browser** | zen-browser |
-| **Login screen** | SDDM, `silent` theme |
+| **Login screen** | SDDM, `silent` theme; or, experimental, the shell's own greeter on greetd (`install.sh --greeter`) |
 | **Shell** | zsh + oh-my-zsh |
 | **Colors** | pywal16 — everything follows the wallpaper, 16 distinct colours |
 | **App theme** | `simplychit` — GTK 3 hand-written, GTK 4 recolours libadwaita |
@@ -179,6 +179,14 @@ them.
 >
 > Until that second command runs, the links in `~/.config` point at paths
 > that no longer exist, so do it before logging out.
+
+**The shell's own login screen** (experimental): `./install.sh install
+--greeter` sets up greetd with a greeter that looks like the lock screen, and
+asks before switching to it (default no). Try it in a virtual machine first:
+a broken login screen leaves only a text console. To see it without
+switching anything: `qs -p ~/.config/quickshell/simplychit/greeter.qml` (Esc
+closes it). Back to SDDM from a console: `sudo systemctl disable greetd &&
+sudo systemctl enable sddm && sudo reboot`.
 
 **When it finishes, log out and pick Hyprland at the login screen.** The desktop
 starts itself. Press <kbd>SUPER</kbd> <kbd>/</kbd> for the cheatsheet.

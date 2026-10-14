@@ -7,7 +7,9 @@ import qs.services
 import qs.widgets
 
 // What a locked screen shows: the wallpaper, blurred and dimmed, a clock,
-// and the password field. Used by the real lock and by its preview.
+// and the password field. Used by the real lock, its preview, and the login
+// screen (greeter.qml), which also asks for the user and shows `actions`
+// (the session, restart, shut down) under the field.
 Item {
     id: root
 
@@ -15,11 +17,32 @@ Item {
     property string message: ""
     property bool busy: false
     property alias password: input.text
+    property bool askUser: false
+    property alias user: userInput.text
+    // [[label, id], ...] shown as small buttons under the field
+    property var actions: []
     signal submitted(string password)
     signal escaped
+    signal action(string name)
 
     function focusInput(): void {
-        input.forceActiveFocus();
+        if (askUser && userInput.text === "")
+            userInput.forceActiveFocus();
+        else
+            input.forceActiveFocus();
+    }
+
+    component Field: Rectangle {
+        property bool focused: false
+        property bool failed: false
+
+        Layout.alignment: Qt.AlignHCenter
+        implicitWidth: 320
+        implicitHeight: 46
+        radius: 23
+        color: Colours.panel
+        border.width: 1
+        border.color: failed ? Qt.rgba(224 / 255, 96 / 255, 78 / 255, 0.7) : focused ? Colours.selectionBorder : Colours.panelBorder
     }
 
     Rectangle {
@@ -76,14 +99,39 @@ Item {
             Layout.bottomMargin: 30
         }
 
-        Rectangle {
-            Layout.alignment: Qt.AlignHCenter
-            implicitWidth: 320
-            implicitHeight: 46
-            radius: 23
-            color: Colours.panel
-            border.width: 1
-            border.color: root.message !== "" ? Qt.rgba(224 / 255, 96 / 255, 78 / 255, 0.7) : input.activeFocus ? Colours.selectionBorder : Colours.panelBorder
+        Field {
+            visible: root.askUser
+            focused: userInput.activeFocus
+            Layout.bottomMargin: 4
+
+            TextInput {
+                id: userInput
+
+                anchors.fill: parent
+                anchors.leftMargin: 20
+                anchors.rightMargin: 20
+                verticalAlignment: TextInput.AlignVCenter
+                horizontalAlignment: TextInput.AlignHCenter
+                color: Colours.foreground
+                font.family: "JetBrainsMono NF"
+                font.pointSize: 14 * 0.75
+                readOnly: root.busy
+                KeyNavigation.tab: input
+                Keys.onReturnPressed: input.forceActiveFocus()
+                Keys.onEnterPressed: input.forceActiveFocus()
+
+                BarText {
+                    anchors.centerIn: parent
+                    visible: userInput.text === ""
+                    text: "User"
+                    color: Colours.hint
+                }
+            }
+        }
+
+        Field {
+            failed: root.message !== ""
+            focused: input.activeFocus
 
             TextInput {
                 id: input
@@ -100,6 +148,7 @@ Item {
                 font.pointSize: 14 * 0.75
                 readOnly: root.busy
                 focus: true
+                KeyNavigation.backtab: root.askUser ? userInput : null
                 Keys.onReturnPressed: root.submitted(text)
                 Keys.onEnterPressed: root.submitted(text)
                 Keys.onEscapePressed: {
@@ -123,6 +172,45 @@ Item {
             px: 12
             color: Qt.rgba(224 / 255, 96 / 255, 78 / 255, 1)
             visible: text !== ""
+        }
+
+        RowLayout {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.topMargin: 18
+            visible: root.actions.length > 0
+            spacing: 8
+
+            Repeater {
+                model: root.actions
+
+                Rectangle {
+                    required property var modelData
+
+                    implicitWidth: actionLabel.implicitWidth + 24
+                    implicitHeight: 30
+                    radius: 15
+                    color: actionArea.containsMouse ? Colours.hover : Colours.alpha(Colours.panel, 0.7)
+                    border.width: 1
+                    border.color: Colours.panelBorder
+
+                    BarText {
+                        id: actionLabel
+
+                        anchors.centerIn: parent
+                        text: parent.modelData[0]
+                        px: 11.5
+                        color: Colours.alpha(Colours.foreground, 0.85)
+                    }
+                    MouseArea {
+                        id: actionArea
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.action(parent.modelData[1])
+                    }
+                }
+            }
         }
     }
 }

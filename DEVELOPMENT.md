@@ -149,6 +149,31 @@ when a headset auto-connects before the shell is up. See
 
 ---
 
+### The greeter
+
+`greeter.qml` (shell root) is the login screen for greetd: greetd runs
+`cage -s -- qs -p /usr/share/simplychit/shell/greeter.qml` as the `greeter`
+user. cage has **no layer-shell**, so it is one `FloatingWindow`, which cage
+shows fullscreen. It reuses `modules/lock/LockContent.qml` (`askUser`,
+`actions`) and drives `Quickshell.Services.Greetd`: `createSession(user)`, a
+`respond()` to each prompt, `cancelSession()` after a failure (greetd wants
+it; Quickshell logs the reply as unexpected), `launch()` with the session's
+`Exec` from `/usr/share/wayland-sessions/` on `readyToLaunch`. Last user and
+session: `~greeter/.local/state/simplychit/greeter.json`.
+
+It cannot read the user's home, so `install.sh` (`greeter_copy_files`)
+copies the shell to `/usr/share/simplychit/shell/` and the palette and the
+wallpaper into the greeter's home; `update` refreshes them.
+
+Testing without greetd or a VM: without `GREETD_SOCK` it is a preview.
+For the login flow, run it in a nested cage (extract `cage` and
+`wlroots0.20` from the mirror into a scratch dir, `LD_LIBRARY_PATH`) with
+`GREETD_SOCK` pointing at a fake greetd: greetd's IPC is a native-endian
+u32 length and a JSON message each way (`create_session`,
+`post_auth_message_response`, `start_session`, `cancel_session`). Type into
+it with `wtype` from a script run *inside* cage, so the keys cannot reach
+the real desktop. A real boot into it: VM only (TODO.md, phase 6).
+
 ## Theming pipeline
 
 ### The GTK theme has to be *selected*, not just present

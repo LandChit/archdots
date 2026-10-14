@@ -109,10 +109,26 @@ Panel {
             }
             spacing: 12
 
-            BarText {
-                text: "Control centre"
-                px: 15
-                font.weight: Font.Medium
+            RowLayout {
+                Layout.fillWidth: true
+
+                BarText {
+                    Layout.fillWidth: true
+                    text: "Control centre"
+                    px: 15
+                    font.weight: Font.Medium
+                }
+                Hot {
+                    onClicked: {
+                        root.close();
+                        SettingsState.show("");
+                    }
+
+                    BarText {
+                        text: "\u{f0493}"
+                        px: 16
+                    }
+                }
             }
 
             RowLayout {

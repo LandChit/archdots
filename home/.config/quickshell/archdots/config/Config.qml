@@ -27,6 +27,11 @@ Singleton {
     property alias toasts: adapter.toasts
     property alias lock: adapter.lock
     property alias idle: adapter.idle
+    property alias apps: adapter.apps
+    property alias notifications: adapter.notifications
+    property alias input: adapter.input
+    property alias keybinds: adapter.keybinds
+    property alias displays: adapter.displays
 
     // Sets one key, given as a dotted path, in settings.json. Returns false and
     // leaves the file alone if it is not valid JSON: a hand edit in progress is
@@ -91,8 +96,6 @@ Singleton {
                 property list<string> favourites: []
                 // Never listed. Ctrl+H hides one; "> unhide" brings it back.
                 property list<string> hidden: []
-                // For apps that ask for a terminal, and "!" commands with Shift.
-                property string terminal: "alacritty"
                 // %s is the query.
                 property string searchUrl: "https://www.google.com/search?q=%s"
             }
@@ -121,6 +124,53 @@ Singleton {
                 property string mode: "dark"
                 // a backend from `wal --backend`; some need extra Python packages
                 property string backend: "wal"
+            }
+
+            // What the launch keybinds run (hypr/config/keybind.lua reads these
+            // too); the terminal is also the launcher's, for apps that ask for
+            // one and for "!" commands with Shift.
+            property JsonObject apps: JsonObject {
+                property string terminal: "alacritty"
+                property string browser: "zen-browser"
+                property string fileManager: "dolphin"
+                property string processManager: "flatpak run io.missioncenter.MissionCenter"
+            }
+
+            property JsonObject notifications: JsonObject {
+                // Seconds a popup stays when the app does not say; critical
+                // ones stay until closed regardless.
+                property int timeout: 5
+                // Do not disturb between these times every day ("HH:mm").
+                property JsonObject schedule: JsonObject {
+                    property bool enabled: false
+                    property string from: "22:00"
+                    property string to: "07:00"
+                }
+            }
+
+            // Read by hypr/config/input.lua (only known keys, right types).
+            property JsonObject input: JsonObject {
+                property string kb_layout: "us"
+                property string kb_variant: ""
+                property string kb_options: ""
+                property real sensitivity: 0
+                property JsonObject touchpad: JsonObject {
+                    property bool natural_scroll: true
+                    property bool tap_to_click: true
+                    property bool disable_while_typing: true
+                }
+            }
+
+            // Read by hypr/config/keybind.lua: id -> keys, and ids to drop.
+            property JsonObject keybinds: JsonObject {
+                property var remap: ({})
+                property list<string> disabled: []
+            }
+
+            // Written by the Displays page; read by hypr/config/monitor.lua.
+            property JsonObject displays: JsonObject {
+                property string active: ""
+                property var profiles: ({})
             }
 
             // Minutes idle before each step, on AC and on battery; 0 is never.

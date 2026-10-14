@@ -18,6 +18,7 @@ import qs.modules.osd
 import qs.modules.polkit
 import qs.modules.powermenu
 import qs.modules.screenshot
+import qs.modules.settings
 import qs.modules.wallpaper
 import qs.services
 
@@ -55,6 +56,13 @@ ShellRoot {
     Centre {}
     Popups {}
     PolkitDialog {}
+
+    // built the first time it opens
+    LazyLoader {
+        active: SettingsState.open
+
+        SettingsWindow {}
+    }
     Lock {}
 
     // started for their side effects: event toasts, idle timeouts
@@ -164,6 +172,14 @@ ShellRoot {
     // not parse is kept as a plain string.
     IpcHandler {
         target: "settings"
+
+        // a page name from services/SettingsState.qml, or '' for the last one
+        function open(page: string): void {
+            SettingsState.show(page);
+        }
+        function close(): void {
+            SettingsState.open = false;
+        }
 
         function set(key: string, value: string): string {
             let parsed = value;

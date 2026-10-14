@@ -48,6 +48,18 @@ hl.window_rule({
     float = true,
 })
 
+-- The shell's settings app: a dialog-sized window in the middle, not a tile.
+hl.window_rule({
+    name = "archdots-settings",
+    match = {
+        class = "^(org.quickshell)$",
+        title = "^(archdots settings)$",
+    },
+    float = true,
+    size = "1000 700",
+    center = true,
+})
+
 -- QOL window rules end
 
 -- My window rules

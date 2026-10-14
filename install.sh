@@ -1413,10 +1413,11 @@ stage_stow() {
     # into a hard failure.
     local simulate line rel src backup
     local conflicts=() unhandled=()
-    # A real ~/.config, so stow links the folders inside it rather than folding
-    # ~/.config itself into one symlink to the repo. Folded, everything any app
+    # A real ~/.config (and ~/.local/bin, for the archdots command), so stow
+    # links the folders inside rather than folding the whole directory into
+    # one symlink to the repo. Folded, everything any app
     # later creates there, ~/.config/archdots/ included, lands in the clone.
-    mkdir -p "$HOME/.config"
+    mkdir -p "$HOME/.config" "$HOME/.local/bin"
     simulate="$(stow --simulate --verbose=1 --dir="$REPO_ROOT" --target="$HOME" home 2>&1 || true)"
     while IFS= read -r line; do
         [[ "$line" == *"  * "* ]] || continue

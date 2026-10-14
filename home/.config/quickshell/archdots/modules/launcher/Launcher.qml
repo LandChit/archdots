@@ -41,7 +41,7 @@ ListPanel {
             run: () => {
                 usage.bump(entry.id);
                 if (entry.runInTerminal)
-                    Quickshell.execDetached(["sh", "-c", Config.launcher.terminal + " -e " + entry.execString.replace(/%[a-zA-Z]/g, "")]);
+                    Quickshell.execDetached(["sh", "-c", Config.apps.terminal + " -e " + entry.execString.replace(/%[a-zA-Z]/g, "")]);
                 else
                     entry.execute();
             }
@@ -126,6 +126,7 @@ ListPanel {
             hint: "run ↵",
             run: () => Power.run(a.id)
         }));
+        rows.push({ title: "Settings", subtitle: "Open", glyph: "\u{f0493}", hint: "open ↵", run: () => SettingsState.show("") });
         const panels = [["wallpaper", "Wallpaper", "󰸉"], ["control", "Control centre", "󰒓"], ["clipboard", "Clipboard history", "󰅌"], ["emoji", "Emoji", "󰞅"], ["screenshot", "Screenshot", "󰄀"], ["keybinds", "Keybinds", "󰌌"], ["notifications", "Notifications", "󰂚"]];
         for (const [panel, label, glyph] of panels)
             rows.push({ title: label, subtitle: "Open", glyph: glyph, hint: "open ↵", run: () => Qt.callLater(() => Panels.open(panel)) });
@@ -160,7 +161,7 @@ ListPanel {
             glyph: "󰆍",
             hint: "run ↵",
             run: () => Quickshell.execDetached(["sh", "-c", term]),
-            runInTerminal: () => Quickshell.execDetached(["sh", "-c", Config.launcher.terminal + " -e sh -c " + JSON.stringify(term + "; exec $SHELL")])
+            runInTerminal: () => Quickshell.execDetached(["sh", "-c", Config.apps.terminal + " -e sh -c " + JSON.stringify(term + "; exec $SHELL")])
         }];
     }
 

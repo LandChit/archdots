@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
+import qs.config
 
 // The notification daemon (org.freedesktop.Notifications), its history, the
 // do-not-disturb flag, and the shell's own toasts.
@@ -60,6 +61,40 @@ Singleton {
         history = history.filter(h => h.key !== key);
     }
 
+    // Do not disturb on a daily schedule (notifications.schedule): switched on
+    // and off at the edges only, so DND set by hand in between is left alone.
+    property bool inSchedule: false
+
+    function scheduled(): bool {
+        const sch = Config.notifications.schedule;
+        if (!sch.enabled)
+            return false;
+        const now = new Date();
+        const minutes = now.getHours() * 60 + now.getMinutes();
+        const parse = t => {
+            const m = /^(\d{1,2}):(\d{2})$/.exec(t);
+            return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : -1;
+        };
+        const from = parse(sch.from), to = parse(sch.to);
+        if (from < 0 || to < 0 || from === to)
+            return false;
+        return from < to ? minutes >= from && minutes < to : minutes >= from || minutes < to;
+    }
+
+    Timer {
+        interval: 30000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            const now = root.scheduled();
+            if (now !== root.inSchedule) {
+                root.inSchedule = now;
+                root.dnd = now;
+            }
+        }
+    }
+
     NotificationServer {
         id: server
 
@@ -84,7 +119,7 @@ Singleton {
                 urgency: critical ? 2 : n.urgency === NotificationUrgency.Low ? 0 : 1,
                 time: Qt.formatTime(new Date(), "hh:mm"),
                 // -1 means "the server decides": 5 s; critical waits for you
-                timeout: critical ? 0 : n.expireTimeout > 0 ? n.expireTimeout : 5000,
+                timeout: critical ? 0 : n.expireTimeout > 0 ? n.expireTimeout : Config.notifications.timeout * 1000,
                 actions: n.actions.map(a => ({ id: a.identifier, text: a.text, action: a })),
                 closeOnDismiss: true
             };

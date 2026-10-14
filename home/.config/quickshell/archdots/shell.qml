@@ -12,6 +12,7 @@ import qs.modules.control
 import qs.modules.emoji
 import qs.modules.keybinds
 import qs.modules.launcher
+import qs.modules.notifications
 import qs.modules.osd
 import qs.modules.powermenu
 import qs.modules.screenshot
@@ -51,6 +52,11 @@ ShellRoot {
     Screenshot {}
     Picker {}
     ControlCentre {}
+    Centre {}
+    Popups {}
+
+    // started for its side effects: the event toasts
+    readonly property var events: Events
     BatteryCard {}
 
     Osd {
@@ -72,6 +78,21 @@ ShellRoot {
         }
         function mode(mode: string): void {
             Theme.setMode(mode);
+        }
+    }
+
+    // qs -c archdots ipc call notifications toast "Title" "Body"
+    IpcHandler {
+        target: "notifications"
+
+        function toast(title: string, body: string): void {
+            Notifs.toast(title, body, "\u{f009a}", true);
+        }
+        function dnd(on: bool): void {
+            Notifs.dnd = on;
+        }
+        function clear(): void {
+            Notifs.clearHistory();
         }
     }
 

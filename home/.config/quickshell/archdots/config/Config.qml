@@ -24,6 +24,7 @@ Singleton {
     property alias battery: adapter.battery
     property alias wallpaper: adapter.wallpaper
     property alias theme: adapter.theme
+    property alias toasts: adapter.toasts
 
     // Sets one key, given as a dotted path, in settings.json. Returns false and
     // leaves the file alone if it is not valid JSON: a hand edit in progress is
@@ -113,6 +114,17 @@ Singleton {
                 property string mode: "dark"
                 // a backend from `wal --backend`; some need extra Python packages
                 property string backend: "wal"
+            }
+
+            // Which events show a toast (TODO C9).
+            property JsonObject toasts: JsonObject {
+                property bool charging: true
+                property bool locks: true
+                property bool keyboardLayout: true
+                property bool audioDevice: true
+                property bool vpn: true
+                property bool nowPlaying: false
+                property bool dnd: true
             }
 
             property JsonObject audio: JsonObject {

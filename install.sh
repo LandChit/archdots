@@ -1564,6 +1564,15 @@ migrate_layout() {
     local real moved=0 unlinked=0 top rel src dst link target
     real="$(cd -- "$REPO_ROOT" && pwd -P)"
 
+    # Two leftovers have no place in home/ and would only show up untracked
+    # there: the zsh plugins' old submodule checkouts (pacman ships them now and
+    # .zshrc reads /usr/share/zsh/plugins/), and the old theme's rendered
+    # palette (rendered again under .themes/simplychit/).
+    rm -rf -- "$real/.ohmyzsh_custom/plugins/zsh-autosuggestions" \
+              "$real/.ohmyzsh_custom/plugins/zsh-syntax-highlighting"
+    rm -f -- "$real/.themes/archdots/gtk-3.0/colors.css" \
+             "$real/.themes/archdots/gtk-4.0/colors.css"
+
     for top in .config .themes .ohmyzsh_custom; do
         [[ -d "$real/$top" && ! -L "$real/$top" ]] || continue
         while IFS= read -r -d '' src; do

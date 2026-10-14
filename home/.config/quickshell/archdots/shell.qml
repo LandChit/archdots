@@ -9,9 +9,11 @@ import qs.modules.battery
 import qs.modules.calendar
 import qs.modules.clipboard
 import qs.modules.emoji
+import qs.modules.keybinds
 import qs.modules.launcher
 import qs.modules.osd
 import qs.modules.powermenu
+import qs.modules.screenshot
 import qs.services
 
 // archdots shell. Run with `qs -c archdots`; control it with
@@ -37,6 +39,8 @@ ShellRoot {
     Calendar {}
     Clipboard {}
     Emoji {}
+    Keybinds {}
+    Screenshot {}
     BatteryCard {}
 
     Osd {

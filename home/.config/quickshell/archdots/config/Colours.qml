@@ -23,6 +23,18 @@ Singleton {
     // alpha(mix(background, color4, 0.22), 0.88)
     readonly property color island: alpha(mix(background, accent, 0.22), 0.88)
     readonly property color islandBorder: alpha(accent, 0.28)
+    // Panels and cards (fabric's .window): the island surface, more opaque.
+    readonly property color panel: alpha(mix(background, accent, 0.22), 0.92)
+    readonly property color panelBorder: alpha(accent, 0.28)
+    // Behind full-screen menus.
+    readonly property color scrim: Qt.rgba(8 / 255, 10 / 255, 14 / 255, 0.62)
+    readonly property color subtext: alpha(foreground, 0.55)
+    readonly property color hint: alpha(foreground, 0.50)
+    // Keyboard selection: a different hue from hover (accent), not just a
+    // stronger alpha, so a hovered row and a selected row are told apart.
+    readonly property color selection: alpha(accentBright, 0.18)
+    readonly property color selectionBorder: alpha(accentBright, 0.50)
+    readonly property color hover: alpha(accent, 0.10)
 
     function alpha(c: color, a: real): color {
         return Qt.rgba(c.r, c.g, c.b, a);

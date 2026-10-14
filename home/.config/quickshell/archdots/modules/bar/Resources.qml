@@ -44,7 +44,7 @@ Island {
         visible: Config.bar.showCpu
         leftPadding: 5
         rightPadding: 5
-        text: CpuTemp.celsius < 0 ? " --°C" : " " + CpuTemp.celsius + "°C"
+        text: CpuTemp.celsius < 0 ? "󰍛 --°C" : "󰍛 " + CpuTemp.celsius + "°C"
     }
 
     Divider {

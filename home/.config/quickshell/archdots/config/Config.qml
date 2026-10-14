@@ -20,6 +20,7 @@ Singleton {
 
     property alias bar: adapter.bar
     property alias audio: adapter.audio
+    property alias launcher: adapter.launcher
 
     // Sets one key, given as a dotted path, in settings.json. Returns false and
     // leaves the file alone if it is not valid JSON: a hand edit in progress is
@@ -71,6 +72,18 @@ Singleton {
                 property string emptyTitle: "Chit"
                 property int titleChars: 20
                 property int mediaChars: 28
+            }
+
+            property JsonObject launcher: JsonObject {
+                // Desktop entry ids (firefox.desktop -> "firefox") pinned to
+                // the top, in this order. Ctrl+P in the launcher toggles one.
+                property list<string> favourites: []
+                // Never listed. Ctrl+H hides one; "> unhide" brings it back.
+                property list<string> hidden: []
+                // For apps that ask for a terminal, and "!" commands with Shift.
+                property string terminal: "alacritty"
+                // %s is the query.
+                property string searchUrl: "https://www.google.com/search?q=%s"
             }
 
             property JsonObject audio: JsonObject {

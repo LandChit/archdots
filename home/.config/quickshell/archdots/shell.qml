@@ -5,6 +5,9 @@ import Quickshell
 import Quickshell.Io
 import qs.config
 import qs.modules.bar
+import qs.modules.launcher
+import qs.modules.powermenu
+import qs.services
 
 // archdots shell. Run with `qs -c archdots`; control it with
 // `qs -c archdots ipc call <target> <function>`.
@@ -21,6 +24,25 @@ ShellRoot {
 
             screen: modelData
             visible: root.barVisible
+        }
+    }
+
+    Launcher {}
+    PowerMenu {}
+
+    // One panel at a time, as with fabric's ctl.py:
+    // qs -c archdots ipc call panel toggle launcher
+    IpcHandler {
+        target: "panel"
+
+        function toggle(name: string): string {
+            return Panels.toggle(name) ? "ok" : "no panel named " + name;
+        }
+        function open(name: string): string {
+            return Panels.open(name) ? "ok" : "no panel named " + name;
+        }
+        function close(): void {
+            Panels.close("");
         }
     }
 

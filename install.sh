@@ -2364,7 +2364,9 @@ stage_app_theming() {
     if copies="$("$REPO_ROOT/home/.local/bin/simplychit" sync-palette 2>&1)"; then
         ok "palette copied to $(grep -c . <<<"$copies") place(s)"
     else
-        warn "simplychit sync-palette failed: $copies"
+        # the rest were still copied; this names the ones that were not
+        warn "some palette copies failed:"
+        say "$(grep '^not copied' <<<"$copies" || printf '%s' "$copies")"
     fi
 
     # btop reads color_theme from btop.conf and writes the rest of its settings

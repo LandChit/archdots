@@ -368,7 +368,32 @@ def sync_palette():
     The shell (services/Theme.qml) runs this after every wal; install.sh runs it
     on install and update."""
     cache = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.join(HOME, ".cache"), "wal")
-    done = []
+    done, failed = [], []
+
+    def copy(src, dst):
+        # one consumer failing (a read-only or dangling link) must not stop
+        # the others
+        try:
+            shutil.copyfile(src, dst)
+            done.append(dst)
+        except OSError as e:
+            failed.append(f"{dst}: {e.strerror or e}")
+
+    # hyprlock first: always written, defaults when there is no palette yet, so
+    # the file hyprlock.conf sources exists from the first install on
+    palette = {}
+    try:
+        with open(os.path.join(cache, "colors.json"), encoding="utf-8") as f:
+            data = json.load(f)
+        palette = dict(data.get("colors", {}), **data.get("special", {}))
+    except (OSError, ValueError, AttributeError, TypeError):
+        pass
+    hyprlock = os.path.join(HOME, ".local/state/simplychit/hyprlock-colors.conf")
+    try:
+        write_atomic(hyprlock, hyprlock_colours(palette))
+        done.append(hyprlock)
+    except OSError as e:
+        failed.append(f"{hyprlock}: {e.strerror or e}")
 
     # GTK: CSS cannot import from the cache. Three copies, not two: GTK resolves
     # a nested @import against the entry file's directory, so the GTK 4 sheet
@@ -382,30 +407,18 @@ def sync_palette():
         ):
             # the parent is stowed; a partial install may not have it
             if os.path.isdir(os.path.dirname(dst)):
-                shutil.copyfile(gtk, dst)
-                done.append(dst)
-
-    # hyprlock: always written, defaults when there is no palette yet, so the
-    # file hyprlock.conf sources exists from the first install on
-    palette = {}
-    try:
-        with open(os.path.join(cache, "colors.json"), encoding="utf-8") as f:
-            data = json.load(f)
-        palette = dict(data.get("colors", {}), **data.get("special", {}))
-    except (OSError, ValueError, AttributeError):
-        pass
-    hyprlock = os.path.join(HOME, ".local/state/simplychit/hyprlock-colors.conf")
-    write_atomic(hyprlock, hyprlock_colours(palette))
-    done.append(hyprlock)
+                copy(gtk, dst)
 
     # btop: pywal16 renders btopwal.theme itself; btop only reads themes from
     # its own folder (color_theme = "simplychit" in btop.conf)
     btop = os.path.join(cache, "btopwal.theme")
     if shutil.which("btop") and os.path.isfile(btop):
         dst = os.path.join(HOME, ".config/btop/themes/simplychit.theme")
-        os.makedirs(os.path.dirname(dst), exist_ok=True)
-        shutil.copyfile(btop, dst)
-        done.append(dst)
+        try:
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            copy(btop, dst)
+        except OSError as e:
+            failed.append(f"{dst}: {e.strerror or e}")
 
     # the browser, through the pywalfox add-on (it reads colors.json itself)
     if shutil.which("pywalfox"):
@@ -414,7 +427,9 @@ def sync_palette():
 
     for d in done:
         print(d.replace(HOME, "~"))
-    return 0
+    for f in failed:
+        print("not copied: " + f.replace(HOME, "~"), file=sys.stderr)
+    return 1 if failed else 0
 
 
 def main():

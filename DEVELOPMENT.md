@@ -152,13 +152,14 @@ when a headset auto-connects before the shell is up. See
 ### The greeter
 
 `greeter.qml` (shell root) is the login screen for greetd: greetd runs
-`env HOME=/var/lib/simplychit/greeter cage -s -- qs -p
-/usr/share/simplychit/shell/greeter.qml` as the `greeter` user (whose own
+`env HOME=/var/lib/simplychit/greeter QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+cage -s -d -- qs -p /usr/share/simplychit/shell/greeter.qml` (no title bar) as the `greeter` user (whose own
 home is `/` on Arch). cage has **no layer-shell**, so it is one `FloatingWindow`, which cage
 shows fullscreen. It reuses `modules/lock/LockContent.qml` (`askUser`,
 `actions`) and drives `Quickshell.Services.Greetd`: `createSession(user)`, a
-`respond()` to each prompt, `cancelSession()` after a failure (greetd wants
-it; Quickshell logs the reply as unexpected), `launch()` with the session's
+`respond()` to each prompt, nothing after a failure (greetd ends that
+session itself; a `cancelSession()` then fails with "Connection refused"),
+`launch()` with the session's
 `Exec` from `/usr/share/wayland-sessions/` on `readyToLaunch`. Last user and
 session: `/var/lib/simplychit/greeter/.local/state/simplychit/greeter.json`.
 

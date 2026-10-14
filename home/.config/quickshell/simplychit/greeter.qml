@@ -6,7 +6,7 @@ import qs.modules.lock
 
 // The login screen: greetd runs it inside cage (install.sh --greeter):
 //   [default_session]
-//   command = "env HOME=/var/lib/simplychit/greeter cage -s -- qs -p /usr/share/simplychit/shell/greeter.qml"
+//   command = "env HOME=/var/lib/simplychit/greeter QT_WAYLAND_DISABLE_WINDOWDECORATION=1 cage -s -d -- qs -p /usr/share/simplychit/shell/greeter.qml"
 //   user = "greeter"
 // It looks like the lock screen. The palette and the wallpaper are copies in
 // that HOME (.cache/wal/colors.json, .local/state/simplychit/wallpaper), since
@@ -63,10 +63,11 @@ ShellRoot {
                 root.pending = "";
             }
         }
+        // greetd ends the session itself after a failed login; a
+        // cancelSession() here fails ("Connection refused", found in a VM)
         function onAuthFailure(message: string): void {
             root.busy = false;
             root.message = "Wrong password";
-            Greetd.cancelSession();
         }
         function onReadyToLaunch(): void {
             root.remember(Greetd.user);

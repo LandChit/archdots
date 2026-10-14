@@ -1972,7 +1972,7 @@ stage_greeter() {
 vt = 1
 
 [default_session]
-command = \"env HOME=$GREETER_HOME cage -s -- qs -p $GREETER_DIR/greeter.qml\"
+command = \"env HOME=$GREETER_HOME QT_WAYLAND_DISABLE_WINDOWDECORATION=1 cage -s -d -- qs -p $GREETER_DIR/greeter.qml\"
 user = \"greeter\""
     if [[ -f "$GREETD_CONF" ]] && [[ "$("${SUDO[@]}" cat "$GREETD_CONF")" == "$body" ]]; then
         skip "$GREETD_CONF already correct"

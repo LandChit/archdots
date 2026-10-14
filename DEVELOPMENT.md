@@ -28,6 +28,7 @@ home/                stowed into $HOME: `stow --dir=<repo> --target=$HOME home`
     hypr/            Hyprland — hyprland.lua + config/*.lua, hyprlock, hyprpaper
       config/custom/   old per-machine overrides location, still loaded (untracked)
     fabric_shell/    the desktop shell (Python + GTK3 layer-shell)
+    quickshell/archdots/   its Quickshell rewrite, the bar so far (README inside)
     wal/templates/   pywal16 templates — the source of all theming
     alacritty/ eza/ fastfetch/ cliphist/ fontconfig/
     Kvantum/ qt6ct/ kdeglobals    Qt theming

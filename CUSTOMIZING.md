@@ -42,9 +42,37 @@ GTK only reads its own folders, so those two files live there:
 | Stay awake (no dim, lock or suspend) | SUPER + SHIFT + I toggles it | |
 
 Not yet: idle timeouts (they are in the tracked `~/.config/hypr/hypridle.conf`
-for now), and anything about the shell itself (bar widgets and so on). Both
-come with the new shell's `~/.config/archdots/settings.json` and the settings
-app (TODO.md, phases 3 to 5).
+for now), and settings for anything but the new bar. They come with the
+settings app and the rest of the shell port (TODO.md, phases 4 and 5).
+
+## The new bar: `settings.json`
+
+The Quickshell bar replaces fabric's when `ARCHDOTS_BAR=quickshell` is set:
+put `hl.env("ARCHDOTS_BAR", "quickshell")` in `hypr/environment.lua` and log in
+again. It reads `~/.config/archdots/settings.json`, and edits apply as soon as
+you save. Only the keys you set matter; everything else keeps its default.
+
+```json
+{
+  "bar": {
+    "showMedia": true,
+    "showCpu": true,
+    "showBattery": true,
+    "clockFormat": "hh:mm AP",
+    "emptyTitle": "Chit",
+    "titleChars": 20,
+    "mediaChars": 28
+  },
+  "audio": {
+    "scrollStep": 5,
+    "maxVolume": 2.0
+  }
+}
+```
+
+`clockFormat` takes [Qt's date format](https://doc.qt.io/qt-6/qml-qtqml-qt.html#formatDateTime-method)
+(`HH:mm` for 24-hour, add `:ss` for seconds). `maxVolume` is 1.0 for 100%.
+To change one from a script: `qs -c archdots ipc call settings set bar.showCpu false`.
 
 ## Hyprland overrides
 

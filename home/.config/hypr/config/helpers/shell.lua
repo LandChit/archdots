@@ -27,10 +27,24 @@ local KILL = "pkill -f 'fabric_shel[l][^ ]*/(" .. KILL_NAMES .. ")\\.py'"
 -- cannot kill the restart mid-flight. The spawned processes still expand to
 -- full paths, so the pattern matches them on the next restart.
 -- Do not inline these variables — that reintroduces the self-kill.
+-- The Quickshell rewrite runs side by side with fabric until it matches it
+-- (TODO.md, phase 3). With ARCHDOTS_BAR=quickshell in the environment, say
+-- hl.env("ARCHDOTS_BAR", "quickshell") in ~/.config/archdots/hypr/environment.lua,
+-- the bar comes from `qs -c archdots` instead of bar.py. The daemon runs
+-- either way: the launcher, popups and notifications still live there.
+-- Checked when the command runs, not here, so a restart picks up a change.
+local QS_BAR = "qs -c archdots -n -d"
+local QS_KILL = "qs kill -c archdots >/dev/null 2>&1"
+
 local function launch()
     local parts = {}
     for _, module in ipairs(MODULES) do
-        parts[#parts + 1] = "$PY $R/" .. module .. ".py &"
+        if module == "bar" then
+            parts[#parts + 1] = 'if [ "$ARCHDOTS_BAR" = quickshell ]; then '
+                .. QS_BAR .. "; else $PY $R/bar.py & fi;"
+        else
+            parts[#parts + 1] = "$PY $R/" .. module .. ".py &"
+        end
     end
     return table.concat(parts, " ")
 end
@@ -42,7 +56,7 @@ local SYNC_COLORS = "wal -R && cp $HOME/.cache/wal/colors-fabric.css $R/css/colo
 function M.restart()
     hl.exec_cmd(
         "R=$HOME/.config/fabric_shell; PY=$R/.venv/bin/python; "
-        .. KILL .. "; sleep 1; "
+        .. KILL .. "; " .. QS_KILL .. "; sleep 1; "
         .. SYNC_COLORS .. "; "
         .. launch()
     )

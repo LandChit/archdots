@@ -47,6 +47,9 @@ SDDM_THEME_VERSION="1.3.5"
 # be able to fail an install.
 PKG_CORE=(
     hyprland hyprpaper hyprlock hypridle hyprpolkitagent
+    # The Quickshell rewrite of the shell (~/.config/quickshell/archdots). Its
+    # battery meter reads UPower, which is D-Bus activated: nothing to enable.
+    quickshell upower
     xdg-desktop-portal-hyprland xdg-desktop-portal-gtk uwsm sddm
     alacritty dolphin
     python-gobject gtk3 gtk-layer-shell python-pip

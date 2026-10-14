@@ -60,8 +60,10 @@ archdots_docker/artifacts
 # theme's copy is the tracked original.
 .config/gtk-4.0/overrides.css
 
-# The user's own GTK 4 rules, imported last by gtk.css. Never tracked.
+# The user's own GTK rules. GTK 4: imported last by gtk.css. GTK 3: read by GTK
+# itself over the theme. Never tracked.
 .config/gtk-4.0/user.css
+.config/gtk-3.0/gtk.css
 
 # The user's own config folder. It belongs in $HOME, but on a home where stow
 # folded ~/.config into a single symlink it ends up in the clone instead.

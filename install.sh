@@ -1468,6 +1468,11 @@ stage_user_dir() {
     write_stub "$HOME/.config/gtk-4.0/user.css" \
 '/* Your GTK 4 rules. Imported last by gtk.css, so anything here wins.
  * This file is not tracked and updates never touch it. */'
+    # GTK 3 reads this file itself, over the theme, so it needs no import and
+    # nothing tracked uses the path. The theme is in ~/.themes/archdots/gtk-3.0/.
+    write_stub "$HOME/.config/gtk-3.0/gtk.css" \
+'/* Your GTK 3 rules. GTK loads this over the archdots theme, so anything here
+ * wins. This file is not tracked and updates never touch it. */'
 
     if [[ -e "$HOME/.custom.zsh" ]]; then
         note "~/.custom.zsh is still sourced; ~/.config/archdots/local/zshrc is the new place for it"

@@ -14,6 +14,7 @@ import qs.modules.keybinds
 import qs.modules.launcher
 import qs.modules.notifications
 import qs.modules.osd
+import qs.modules.polkit
 import qs.modules.powermenu
 import qs.modules.screenshot
 import qs.modules.wallpaper
@@ -52,6 +53,7 @@ ShellRoot {
     ControlCentre {}
     Centre {}
     Popups {}
+    PolkitDialog {}
 
     // started for its side effects: the event toasts
     readonly property var events: Events

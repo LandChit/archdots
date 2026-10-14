@@ -12,8 +12,9 @@ import qs.config
 // wallpaper for every screen also re-runs pywal16 over it, which recolours:
 //
 //   · the shell, live: config/Colours.qml watches ~/.cache/wal/colors.json
-//   · GTK: colors-gtk.css copied next to each gtk.css (GTK cannot import from
-//     the cache; see .gitignore and DEVELOPMENT.md)
+//   · GTK, hyprlock, btop and the browser (pywalfox): `simplychit sync-palette`
+//     hands each its own copy (GTK cannot import from the cache; see
+//     .gitignore and DEVELOPMENT.md)
 //   · Hyprland's borders: `hyprctl reload` re-reads colors-hyprland.lua
 //
 // and re-points ~/.local/state/simplychit/wallpaper, which hyprlock's config
@@ -111,18 +112,11 @@ Singleton {
         }
     }
 
-    // GTK's three copies (two for the theme, one next to the gtk.css that
-    // libadwaita reads), then Hyprland.
+    // The apps with their own copy of the palette, then Hyprland.
     Process {
         id: sync
 
-        command: ["sh", "-c", `
-            C="\${XDG_CACHE_HOME:-$HOME/.cache}/wal"
-            for t in "$HOME/.themes/simplychit/gtk-3.0/colors.css" "$HOME/.themes/simplychit/gtk-4.0/colors.css" "$HOME/.config/gtk-4.0/colors.css"; do
-                [ -d "$(dirname "$t")" ] && cp "$C/colors-gtk.css" "$t"
-            done
-            hyprctl reload >/dev/null
-        `]
+        command: ["sh", "-c", "\"$1\" sync-palette >/dev/null; hyprctl reload >/dev/null", "sh", root.home + "/.local/bin/simplychit"]
     }
 
     Process {

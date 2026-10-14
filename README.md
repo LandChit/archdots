@@ -213,11 +213,9 @@ mkdir -p ~/Pictures/wallpapers && cp ~/simplychit/wallpapers/* ~/Pictures/wallpa
 # the templates and every sheet downstream depend on it.
 wal -i ~/Pictures/wallpapers/<pick-one> --cols16 dual
 
-# 3. the shell reads the palette from ~/.cache/wal itself; GTK needs a copy
-#    beside each gtk.css, in its own format because GTK CSS has no var().
-for d in ~/.themes/simplychit/gtk-3.0 ~/.themes/simplychit/gtk-4.0 ~/.config/gtk-4.0; do
-  cp ~/.cache/wal/colors-gtk.css "$d/colors.css"
-done
+# 3. the shell reads the palette from ~/.cache/wal itself; GTK, hyprlock, btop
+#    and the browser need their own copies (GTK CSS has no var(), for one).
+~/simplychit/home/.local/bin/simplychit sync-palette
 
 # 4. the GTK 4 recolour has to sit *beside* the file that imports it — a flatpak
 #    mounts .config/gtk-4.0 inside its own per-app home, so a relative import
@@ -323,7 +321,7 @@ empty boxes.
 
 ```
 tlp fd htop nvtop fastfetch tmux unzip wget curl smartmontools ark ddcutil
-khal vdirsyncer
+khal vdirsyncer btop
 ```
 
 `tlp` on laptops only; a desktop gets `power-profiles-daemon` instead (the
@@ -335,7 +333,7 @@ one-time setup (CUSTOMIZING.md, Calendar).
 
 ```
 paru zen-browser-bin visual-studio-code-bin hyprls-git xwaylandvideobridge
-sddm-silent-theme
+python-pywalfox sddm-silent-theme
 ```
 
 An existing `paru` or `yay` is used as it is. Otherwise `paru` is built from

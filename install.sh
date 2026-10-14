@@ -97,6 +97,8 @@ PKG_UTILS=(
     # Events under the calendar's month grid: khal reads the calendars,
     # vdirsyncer syncs them with Google or CalDAV (CUSTOMIZING.md, Calendar).
     khal vdirsyncer
+    # themed from the wallpaper (simplychit sync-palette, stage_app_theming)
+    btop
 )
 
 # AUR packages the desktop genuinely needs. Kept apart from PKG_AUR because
@@ -114,6 +116,8 @@ PKG_AUR_CORE=(
 PKG_AUR=(
     zen-browser-bin visual-studio-code-bin hyprls-git
     xwaylandvideobridge   # started by autorun.lua; moved out of extra to the AUR
+    # the browser's colours from the wallpaper; needs its add-on in the browser
+    python-pywalfox
 )
 
 # Tools only. Media players, office suites and game launchers are a matter of
@@ -2331,41 +2335,63 @@ stage_theming() {
         note "run by hand: wal -i $WALLPAPER ${WAL_ARGS[*]}"
     else
         ok "palette generated from $(basename "$WALLPAPER")"
+        [[ -f "$HOME/.cache/wal/colors-gtk.css" ]] \
+            || warn "colors-gtk.css missing — is .config/wal/templates/ stowed?"
+    fi
+    stage_app_theming
+}
 
-        # pywal16 renders into ~/.cache/wal/; every consumer reads its own copy
-        # instead, and this is where those copies are made. All of them are
-        # gitignored, so none of this shows up in `git status` afterwards — the
-        # wallpaper picker rewrites exactly the same set on SUPER + W.
-        #
-        # Two formats, because GTK CSS has no var(): the shell compiles SCSS and
-        # uses var(--colorN), while GTK needs @define-color, so colors-gtk.css is
-        # a second template rather than a copy of the first.
-        #
-        # Three GTK destinations, not two. GTK resolves a nested @import against
-        # the *entry* file's directory rather than the importing file's, so the
-        # GTK 4 sheet reached through .config/gtk-4.0/gtk.css looks for its
-        # palette there — not next to itself in .themes/.
-        local pair src dst copied=0
-        for pair in \
-            "colors-gtk.css:$HOME/.themes/simplychit/gtk-3.0/colors.css" \
-            "colors-gtk.css:$HOME/.themes/simplychit/gtk-4.0/colors.css" \
-            "colors-gtk.css:$HOME/.config/gtk-4.0/colors.css"
-        do
-            src="$HOME/.cache/wal/${pair%%:*}"
-            dst="${pair#*:}"
-            if [[ ! -f "$src" ]]; then
-                warn "$src missing — is .config/wal/templates/ stowed?"
-                continue
-            fi
-            # The parent is a stowed symlink on a normal install, but a partial
-            # or --skip-stow run can leave it absent, and cp would fail there.
-            if [[ ! -d "$(dirname "$dst")" ]]; then
-                warn "$(dirname "$dst") missing — skipping its palette"
-                continue
-            fi
-            cp "$src" "$dst" && copied=$(( copied + 1 ))
-        done
-        ok "palette copied to $copied consumer(s)"
+# ── apps that keep their own copy of the palette ────────────────────────────
+#
+# pywal16 renders into ~/.cache/wal/; GTK, hyprlock, btop and the browser cannot
+# read from there, and `simplychit sync-palette` makes their copies (the shell
+# runs it after every wallpaper change; see the command for the why of each).
+# All of them are outside the repo, so none of this shows up in `git status`.
+#
+# Run on install and on update. Even with no palette yet it writes hyprlock's
+# colour file, with defaults, so the file hyprlock.conf sources always exists.
+# The rest is one-time setup for apps that need to be pointed at the palette.
+
+stage_app_theming() {
+    step "Apps themed from the wallpaper"
+    local copies
+    if copies="$("$REPO_ROOT/home/.local/bin/simplychit" sync-palette 2>&1)"; then
+        ok "palette copied to $(grep -c . <<<"$copies") place(s)"
+    else
+        warn "simplychit sync-palette failed: $copies"
+    fi
+
+    # btop reads color_theme from btop.conf and writes the rest of its settings
+    # there itself; only seeded, never edited once it exists.
+    if command -v btop >/dev/null && [[ ! -e "$HOME/.config/btop/btop.conf" ]]; then
+        mkdir -p "$HOME/.config/btop"
+        printf 'color_theme = "simplychit"\ntheme_background = False\n' > "$HOME/.config/btop/btop.conf"
+        ok "btop set to the wallpaper theme"
+    fi
+
+    # VS Code: the wal-theme extension builds a colour theme from colors.json
+    # and follows it on its own. Choosing it ("Wal") is left to you.
+    local code
+    for code in code codium; do
+        command -v "$code" >/dev/null || continue
+        if "$code" --list-extensions 2>/dev/null | grep -qix 'dlasagno.wal-theme'; then
+            skip "$code: wal-theme already installed"
+        elif run_logged "VS Code wal-theme" "$code" --install-extension dlasagno.wal-theme; then
+            ok "$code: wal-theme installed"
+            note "VS Code: pick the colour theme \"Wal\" (Ctrl+K Ctrl+T) to follow the wallpaper"
+        else
+            warn "$code: could not install the wal-theme extension"
+        fi
+    done
+
+    # The browser: pywalfox's native host, which its add-on talks to.
+    if command -v pywalfox >/dev/null; then
+        if run_logged "pywalfox" pywalfox install; then
+            ok "pywalfox ready"
+            note "browser: add the Pywalfox add-on (addons.mozilla.org) for wallpaper colours"
+        else
+            warn "pywalfox install failed"
+        fi
     fi
 }
 
@@ -2811,6 +2837,7 @@ run_update() {
     retire_old_name     # archdots -> SimplyChit, once
     stage_wallpapers    # copies any new wallpapers into ~/Pictures/wallpapers
     stage_gtk4_base     # update_packages may have moved libadwaita under us
+    stage_app_theming   # palette copies (hyprlock's file), apps the update added
     stage_shell_services  # hyprpolkitagent off (the shell is the agent), tlp-pd
     if [[ -d "$GREETER_DIR" ]]; then
         step "The greeter"

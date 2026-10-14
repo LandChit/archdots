@@ -196,8 +196,9 @@ misconfigured — the pywal16 palette is applied correctly on top of a light bas
 ### The GTK theme follows the wallpaper
 
 `.themes/simplychit/` holds no colours of its own. The palette is pywal16 output:
-`wal/templates/colors-gtk.css` renders to `~/.cache/wal/colors-gtk.css`, and the
-wallpaper picker copies it in as `colors.css` beside each sheet. The shell
+`wal/templates/colors-gtk.css` renders to `~/.cache/wal/colors-gtk.css`, and
+`simplychit sync-palette` (run by the picker) copies it in as `colors.css`
+beside each sheet. The shell
 itself needs no copy: it reads `~/.cache/wal/colors.json` directly.
 
 It needs its own template because **GTK CSS has no `var()`** — named colours are
@@ -287,6 +288,15 @@ wallpaper, and templates in `.config/wal/templates/` push them everywhere:
 | *(none: `colors.json`)* | the whole shell | `config/Colours.qml` reads `~/.cache/wal/colors.json`, watched |
 | `colors-gtk.css` | GTK 3 + GTK 4 apps | copied next to each `gtk.css` (GTK CSS has no `var()`) |
 | `colors-alacritty.toml` | terminal | imported by the alacritty config |
+| *(none: `colors.json`)* | hyprlock | `simplychit sync-palette` writes `~/.local/state/simplychit/hyprlock-colors.conf`, which `hyprlock.conf` sources after its own defaults |
+| *(pywal16's own `btopwal.theme`)* | btop | copied to `~/.config/btop/themes/simplychit.theme`; install.sh seeds `color_theme` |
+| *(none: `colors.json`)* | VS Code | the `dlasagno.wal-theme` extension (install.sh adds it), theme "Wal" |
+| *(none: `colors.json`)* | browser | pywalfox (`pywalfox update` in `sync-palette`) and its add-on |
+| *(none)* | fastfetch | its keys use ANSI colour 94, so it follows the terminal's palette |
+
+`simplychit sync-palette` makes every copy in the table, and the shell runs it
+after each `wal`. A copy is in the state or config folder, never in the
+cache: hyprlock's has to exist even when `wal` has not run since an update.
 
 `color4` is the accent throughout — workspace highlight, selected-row glow,
 search caret, window border. Every config falls back to a dark neutral palette

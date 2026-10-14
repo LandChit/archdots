@@ -101,6 +101,8 @@ PKG_UTILS=(
     btop
     # screen recording from the screenshot menu and SUPER+SHIFT+R
     wf-recorder
+    # QR codes: show the clipboard as one, read one off the screen
+    qrencode zbar
 )
 
 # AUR packages the desktop genuinely needs. Kept apart from PKG_AUR because

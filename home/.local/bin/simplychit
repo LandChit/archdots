@@ -64,6 +64,7 @@ def checks():
         "fd": "the launcher's file search", "ddcutil": "external monitor brightness",
         "tlp": "power profiles through tlp-pd", "bluetoothctl": "pairing devices that need a passkey",
         "khal": "events in the calendar panel", "wf-recorder": "screen recording",
+        "qrencode": "the clipboard as a QR code", "zbarimg": "scanning QR codes (zbar)",
     }
     for cmd, why in required.items():
         add("Programs", cmd, "ok" if shutil.which(cmd) else "fail", why if shutil.which(cmd) else "missing: " + why)

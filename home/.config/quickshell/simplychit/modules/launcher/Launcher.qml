@@ -127,9 +127,10 @@ ListPanel {
             run: () => Power.run(a.id)
         }));
         rows.push({ title: "Settings", subtitle: "Open", glyph: "\u{f0493}", hint: "open ↵", run: () => SettingsState.show("") });
-        const panels = [["wallpaper", "Wallpaper", "󰸉"], ["control", "Control centre", "󰒓"], ["clipboard", "Clipboard history", "󰅌"], ["emoji", "Emoji", "󰞅"], ["screenshot", "Screenshot", "󰄀"], ["keybinds", "Keybinds", "󰌌"], ["notifications", "Notifications", "󰂚"]];
+        const panels = [["wallpaper", "Wallpaper", "󰸉"], ["control", "Control centre", "󰒓"], ["clipboard", "Clipboard history", "󰅌"], ["emoji", "Emoji", "󰞅"], ["screenshot", "Screenshot", "󰄀"], ["keybinds", "Keybinds", "󰌌"], ["notifications", "Notifications", "󰂚"], ["notepad", "Notepad", "\u{f082e}"], ["qr", "QR code of the clipboard", "\u{f0432}"]];
         for (const [panel, label, glyph] of panels)
             rows.push({ title: label, subtitle: "Open", glyph: glyph, hint: "open ↵", run: () => Qt.callLater(() => Panels.open(panel)) });
+        rows.push({ title: "Scan a QR code", subtitle: "Drag a box round it; what it says is copied", glyph: "\u{f0432}", hint: "scan ↵", run: () => QrScan.scan() });
         rows.push({ title: Config.theme.mode === "light" ? "Dark mode" : "Light mode", subtitle: "Theme · re-runs pywal16 on the wallpaper", glyph: "\u{f0594}", hint: "switch ↵", run: () => Theme.setMode(Config.theme.mode === "light" ? "dark" : "light") });
         rows.push({ title: "Random wallpaper", subtitle: "Theme", glyph: "\u{f0e09}", hint: "run ↵", run: () => Theme.next(true) });
         for (const backend of Theme.backends)

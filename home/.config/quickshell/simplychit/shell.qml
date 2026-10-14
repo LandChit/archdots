@@ -18,6 +18,7 @@ import qs.modules.notifications
 import qs.modules.osd
 import qs.modules.polkit
 import qs.modules.powermenu
+import qs.modules.qr
 import qs.modules.screenshot
 import qs.modules.settings
 import qs.modules.wallpaper
@@ -54,6 +55,7 @@ ShellRoot {
     Notepad {
         id: notepad
     }
+    Qr {}
     Screenshot {}
     Picker {}
     ControlCentre {}
@@ -135,6 +137,19 @@ ShellRoot {
         // "recording 1:05" or "idle", for scripts
         function status(): string {
             return Recorder.recording ? "recording " + Recorder.elapsed : "idle";
+        }
+    }
+
+    // qs -c simplychit ipc call qr open   (the clipboard as a QR code)
+    IpcHandler {
+        target: "qr"
+
+        function open(): void {
+            Panels.open("qr");
+        }
+        // read a code off a region of the screen and copy it
+        function scan(): void {
+            QrScan.scan();
         }
     }
 

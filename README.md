@@ -323,7 +323,7 @@ empty boxes.
 
 ```
 tlp fd htop nvtop fastfetch tmux unzip wget curl smartmontools ark ddcutil
-khal vdirsyncer btop wf-recorder
+khal vdirsyncer btop wf-recorder qrencode zbar
 ```
 
 `tlp` on laptops only; a desktop gets `power-profiles-daemon` instead (the

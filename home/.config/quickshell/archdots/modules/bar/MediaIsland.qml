@@ -7,10 +7,11 @@ import qs.widgets
 // Previous / play-pause / next and "title · artist". Only shown while a
 // player is playing, so it can afford the space.
 Island {
+    required property var settings
     id: root
 
     padding: 10
-    visible: Config.bar.showMedia && Media.playing
+    visible: settings.showMedia && Media.playing
 
     component MediaButton: BarText {
         id: button
@@ -51,6 +52,6 @@ Island {
         px: 11.5
         leftPadding: 6
         rightPadding: 4
-        text: full.length > Config.bar.mediaChars ? full.slice(0, Config.bar.mediaChars) + "…" : full
+        text: full.length > settings.mediaChars ? full.slice(0, settings.mediaChars) + "…" : full
     }
 }

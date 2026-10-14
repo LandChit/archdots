@@ -6,6 +6,7 @@ import qs.widgets
 
 // volume · cpu temperature · battery, with the same glyphs as the fabric bar.
 Island {
+    required property var settings
     padding: 10
 
     // (upper bound, glyph): first match wins, the last entry catches the rest
@@ -18,6 +19,22 @@ Island {
 
     readonly property var volumeIcons: [[34, "󰕿"], [67, "󰖀"], [10000, "󰕾"]]
     readonly property var batteryIcons: [[11, "󰂃"], [31, "󰁺"], [51, "󰁼"], [71, "󰁾"], [91, "󰂀"], [10000, "󰁹"]]
+
+    // stay awake (SUPER+SHIFT+I) and do-not-disturb, only while on
+    BarText {
+        visible: Idle.inhibited
+        text: "\u{f0176}"
+        leftPadding: 3
+        rightPadding: 3
+        color: Colours.accentBright
+    }
+    BarText {
+        visible: Notifs.dnd
+        text: "\u{f009b}"
+        leftPadding: 3
+        rightPadding: 3
+        color: Colours.accentBright
+    }
 
     Hot {
         onClicked: mouse => {
@@ -37,22 +54,22 @@ Island {
     }
 
     Divider {
-        visible: Config.bar.showCpu
+        visible: settings.showCpu
     }
 
     BarText {
-        visible: Config.bar.showCpu
+        visible: settings.showCpu
         leftPadding: 5
         rightPadding: 5
         text: CpuTemp.celsius < 0 ? "󰍛 --°C" : "󰍛 " + CpuTemp.celsius + "°C"
     }
 
     Divider {
-        visible: Config.bar.showBattery && Battery.available
+        visible: settings.showBattery && Battery.available
     }
 
     Hot {
-        visible: Config.bar.showBattery && Battery.available
+        visible: settings.showBattery && Battery.available
         onClicked: mouse => {
             if (mouse.button === Qt.LeftButton)
                 Panels.toggle("battery");

@@ -33,12 +33,10 @@ ShellRoot {
     }
 
     Variants {
-        model: Quickshell.screens
+        // no bar on screens listed in bar.excluded (TODO C7)
+        model: Quickshell.screens.filter(s => !Config.bar.excluded.includes(s.name))
 
         delegate: Bar {
-            required property ShellScreen modelData
-
-            screen: modelData
             visible: root.barVisible
         }
     }

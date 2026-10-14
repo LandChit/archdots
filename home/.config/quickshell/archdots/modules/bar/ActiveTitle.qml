@@ -3,15 +3,16 @@ import qs.config
 import qs.services
 import qs.widgets
 
-// The focused window's title, or Config.bar.emptyTitle when nothing has focus.
+// The focused window's title, or settings.emptyTitle when nothing has focus.
 Island {
+    required property var settings
     padding: 13
 
     BarText {
         readonly property string title: Hypr.activeTitle
 
-        text: title === "" ? Config.bar.emptyTitle
-            : title.length > Config.bar.titleChars ? title.slice(0, Config.bar.titleChars) + "…"
+        text: title === "" ? settings.emptyTitle
+            : title.length > settings.titleChars ? title.slice(0, settings.titleChars) + "…"
             : title
     }
 }

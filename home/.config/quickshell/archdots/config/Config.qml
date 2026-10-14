@@ -76,6 +76,11 @@ Singleton {
                 property string emptyTitle: "Chit"
                 property int titleChars: 20
                 property int mediaChars: 28
+                // Per screen (TODO C7): any bar key above, by monitor name,
+                // e.g. { "HDMI-A-1": { "showMedia": false } }
+                property var monitors: ({})
+                // Screens with no bar at all.
+                property list<string> excluded: []
             }
 
             property JsonObject launcher: JsonObject {

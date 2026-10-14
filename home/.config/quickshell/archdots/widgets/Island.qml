@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 
-// One rounded bar island (fabric's .island): 32px tall, the accent-mixed
+// One rounded bar island: 32px tall, the accent-mixed
 // surface, a faint accent border. Children are laid out in a row.
 Rectangle {
     id: root

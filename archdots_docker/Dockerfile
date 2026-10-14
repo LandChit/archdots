@@ -13,7 +13,7 @@ RUN pacman -Syu --noconfirm && \
       mesa libxkbcommon wayland xorg-xwayland seatd && \
     pacman -Scc --noconfirm
 
-# The script refuses to run as root — stow, the venv and gsettings must be the
+# The script refuses to run as root — stow, the shell and gsettings must be the
 # user's. NOPASSWD so an unattended --yes run is not blocked on a prompt.
 RUN useradd -m -G wheel -s /bin/bash tester && \
     echo "tester ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/tester

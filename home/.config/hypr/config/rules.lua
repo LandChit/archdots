@@ -139,23 +139,23 @@ hl.window_rule({
     workspace = "4",
 })
 
--- Frosted glass for the fabric shell. The 0.7 alpha threshold keeps the
--- ~0.85-alpha panel surfaces blurred while excluding the panels' CSS
--- box-shadows (alpha <= 0.6) — blurring those painted a sharp frosted
--- rectangle behind the rounded corners.
+-- Frosted glass for the shell's surfaces (namespaces "archdots-<name>").
+-- ignore_alpha 0.5 blurs behind the 0.88-0.94 alpha islands and cards but not
+-- behind their soft edges. The wallpaper layer is opaque and left out.
 hl.layer_rule(
     {
-        name = "fabric",
-        match = { namespace = "fabric-*" },
+        name = "archdots-surfaces",
+        match = { namespace = "archdots-(bar|launcher|clipboard|emoji|calendar|control|notifications|battery|osd|wallpaper)" },
         blur = true,
-        ignore_alpha = 1,
+        ignore_alpha = 0.5,
     }
 )
 
+-- The full-screen menus: the whole scrim is frosted.
 hl.layer_rule(
     {
-        name = "fabric-powermenu",
-        match = { namespace = "fabric-powermenu" },
+        name = "archdots-scrims",
+        match = { namespace = "archdots-(powermenu|screenshot|keybinds|polkit|lock-preview)" },
         blur = true,
         ignore_alpha = 0.1,
     }

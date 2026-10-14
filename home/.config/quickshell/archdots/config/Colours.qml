@@ -19,11 +19,11 @@ Singleton {
     readonly property color accentBright: wal.colors.color12
     readonly property color highlight: wal.colors.color7
 
-    // The island surface from fabric's bar.css:
+    // The island surface:
     // alpha(mix(background, color4, 0.22), 0.88)
     readonly property color island: alpha(mix(background, accent, 0.22), 0.88)
     readonly property color islandBorder: alpha(accent, 0.28)
-    // Panels and cards (fabric's .window): the island surface, more opaque.
+    // Panels and cards: the island surface, more opaque.
     readonly property color panel: alpha(mix(background, accent, 0.22), 0.92)
     readonly property color panelBorder: alpha(accent, 0.28)
     // Behind full-screen menus.

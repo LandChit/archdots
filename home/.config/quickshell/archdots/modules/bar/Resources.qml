@@ -4,7 +4,7 @@ import qs.config
 import qs.services
 import qs.widgets
 
-// volume · cpu temperature · battery, with the same glyphs as the fabric bar.
+// volume · cpu temperature · battery.
 Island {
     required property var settings
     padding: 10

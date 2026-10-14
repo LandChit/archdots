@@ -4,7 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 
-// Which panel is open. One at a time, like fabric's daemon: opening one closes
+// Which panel is open. One at a time: opening one closes
 // the other. Feedback surfaces (OSD, notification popups, toasts) are not
 // panels and are never closed by this.
 //

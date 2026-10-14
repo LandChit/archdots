@@ -49,7 +49,6 @@ archdots_docker/artifacts
 # fresh clone still has a palette before anything starts.
 #
 # The templates themselves stay tracked; only the rendered copies are ignored.
-home/.config/fabric_shell/css/colors-fabric.css
 home/.themes/archdots/gtk-3.0/colors.css
 home/.themes/archdots/gtk-4.0/colors.css
 home/.config/gtk-4.0/colors.css

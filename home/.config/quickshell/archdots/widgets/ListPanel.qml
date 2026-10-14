@@ -4,7 +4,7 @@ import qs.widgets
 // A SearchPanel whose body is a keyboard-driven list. `items` is a plain JS
 // array; the delegate gets each one as modelData.
 //
-// Nothing is highlighted until an arrow key is pressed (fabric's behaviour),
+// Nothing is highlighted until an arrow key is pressed,
 // but Enter still opens `defaultIndex`, the obvious pick for the query.
 SearchPanel {
     id: root

@@ -7,15 +7,15 @@
  * change; the wallpaper picker then copies it into both gtk-3.0/ and gtk-4.0/
  * of the archdots theme, next to the gtk.css that imports it.
  *
- * Mirrors colors-fabric.css: same palette, same semantic names, so GTK apps and
- * the shell are talking about the same colours. GTK CSS has no var(); named
- * colours are @define-color / @name, which is the one reason this cannot simply
- * be colors-fabric.css. It is also why the derived shades are computed here by
+ * The same palette and semantic names the shell reads from colors.json, so GTK
+ * apps and the shell are talking about the same colours. GTK CSS has no var();
+ * named colours are @define-color / @name. It is also why the derived shades are computed here by
  * pywal16 rather than with mix()/alpha() in the theme: GTK 3's mix() cannot be
  * used inside another @define-color.
  *
  * Generated with --cols16 dual, so colors 8-15 are distinct rather than copies
- * of 0-7 — see colors-fabric.css for the reasoning.
+ * of 0-7: color12 is a real second accent (keyboard selection uses it) instead
+ * of a duplicate of color4.
  *
  * NOTE: lighten()/darken() take an integer percent — pywal16 strips '.' from
  * the argument, so `darken(0.3)` silently means 3%, not 30%. saturate() *sets*

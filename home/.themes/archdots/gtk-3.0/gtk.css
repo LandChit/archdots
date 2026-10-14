@@ -9,7 +9,7 @@
  * from that palette with mix()/alpha(), so a new wallpaper recolours the whole
  * theme without anything being regenerated.
  *
- * The look is the fabric shell's, ported to GTK's widget set:
+ * The look is the shell's, ported to GTK's widget set:
  *   · surfaces are the wallpaper background lifted 22% toward the accent
  *   · one hairline border at alpha(accent, 0.28) around every raised surface
  *   · selection is an accent wash at 0.18 with a 0.50 accent border

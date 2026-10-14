@@ -7,7 +7,7 @@ import Quickshell
 //
 // Lock goes through `loginctl lock-session`, so whichever locker hypridle's
 // lock_cmd names does the locking (and idle- and sleep-locking use the same
-// one). fabric ran hyprlock directly because nothing listened then.
+// one).
 Singleton {
     readonly property var actions: [
         { id: "lock", label: "Lock", glyph: "󰍁", command: ["loginctl", "lock-session"] },

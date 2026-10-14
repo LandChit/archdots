@@ -6,7 +6,7 @@ import Quickshell.Io
 
 // CPU package temperature in °C, or -1 when there is no sensor.
 //
-// The sensor is found once, the same way fabric's common.find_cpu_temp does:
+// The sensor is found once:
 // by hwmon driver name, then by thermal zone type. thermal_zone0 is not
 // portable (it is a chassis probe on some laptops and a constant 20°C on others).
 Singleton {

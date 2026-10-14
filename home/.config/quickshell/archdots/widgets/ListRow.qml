@@ -4,7 +4,7 @@ import Quickshell
 import qs.config
 import qs.widgets
 
-// fabric's app row: an icon tile, a title over a subtitle, and a trailing
+// An app row: an icon tile, a title over a subtitle, and a trailing
 // hint shown only on the keyboard-selected row. Use as a ListPanel delegate.
 //
 // `icon` is a theme icon name or path; `glyph` is a Nerd Font glyph used

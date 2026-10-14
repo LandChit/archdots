@@ -5,16 +5,18 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("sleep 1; /usr/lib/pam_kwallet_init --no-startup-id")
     hl.exec_cmd("sleep 5; killall kwalletmanager5")
 
+    -- The shell draws the wallpaper, the bar and every panel, and is the
+    -- notification daemon and the polkit agent.
     shell.restart()
 
-
-    hl.exec_cmd("hyprpaper &")
     hl.exec_cmd("hypridle &")   -- dim, lock, screens off, suspend: see ../hypridle.conf
-    -- The polkit agent is a systemd user unit that install.sh enables. Starting
-    -- it here as well covers a session that never reaches graphical-session.target,
-    -- and it has to come after the import: the unit needs WAYLAND_DISPLAY.
-    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
-        .. " && systemctl --user start hyprpolkitagent.service")
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
+    -- One polkit agent per session, first to register wins. The shell's is the
+    -- one meant to; if it has not registered a few seconds in (shell not
+    -- running, or broken), hyprpolkitagent takes the job so authentication
+    -- always has somewhere to go.
+    hl.exec_cmd("sleep 8; " .. shell.ipc("polkit", "registered")
+        .. " 2>/dev/null | grep -qx true || systemctl --user start hyprpolkitagent.service")
     hl.exec_cmd("xwaylandvideobridge &")
     hl.exec_cmd("wl-paste --watch cliphist store")
     hl.exec_cmd("solaar --window=hide")

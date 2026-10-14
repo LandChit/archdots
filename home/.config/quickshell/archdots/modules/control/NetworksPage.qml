@@ -7,7 +7,7 @@ import qs.widgets
 
 // Wi-Fi networks, connected first, then by signal. Click to connect or
 // disconnect. A secured network you have not joined before asks for its
-// password here (fabric could only point you at nmcli).
+// password here.
 ColumnLayout {
     id: root
 

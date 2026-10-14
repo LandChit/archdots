@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.config
 
-// One floating row of islands along the top of a screen, like fabric's bar.py:
+// One floating row of islands along the top of a screen:
 // workspaces and the window title on the left, media, meters and the clock on
 // the right.
 PanelWindow {

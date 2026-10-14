@@ -124,7 +124,7 @@ PanelWindow {
                     width: parent.width * Math.min(root.percent, 100) / 100
                     height: parent.height
                     radius: 3
-                    // past 100%: the warm red fabric used, the palette's own
+                    // past 100%: a fixed warm red, since the palette's own
                     // red can come out grey
                     color: root.muted ? Colours.alpha(Colours.foreground, 0.30)
                          : root.percent > 100 ? Qt.rgba(224 / 255, 96 / 255, 78 / 255, 1)

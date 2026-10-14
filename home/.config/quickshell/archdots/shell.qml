@@ -126,7 +126,7 @@ ShellRoot {
         }
     }
 
-    // One panel at a time, as with fabric's ctl.py:
+    // One panel at a time:
     // qs -c archdots ipc call panel toggle launcher
     IpcHandler {
         target: "panel"

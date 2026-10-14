@@ -7,7 +7,7 @@
 --
 -- Generated with --cols16 dual, so colors 8-15 are distinct rather than copies
 -- of 0-7; accent_bright below is color12, which under classic pywal was just a
--- copy of color4. See colors-fabric.css for the reasoning.
+-- copy of color4.
 --
 -- NOTE: lighten()/darken() take an integer percent — pywal16 strips '.' from
 -- the argument, so `darken(0.3)` silently means 3%, not 30%. saturate() *sets*
@@ -34,7 +34,7 @@ return {{
     color14 = "{color14.strip}",
     color15 = "{color15.strip}",
 
-    -- Semantic names, matching colors-fabric.css so the window borders and the
+    -- Semantic names, matching the shell's (config/Colours.qml) so the window borders and the
     -- shell panels are talking about the same colours.
     accent        = "{color4.strip}",
     accent_bright = "{color12.strip}",

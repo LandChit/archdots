@@ -4,7 +4,7 @@ import Quickshell
 import qs.config
 import qs.widgets
 
-// fabric's search panel: a card hanging from the top of the screen with a
+// A search panel: a card hanging from the top of the screen with a
 // search row, a body (default property) and a footer of key hints. Slides
 // and fades in. The search field keeps the keyboard; arrow keys and Enter are
 // passed on as signals for the body to act on.

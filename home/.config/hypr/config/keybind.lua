@@ -109,24 +109,24 @@ hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(),
     { mouse = true, desc = "Window: Drag to resize" })
 
--- Each media key changes the level and then shows the shell's OSD for it.
+-- The shell's OSD shows itself whenever a level changes.
 hl.bind("XF86AudioRaiseVolume",
-    shell.with_osd("wpctl set-volume -l 2 @DEFAULT_AUDIO_SINK@ 5%+", "volume"),
+    hl.dsp.exec_cmd("wpctl set-volume -l 2 @DEFAULT_AUDIO_SINK@ 5%+"),
     { locked = true, repeating = true, desc = "Media: Volume up" })
 hl.bind("XF86AudioLowerVolume",
-    shell.with_osd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-", "volume"),
+    hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),
     { locked = true, repeating = true, desc = "Media: Volume down" })
 hl.bind("XF86AudioMute",
-    shell.with_osd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle", "volume"),
+    hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),
     { locked = true, repeating = true, desc = "Media: Mute output" })
 hl.bind("XF86AudioMicMute",
-    shell.with_osd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle", "mic"),
+    hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),
     { locked = true, repeating = true, desc = "Media: Mute microphone" })
 hl.bind("XF86MonBrightnessUp",
-    shell.with_osd("brightnessctl -e4 -n2 set 5%+", "brightness"),
+    shell.brightness("up"),
     { locked = true, repeating = true, desc = "Media: Brightness up" })
 hl.bind("XF86MonBrightnessDown",
-    shell.with_osd("brightnessctl -e4 -n2 set 5%-", "brightness"),
+    shell.brightness("down"),
     { locked = true, repeating = true, desc = "Media: Brightness down" })
 
 -- Requires playerctl

@@ -9,7 +9,7 @@ import qs.widgets
 // Emoji grid with a group rail, most-used first. Enter or a click copies.
 // ↑↓ move by row; ←→ move while the search is empty; PgUp/PgDn change group.
 //
-// The data is the JSON fabric used (unicode-emoji-json), cached at
+// The data is unicode-emoji-json, cached at
 // ~/.cache/emoji-picker/; downloaded once if it is missing.
 SearchPanel {
     id: root

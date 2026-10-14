@@ -12,7 +12,8 @@ Item {
 
     // ~/.local/state/archdots/<file>-counts.json
     required property string file
-    // Read once if the file above does not exist yet (fabric's old tallies).
+    // Read once if the file above does not exist yet (tallies kept by the
+    // shell before this one).
     property string importFrom: ""
 
     property var counts: ({})

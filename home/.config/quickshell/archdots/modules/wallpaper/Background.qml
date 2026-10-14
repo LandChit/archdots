@@ -23,7 +23,7 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     color: Colours.background
     WlrLayershell.layer: WlrLayer.Background
-    WlrLayershell.namespace: "archdots-wallpaper"
+    WlrLayershell.namespace: "archdots-background"
 
     property Image front: one
 

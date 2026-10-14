@@ -51,7 +51,7 @@ if [[ -n "${REBUILD:-}" ]] || ! docker image inspect "$IMAGE" &>/dev/null; then
 fi
 
 case "$MODE" in
-    fast)   ARGS=(--yes --skip-packages --skip-venv) ;;
+    fast)   ARGS=(--yes --skip-packages) ;;
     full)   ARGS=(--yes) ;;
     # --no-aur on purpose: nothing in the AUR set (browser, editor, LSP, the
     # SDDM theme) affects whether the compositor and shell come up, and paru's

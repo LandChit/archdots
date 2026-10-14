@@ -145,7 +145,7 @@ Singleton {
             property JsonObject audio: JsonObject {
                 // Percentage points per scroll notch over the volume meter.
                 property int scrollStep: 5
-                // 1.0 is 100%. The fabric bar allowed up to 200% (wpctl -l 2).
+                // 1.0 is 100%; 2.0 matches the volume keys' wpctl -l 2.
                 property real maxVolume: 2.0
             }
         }

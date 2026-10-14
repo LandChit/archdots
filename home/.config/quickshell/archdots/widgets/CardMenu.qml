@@ -115,7 +115,7 @@ Panel {
                         ColorAnimation { duration: 140 }
                     }
 
-                    // fabric's glowpulse: an accent halo breathing round the selection
+                    // an accent halo breathing round the selection
                     Rectangle {
                         property real glow: 6
 

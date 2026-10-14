@@ -12,7 +12,7 @@ import qs.widgets
 // Image entries get real thumbnails: each is decoded once into
 // $XDG_RUNTIME_DIR/archdots-clipboard/ (tmpfs, gone at logout) and loaded
 // asynchronously, so large images no longer stall the panel or fall back to
-// a generic icon as they did in fabric. The selected image is also shown
+// a generic icon. The selected image is also shown
 // large under the list.
 //
 // cliphist's own "id<TAB>preview" line is what it wants back to decode or

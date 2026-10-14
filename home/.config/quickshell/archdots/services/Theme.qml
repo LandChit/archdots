@@ -112,7 +112,7 @@ Singleton {
     }
 
     // GTK's three copies (two for the theme, one next to the gtk.css that
-    // libadwaita reads), fabric's while it is still around, then Hyprland.
+    // libadwaita reads), then Hyprland.
     Process {
         id: sync
 
@@ -121,7 +121,6 @@ Singleton {
             for t in "$HOME/.themes/archdots/gtk-3.0/colors.css" "$HOME/.themes/archdots/gtk-4.0/colors.css" "$HOME/.config/gtk-4.0/colors.css"; do
                 [ -d "$(dirname "$t")" ] && cp "$C/colors-gtk.css" "$t"
             done
-            [ -d "$HOME/.config/fabric_shell/css" ] && cp "$C/colors-fabric.css" "$HOME/.config/fabric_shell/css/colors-fabric.css"
             hyprctl reload >/dev/null
         `]
     }
@@ -151,7 +150,7 @@ Singleton {
                 root.perMonitor = state.monitors ?? {};
             } catch (e) {}
         }
-        // First run under the shell: take over what hyprpaper and hyprlock
+        // First run under the shell: take over what the old setup and hyprlock
         // were already showing, through the pointer.
         onLoadFailed: pointerReader.running = true
     }

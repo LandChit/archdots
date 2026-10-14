@@ -24,7 +24,7 @@ cd "$REPO" || exit 1
 # host's machine-specific files and reports "monitor.lua already exists", which
 # is the opposite of what a new machine sees.
 rm -f  home/.config/hypr/config/custom/*.lua
-rm -rf home/.config/fabric_shell/.venv .omc home/.config/hypr/.omc
+rm -rf .omc home/.config/hypr/.omc
 
 # Files flagged assume-unchanged (`git ls-files -v` prints those lowercase) are
 # local-only by definition: git is told to ignore whatever the working tree
@@ -74,7 +74,6 @@ echo "===================== post-run checks ====================="
 echo "  install.sh exit code:          $install_rc"
 printf "  %-30s %s\n" ".zshrc -> repo:"        "$(resolves "$HOME/.zshrc")"
 printf "  %-30s %s\n" "hypr config -> repo:"   "$(resolves "$HOME/.config/hypr/config/keybind.lua")"
-printf "  %-30s %s\n" "fabric_shell -> repo:"  "$(resolves "$HOME/.config/fabric_shell/bar.py")"
 printf "  %-30s %s\n" "quickshell -> repo:"    "$(resolves "$HOME/.config/quickshell/archdots/shell.qml")"
 printf "  %-30s %s\n" "install.sh NOT stowed:" "$([ -e "$HOME/install.sh" ] && echo LEAKED || echo ok)"
 printf "  %-30s %s\n" "repo-only NOT stowed:"  "$(for f in home kvantum .themes_sddm README.md archdots_docker; do [ -e "$HOME/$f" ] && printf 'LEAKED:%s ' "$f"; done; echo ok)"
@@ -84,7 +83,7 @@ printf "  %-30s %s\n" "oh-my-zsh:"             "$([ -d "$HOME/.oh-my-zsh" ] && e
 printf "  %-30s %s\n" "zsh plugins (pacman):"  "$([ -r /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ] && [ -r /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && echo yes || echo MISSING)"
 printf "  %-30s %s\n" "user folder files:"     "$(cd "$HOME/.config/archdots" 2>/dev/null && find . -type f | sort | tr '\n' ' ' || echo MISSING)"
 printf "  %-30s %s\n" "user folder in repo:"   "$([ -e "$REPO/.config/archdots" ] && echo LEAKED || echo ok)"
-printf "  %-30s %s\n" "venv python:"           "$([ -x "$HOME/.config/fabric_shell/.venv/bin/python" ] && echo yes || echo no)"
+printf "  %-30s %s\n" "no fabric_shell left:"  "$([ -e "$HOME/.config/fabric_shell" ] && echo LEFT || echo ok)"
 echo "  repo dirtied by machine config:"
 git -C "$REPO" status --short 2>/dev/null | sed 's/^/    /' | head -8
 echo "==========================================================="
@@ -140,11 +139,14 @@ cat >> "$HOME/.config/archdots/hypr/monitor.lua" <<'MON'
 hl.monitor({ output = "WAYLAND-1", mode = "preferred", position = "0x0", scale = 1.0 })
 MON
 
-echo "  palette in use: $(grep -E '^\s+--(background|color4):' \
-    "$HOME/.config/fabric_shell/css/colors-fabric.css" 2>/dev/null | tr -d ' \n' || echo unknown)"
+palette() {
+    python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["special"]["background"], d["colors"]["color4"])' \
+        "$HOME/.cache/wal/colors.json" 2>/dev/null || echo unknown
+}
+echo "  palette in use: $(palette)"
 
-# dbus-run-session: the shell daemon claims org.freedesktop.Notifications, and
-# a container has no session bus otherwise.
+# dbus-run-session: the shell claims org.freedesktop.Notifications, and a
+# container has no session bus otherwise.
 dbus-run-session -- Hyprland > /tmp/hypr.log 2>&1 &
 hyprpid=$!
 
@@ -187,32 +189,27 @@ hyprctl binds -j | python3 -c 'import json,sys; print(sum(1 for b in json.load(s
 
 echo "  waiting for the shell..."
 for _ in $(seq 30); do
-    pgrep -f "fabric_shell/bar.py" >/dev/null 2>&1 && break
+    pgrep -f "qs -c archdots" >/dev/null 2>&1 && break
     sleep 1
 done
-printf "  %-30s %s\n" "daemon.py:" "$(pgrep -f 'fabric_shell/daemon.py' >/dev/null 2>&1 && echo running || echo 'NOT RUNNING')"
-printf "  %-30s %s\n" "bar.py:"    "$(pgrep -f 'fabric_shell/bar.py'    >/dev/null 2>&1 && echo running || echo 'NOT RUNNING')"
+qspid="$(pgrep -f 'qs -c archdots' | head -1)"
+printf "  %-30s %s\n" "shell (qs -c archdots):" "$([ -n "$qspid" ] && echo "running, pid $qspid" || echo 'NOT RUNNING')"
+# its own log, for anything QML refused to load
+qs log -c archdots 2>/dev/null | grep -E 'ERROR|WARN' | grep -vE 'textinput|PowerProfiles' | head -8 | sed 's/^/    log: /'
 
 printf "  %-30s %s\n" "bar layer geometry:" "$(hyprctl layers -j | python3 -c 'import json,sys
 d=json.load(sys.stdin)
 for mon in d.values():
     for lvl in mon["levels"].values():
         for l in lvl:
-            if "fabric" in l.get("namespace",""):
-                print("%s %sx%s at %s,%s" % (l["namespace"], l["w"], l["h"], l["x"], l["y"]))' 2>/dev/null | head -2 | tr '\n' ' ')"
-printf "  %-30s %s\n" "fabric layer surfaces:"  "$(hyprctl layers 2>/dev/null | grep -c fabric)"
+            if l.get("namespace") == "archdots-bar":
+                print("%sx%s at %s,%s" % (l["w"], l["h"], l["x"], l["y"]))' 2>/dev/null | head -2 | tr '\n' ' ')"
+printf "  %-30s %s\n" "shell layer surfaces:" "$(hyprctl layers 2>/dev/null | grep -o 'archdots-[a-z-]*' | sort -u | tr '\n' ' ')"
 # The session bus belongs to the dbus-run-session that Hyprland runs inside;
-# this script is outside it, so it has to borrow that bus address from the
-# daemon's own environment. Querying without this reports "unclaimed" for a bus
-# that is in fact owned, which reads as a failure when nothing is wrong.
-dpid="$(pgrep -f 'fabric_shell/daemon.py' | head -1)"
-if [ -n "$dpid" ] && [ -r "/proc/$dpid/environ" ]; then
-    bus="$(tr '\0' '\n' < "/proc/$dpid/environ" | grep '^DBUS_SESSION_BUS_ADDRESS=' | cut -d= -f2-)"
-    # busctl prints "PID=1234", so the separator is '=' and not whitespace —
-    # and the anchor has to be PID= or it also matches the PIDFD line.
-    # Gio.bus_own_name is asynchronous — it returns immediately and the name is
-    # acquired later on the main loop, so a single query right after startup can
-    # miss it. Retry rather than declare failure on the first look.
+# this script is outside it, so it borrows that bus address from the shell's
+# own environment. The name is claimed asynchronously, so retry a while.
+if [ -n "$qspid" ] && [ -r "/proc/$qspid/environ" ]; then
+    bus="$(tr '\0' '\n' < "/proc/$qspid/environ" | grep '^DBUS_SESSION_BUS_ADDRESS=' | cut -d= -f2-)"
     owner=""
     for _ in $(seq 15); do
         owner="$(DBUS_SESSION_BUS_ADDRESS="$bus" busctl --user status org.freedesktop.Notifications 2>/dev/null | awk -F= '/^PID=/{print $2}')"
@@ -220,18 +217,12 @@ if [ -n "$dpid" ] && [ -r "/proc/$dpid/environ" ]; then
         sleep 1
     done
     if [ -n "$owner" ]; then
-        printf "  %-30s %s\n" "notification bus owner:" "pid $owner$([ "$owner" = "$dpid" ] && echo ' (= daemon.py, correct)')"
+        printf "  %-30s %s\n" "notification bus owner:" "pid $owner$([ "$owner" = "$qspid" ] && echo ' (= the shell, correct)')"
     else
         printf "  %-30s %s\n" "notification bus owner:" "UNCLAIMED"
-        echo "    bus address: ${bus:-EMPTY}"
-        echo "    names on that bus matching 'otif':"
-        DBUS_SESSION_BUS_ADDRESS="$bus" busctl --user list 2>&1 | grep -i otif | sed 's/^/      /' \
-            || echo "      (none)"
-        echo "    busctl list exit: $(DBUS_SESSION_BUS_ADDRESS="$bus" busctl --user list >/dev/null 2>&1; echo $?)"
-
     fi
 else
-    printf "  %-30s %s\n" "notification bus owner:" "n/a (no daemon to read the bus from)"
+    printf "  %-30s %s\n" "notification bus owner:" "n/a (no shell to read the bus from)"
 fi
 
 # The nested compositor opened its own socket beside the host one we mounted in
@@ -252,7 +243,10 @@ fi
 # its own opaque widget background behind the shell's semi-transparent islands
 # — so the bar stops following the palette while the CSS itself is still fine.
 echo "  --- gtk theme resolution ---"
-"$HOME/.config/fabric_shell/.venv/bin/python" - <<'GTKPY' 2>&1 | sed 's/^/    /'
+# python-gobject is not a dependency any more (the fabric shell needed it);
+# check only where it happens to be installed.
+python3 -c 'import gi' 2>/dev/null || echo "    skipped: python-gobject not installed"
+python3 -c 'import gi' 2>/dev/null && python3 - <<'GTKPY' 2>&1 | sed 's/^/    /'
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -267,33 +261,31 @@ for p in (os.path.expanduser("~/.themes"), "/usr/share/themes"):
 GTKPY
 
 # ── does the shell re-theme in place? ───────────────────────────────────────
-# Exactly what the wallpaper picker does internally: regenerate the palette with
-# pywal16, then copy it into css/. Everything else is common._watch_palette's job.
-# If the bar does not change colour after this, the Gio.FileMonitor is dead —
-# which is the failure that used to require restarting the shell.
+# What the wallpaper picker does: `wallpaper set` runs pywal16 and the shell
+# reads ~/.cache/wal/colors.json live. If the bar keeps its colour, the shell's
+# watch on that file is dead — which used to mean restarting it.
 if [ -n "${nested:-}" ] && command -v grim >/dev/null; then
     echo "  --- live re-theme test ---"
-    before="$(grep -E '^\s+--background:' "$HOME/.config/fabric_shell/css/colors-fabric.css" | tr -d ' ')"
-    # install.sh's $WALLPAPER is not in scope here. The wallpaper pointer holds
-    # what it actually chose — hyprpaper.conf names the pointer, not a picture —
-    # so resolve that and pick a different file. Comparing a palette against
-    # itself proves nothing.
+    before="$(palette)"
+    # The pointer holds what install.sh chose; pick a different file, since
+    # comparing a palette against itself proves nothing.
     current="$(readlink -f "$HOME/.local/state/archdots/wallpaper" 2>/dev/null)"
     other="$(find "$HOME/Pictures/wallpapers" -maxdepth 1 -type f ! -name "$(basename "$current")" | head -1)"
     printf "    %-28s %s\n" "palette before:" "$before"
     printf "    %-28s %s\n" "switching to:" "$(basename "$other")"
-    # --cols16 dual must match install.sh and wallpapers.py, or this test
-    # regenerates the palette in a shape the real picker never produces.
-    wal -i "$other" --cols16 dual -n -q >/dev/null 2>&1
-    cp "$HOME/.cache/wal/colors-fabric.css" "$HOME/.config/fabric_shell/css/colors-fabric.css"
-    sleep 4
-    after="$(grep -E '^\s+--background:' "$HOME/.config/fabric_shell/css/colors-fabric.css" | tr -d ' ')"
+    qs -c archdots ipc call wallpaper set "$other" >/dev/null 2>&1
+    for _ in $(seq 20); do
+        [ "$(palette)" != "$before" ] && break
+        sleep 1
+    done
+    after="$(palette)"
     printf "    %-28s %s\n" "palette after:" "$after"
+    sleep 2
     WAYLAND_DISPLAY="$nested" grim /artifacts/after-retheme.png 2>/dev/null \
         && printf "    %-28s %s\n" "second screenshot:" "artifacts/after-retheme.png"
     if [ "$before" != "$after" ]; then
-        echo "    palette file DID change — if the two screenshots differ, the"
-        echo "    shell re-themed in place with no restart."
+        echo "    palette DID change — if the two screenshots differ, the shell"
+        echo "    re-themed in place with no restart."
     else
         echo "    palette unchanged — test inconclusive (need a second wallpaper)"
     fi

@@ -5,7 +5,7 @@ import Quickshell.Services.SystemTray
 import qs.config
 import qs.widgets
 
-// Tray icons, moved here from the bar as in fabric. Click to activate,
+// Tray icons (they live here, not in the bar). Click to activate,
 // right-click for the app's menu.
 Flow {
     id: root

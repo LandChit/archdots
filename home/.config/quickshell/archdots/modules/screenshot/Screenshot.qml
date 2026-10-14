@@ -3,7 +3,7 @@ import Quickshell
 import qs.widgets
 
 // Region, window, whole screen, or the whole screen after 5 s. Every shot is
-// saved to ~/Pictures/screenshots and copied, as fabric's menu did.
+// saved to ~/Pictures/screenshots and copied.
 //
 // The menu closes first and the grab waits for it to fade, so the scrim is
 // never in the picture. The filename is expanded once into $F: repeating

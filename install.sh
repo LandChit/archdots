@@ -21,7 +21,7 @@
 # as plain text on stdout.
 #
 # Run it as your normal user. It calls sudo where it needs to and nowhere else:
-# stow, the venv and every gsettings call must run as you, not as root.
+# stow, the shell and every gsettings call must run as you, not as root.
 
 set -euo pipefail
 
@@ -31,9 +31,9 @@ REPO_URL_DEFAULT="https://github.com/LandChit/archdots"
 REPO_DIR_DEFAULT="$HOME/archdots"
 WALLPAPER_DIR="$HOME/Pictures/wallpapers"
 
-# The wallpaper this machine is using, as a symlink. hyprpaper.conf and
-# hyprlock.conf point at it instead of at a picture, which is what keeps both of
-# those files identical on every machine and out of `git status`.
+# The wallpaper this machine is using, as a symlink. hyprlock.conf points at it
+# instead of at a picture, which keeps that file identical on every machine and
+# out of `git status`; the shell's wallpaper picker re-points it.
 WALLPAPER_POINTER="$HOME/.local/state/archdots/wallpaper"
 
 # The SDDM theme is pinned. Its config schema changes between releases, and
@@ -46,20 +46,15 @@ SDDM_THEME_VERSION="1.3.5"
 # lives further down, because a package that is merely nice to have should not
 # be able to fail an install.
 PKG_CORE=(
-    hyprland hyprpaper hyprlock hypridle hyprpolkitagent
-    # The Quickshell rewrite of the shell (~/.config/quickshell/archdots). Its
-    # battery meter reads UPower, which is D-Bus activated: nothing to enable.
+    # hyprlock is the lock screen unless the shell's own is switched on, and
+    # its fallback either way; hyprpolkitagent is the polkit fallback.
+    hyprland hyprlock hypridle hyprpolkitagent
+    # The desktop shell (~/.config/quickshell/archdots): bar, wallpaper, every
+    # panel, notifications, polkit. Its battery meter reads UPower, which is
+    # D-Bus activated: nothing to enable.
     quickshell upower
     xdg-desktop-portal-hyprland xdg-desktop-portal-gtk uwsm sddm
     alacritty dolphin
-    python-gobject gtk3 gtk-layer-shell python-pip
-    # fabric.system_tray does gi.require_version("DbusmenuGtk3", "0.4") at
-    # import time, and daemon.py imports it through controlcenter -> tray. Miss
-    # this and *every* overlay dies with the daemon — launcher, clipboard,
-    # notifications, control centre, the lot — while bar.py keeps running, so
-    # the desktop looks half-alive rather than broken. pip cannot supply it:
-    # it is a typelib, not a wheel.
-    libdbusmenu-gtk3
     cliphist wl-clipboard grim slurp brightnessctl playerctl libnotify
     pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol
     networkmanager bluez bluez-utils blueman
@@ -82,10 +77,8 @@ PKG_CORE=(
     # run — an update, or a re-run after a change — gets the boxes even if this
     # one had to fall back to plain prompts.
     libnewt
-    # pip compiles pycairo and PyGObject from source rather than fetching
-    # wheels, so their build dependencies have to be present. base-devel is
-    # also what makepkg needs to bootstrap paru.
-    base-devel cairo gobject-introspection pkgconf
+    # what makepkg needs to bootstrap paru
+    base-devel
 )
 
 # JetBrainsMono Nerd is required — without it every glyph in the bar is a box.
@@ -148,7 +141,6 @@ WANT_AUR=1
 WANT_FLATPAK=1
 DO_PACKAGES=1
 DO_STOW=1
-DO_VENV=1
 DO_MACHINE=1
 
 usage() {
@@ -177,7 +169,6 @@ plain text, with every command's output on screen.
       --no-aur        Skip paru and every AUR package.
       --skip-packages Install nothing; only link, build and configure.
       --skip-stow     Do not run stow.
-      --skip-venv     Do not build the fabric_shell virtualenv.
       --skip-machine  Do not touch machine-specific config (GPU, monitors,
                       wallpaper paths).
   -h, --help          This text.
@@ -206,7 +197,9 @@ while [[ $# -gt 0 ]]; do
         --no-aur)        WANT_AUR=0 ;;
         --skip-packages) DO_PACKAGES=0 ;;
         --skip-stow)     DO_STOW=0 ;;
-        --skip-venv)     DO_VENV=0 ;;
+        # the fabric shell's virtualenv is gone; still accepted so older
+        # scripts that pass it keep working
+        --skip-venv)     ;;
         --skip-machine)  DO_MACHINE=0 ;;
         -h|--help)       usage; exit 0 ;;
         *)               echo "unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -882,7 +875,7 @@ $KEYS_YESNO"
 
 # ── guards ──────────────────────────────────────────────────────────────────
 
-(( EUID != 0 )) || die "do not run this as root — stow, the venv and gsettings must run as your user."
+(( EUID != 0 )) || die "do not run this as root — stow, the shell and gsettings must run as your user."
 command -v pacman >/dev/null || die "pacman not found. This installer is for Arch Linux."
 command -v sudo   >/dev/null || die "sudo not found. Install it and add your user to a wheel rule."
 
@@ -906,7 +899,7 @@ find_repo_root() {
     [[ -f "${BASH_SOURCE[0]}" ]] || return 1
     dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || return 1
     # A clone is identifiable by these two, which exist nowhere else.
-    [[ -f "$dir/install.sh" && -d "$dir/home/.config/fabric_shell" ]] || return 1
+    [[ -f "$dir/install.sh" && -d "$dir/home/.config/quickshell/archdots" ]] || return 1
     printf '%s' "$dir"
 }
 
@@ -1345,8 +1338,8 @@ migrate_layout() {
             mkdir -p "$(dirname -- "$dst")"
             mv -- "$src" "$dst"
             moved=$(( moved + 1 ))
-        # A .venv moves as one directory (thousands of files, and stage_venv
-        # rebuilds it if anything is off); everything else file by file.
+        # A .venv moves as one directory (thousands of files; retire_fabric
+        # then deletes the fabric shell's); everything else file by file.
         done < <(find "$real/$top" \( -type d -name .venv -prune -print0 \) -o \( ! -type d -print0 \))
         find "$real/$top" -depth -type d -empty -delete 2>/dev/null
         [[ -d "$real/$top" ]] || ok "moved what was left in $top/ into home/"
@@ -1573,42 +1566,34 @@ stage_user_dir() {
     fi
 }
 
-# ── the shell's virtualenv ──────────────────────────────────────────────────
+# ── retiring the fabric shell ───────────────────────────────────────────────
+#
+# The shell used to be fabric_shell (Python, its own virtualenv). It is now
+# Quickshell, and the fabric files are gone from the repo, but a clone that
+# pulls across that change still has what git never tracked: the venv,
+# __pycache__ and the rendered colors-fabric.css, in home/.config/fabric_shell/.
+# Left there, stow would keep ~/.config/fabric_shell linked to it. Its processes
+# may also still be running.
+#
+# Deleted only when git tracks nothing under it any more, so this can never
+# remove a file that belongs to the repo.
 
-stage_venv() {
-    phase 87 96 "Building the desktop shell"
-    step "fabric_shell virtualenv"
-    if (( ! DO_VENV )); then
-        skip "skipped (--skip-venv)"
-        return 0
+retire_fabric() {
+    local dir="$REPO_ROOT/home/.config/fabric_shell"
+    # $HOME-anchored, and fabric_shel[l] so pkill never matches this script
+    local procs="$HOME/\.config/fabric_shel[l][^ ]*/(daemon|bar|notifications)\.py"
+
+    if pgrep -f "$procs" >/dev/null 2>&1; then
+        pkill -f "$procs" && ok "stopped the old fabric shell"
     fi
-
-    local mode="${1:-install}"
-    local venv="$HOME/.config/fabric_shell/.venv"
-    local reqs="$HOME/.config/fabric_shell/requirements.txt"
-
-    if [[ ! -f "$reqs" ]]; then
-        warn "$reqs not found — did stow run?"
-        note "venv skipped: requirements.txt missing"
-        return 0
+    if [[ -d "$dir" ]] && [[ -z "$(git -C "$REPO_ROOT" ls-files -- "$dir" 2>/dev/null)" ]]; then
+        rm -rf -- "$dir"
+        ok "removed the old fabric shell's leftovers (venv, caches)"
     fi
-
-    [[ -d "$venv" ]] || run_logged "Creating the virtualenv" python -m venv "$venv"
-    say "installing fabric (this compiles pycairo and PyGObject — slow)"
-    # The absolute path matters. A bare `-r requirements.txt` resolves against
-    # the working directory, which here is the repo root, where no such file
-    # exists.
-    "$venv/bin/pip" install --upgrade pip >/dev/null 2>&1 || true
-    local pip_args=(install -r "$reqs")
-    # On an update, requirements.txt may have moved to a newer fabric.
-    [[ "$mode" == "upgrade" ]] && pip_args=(install --upgrade -r "$reqs")
-    if run_logged "Building fabric (this takes a while)" "$venv/bin/pip" "${pip_args[@]}"; then
-        ok "$venv"
-    else
-        # Non-fatal so the machine config below still gets written.
-        warn "fabric failed to build — the bar and overlays will not start"
-        note "retry: $venv/bin/pip install -r $reqs"
+    if [[ -L "$HOME/.config/fabric_shell" && ! -e "$HOME/.config/fabric_shell" ]]; then
+        rm -- "$HOME/.config/fabric_shell"
     fi
+    return 0
 }
 
 # ── wallpapers ──────────────────────────────────────────────────────────────
@@ -1647,9 +1632,9 @@ stage_wallpapers() {
     fi
 
     # ── the pointer ─────────────────────────────────────────────────────────
-    # hyprpaper.conf and hyprlock.conf both name $WALLPAPER_POINTER rather than
-    # a picture, so neither tracked file has to be edited per machine — or per
-    # wallpaper. This symlink is the machine's actual choice, and the picker
+    # hyprlock.conf names $WALLPAPER_POINTER rather than a picture, and the
+    # shell starts from it, so no tracked file has to be edited per machine — or
+    # per wallpaper. This symlink is the machine's actual choice, and the picker
     # (SUPER + W) re-points it whenever you change wallpaper.
     #
     # An existing pointer is never repointed: on an update it is the choice made
@@ -1674,8 +1659,8 @@ stage_wallpapers() {
 #
 #   Hyprland   ~/.config/archdots/hypr/*.lua, loaded after the defaults
 #   uwsm       env-hyprland.d/, sourced after env-hyprland  (gitignored)
-#   hyprpaper  ~/.local/state/archdots/wallpaper, a symlink the tracked
-#   hyprlock   config points at, so neither config names a picture
+#   wallpaper  ~/.local/state/archdots/wallpaper, a symlink hyprlock's tracked
+#              config points at and the shell starts from
 #
 # The repo therefore stays clean after an install, and nothing here can push one
 # machine's hardware onto another.
@@ -1898,7 +1883,7 @@ hl.workspace_rule({ workspace = \"1\", monitor = \"$primary\", default = true, p
 #
 # --cols16 dual is what makes colors 8-15 real colours instead of copies of 0-7,
 # which the templates and every sheet downstream rely on. It has to match the
-# flag the wallpaper picker uses (fabric_shell/wallpapers.py) — a run without it
+# flag the wallpaper picker uses (quickshell/archdots/services/Theme.qml) — a run without it
 # would quietly rewrite the palette with a duplicated bright half.
 #
 # Note that on a near-monochrome wallpaper the distinct bright half is a much
@@ -1935,7 +1920,6 @@ stage_theming() {
         # palette there — not next to itself in .themes/.
         local pair src dst copied=0
         for pair in \
-            "colors-fabric.css:$HOME/.config/fabric_shell/css/colors-fabric.css" \
             "colors-gtk.css:$HOME/.themes/archdots/gtk-3.0/colors.css" \
             "colors-gtk.css:$HOME/.themes/archdots/gtk-4.0/colors.css" \
             "colors-gtk.css:$HOME/.config/gtk-4.0/colors.css"
@@ -2131,41 +2115,45 @@ stage_services() {
         fi
     done
 
-    # User units: no sudo, and no question either. Without a polkit agent every
-    # "authentication required" prompt fails silently instead of asking.
-    for svc in hyprpolkitagent; do
-        if ! systemctl --user list-unit-files "$svc.service" &>/dev/null; then
-            skip "$svc not installed"
-        elif systemctl --user is-enabled "$svc" &>/dev/null; then
-            skip "$svc already enabled"
-        elif run_logged "Enabling $svc" systemctl --user enable "$svc.service"; then
-            ok "$svc enabled (user unit)"
+    # The shell is the polkit agent now. Only one agent can register per
+    # session, and an enabled hyprpolkitagent unit starts first and wins, so it
+    # is switched off here; autorun.lua starts it only if the shell's agent has
+    # not registered (shell down or broken).
+    if systemctl --user is-enabled hyprpolkitagent.service &>/dev/null; then
+        if run_logged "Disabling hyprpolkitagent (now the fallback)" systemctl --user disable hyprpolkitagent.service; then
+            ok "hyprpolkitagent is the fallback agent now"
         else
-            # No user manager, e.g. in a container. autorun.lua starts it anyway.
-            warn "could not enable $svc"
-            note "enable it by hand: systemctl --user enable $svc.service"
+            warn "could not disable hyprpolkitagent"
+            note "the shell's polkit dialog will not show while it runs: systemctl --user disable hyprpolkitagent.service"
         fi
-    done
+    fi
+
+    # Power profiles in the control centre need the power-profiles D-Bus
+    # service. TLP conflicts with power-profiles-daemon but ships tlp-pd, which
+    # provides the same interface.
+    if command -v tlp >/dev/null && systemctl list-unit-files tlp-pd.service &>/dev/null \
+        && ! systemctl is-enabled tlp-pd.service &>/dev/null; then
+        if confirm "Enable tlp-pd?
+
+TLP is installed. tlp-pd lets the control centre switch power profiles (saver, balanced, performance) through TLP." y; then
+            if run_logged "Enabling tlp-pd" "${SUDO[@]}" systemctl enable --now tlp-pd.service; then
+                ok "tlp-pd enabled"
+            else
+                warn "could not enable tlp-pd"
+                note "enable it by hand: sudo systemctl enable --now tlp-pd"
+            fi
+        fi
+    fi
 }
 
 # ── restarting the running shell ────────────────────────────────────────────
 #
-# Only meaningful during an update, and only when a session is up. The command
-# mirrors hypr/config/helpers/shell.lua: kill both long-lived modules, refresh
-# the pywal16 colours, start them again — all inside one shell, so that shell's
-# own command line is what its own pkill sees rather than the processes it is
-# about to spawn.
-
-# Both patterns are anchored to *this* $HOME. The bracket in fabric_shel[l] is
-# what keeps pkill from matching the shell running the restart itself; the $HOME
-# prefix is what keeps it from matching a session belonging to another home
-# under the same user — an installer run with HOME pointed somewhere else would
-# otherwise kill the desktop that is running right now. (Found the hard way.)
-SHELL_PROCS="$HOME/\.config/fabric_shel[l][^ ]*/(daemon|bar)\.py"
-SHELL_PROCS_ALL="$HOME/\.config/fabric_shel[l][^ ]*/(daemon|bar|notifications)\.py"
+# Only meaningful during an update, and only when a session is up. Same as
+# hypr/config/helpers/shell.lua's restart: stop the instance, start a new one
+# detached.
 
 shell_is_running() {
-    pgrep -f "$SHELL_PROCS" >/dev/null 2>&1
+    qs list -c archdots 2>/dev/null | grep -q '^Instance'
 }
 
 restart_shell() {
@@ -2176,26 +2164,20 @@ restart_shell() {
     fi
     if ! interactive confirm "Restart the running shell now?
 
-The bar and the overlays disappear for a second while it comes back. Skip this if you are in the middle of something — SUPER + SHIFT + R does the same later." y; then
+The bar and the panels disappear for a second while it comes back. Skip this if you are in the middle of something — SUPER + SHIFT + CTRL + ALT + R does the same later." y; then
         skip "left running the old code"
-        note "restart the shell with SUPER + SHIFT + R, or log out and back in"
+        note "restart the shell with SUPER + SHIFT + CTRL + ALT + R, or log out and back in"
         return 0
     fi
-    # setsid, or the new daemon is a child of this script and dies with it.
-    setsid bash -c '
-        R=$HOME/.config/fabric_shell; PY=$R/.venv/bin/python
-        pkill -f "'"$SHELL_PROCS_ALL"'"
-        sleep 1
-        wal -R >/dev/null 2>&1 && cp "$HOME/.cache/wal/colors-fabric.css" "$R/css/colors-fabric.css"
-        $PY $R/daemon.py >/dev/null 2>&1 &
-        $PY $R/bar.py >/dev/null 2>&1 &
-    ' >/dev/null 2>&1 || true
+    qs kill -c archdots >/dev/null 2>&1 || true
+    # -d detaches it, so it does not die with this script
+    qs -c archdots -n -d >/dev/null 2>&1 || true
     sleep 3
     if shell_is_running; then
         ok "restarted"
     else
         warn "the shell did not come back"
-        note "restart it by hand with SUPER + SHIFT + R, or log out and back in"
+        note "restart it by hand with SUPER + SHIFT + CTRL + ALT + R, or log out and back in"
     fi
 }
 
@@ -2356,7 +2338,7 @@ run_update() {
     update_packages
     stage_stow          # picks up whatever the update added, moved or renamed
     stage_user_dir      # creates any user stub a newer version added
-    stage_venv upgrade  # requirements.txt may have moved to a newer fabric
+    retire_fabric       # leftovers of the shell before Quickshell, once
     stage_wallpapers    # copies any new wallpapers into ~/Pictures/wallpapers
     stage_gtk4_base     # update_packages may have moved libadwaita under us
     phase 97 100 "Finishing up"
@@ -2393,7 +2375,7 @@ run_install() {
     stage_stow
     stage_user_dir
     stage_zsh
-    stage_venv
+    retire_fabric
     phase 96 97 "Wallpapers"
     stage_wallpapers
     phase 97 98 "This machine's hardware"
@@ -2459,14 +2441,13 @@ $KEYS_LIST" 20 76 7 \
         aur      "  paru and the AUR packages"             "$(on_off $WANT_AUR)" \
         flatpak  "  the flatpak applications"              "$(on_off $WANT_FLATPAK)" \
         stow     "Link the dotfiles into \$HOME"           "$(on_off $DO_STOW)" \
-        venv     "Build the fabric_shell virtualenv"       "$(on_off $DO_VENV)" \
         machine  "Machine config: GPU, monitors, wallpaper" "$(on_off $DO_MACHINE)")" \
         || { say "cancelled"; exit 0; }
 
     # The tags are the same switches --help documents, so this checklist cannot
     # ask for anything the flags cannot. whiptail returns them quoted, space
     # separated.
-    DO_PACKAGES=0; DO_STOW=0; DO_VENV=0; DO_MACHINE=0
+    DO_PACKAGES=0; DO_STOW=0; DO_MACHINE=0
     WANT_UTILS=0; WANT_AUR=0; WANT_FLATPAK=0
     for tag in ${sel//\"/}; do
         case "$tag" in
@@ -2475,7 +2456,6 @@ $KEYS_LIST" 20 76 7 \
             aur)      WANT_AUR=1 ;;
             flatpak)  WANT_FLATPAK=1 ;;
             stow)     DO_STOW=1 ;;
-            venv)     DO_VENV=1 ;;
             machine)  DO_MACHINE=1 ;;
         esac
     done
@@ -2505,7 +2485,7 @@ with --no-gui to be asked about each step and watch it work.
 
 $KEYS_MENU" 20 76 4 \
         install "Install: packages, dotfiles, shell, machine config" \
-        update  "Update: pull, re-link, refresh packages and the venv" \
+        update  "Update: pull, re-link, refresh packages, restart the shell" \
         custom  "Custom install: pick the stages yourself" \
         quit    "Quit")" || MODE="quit"
 

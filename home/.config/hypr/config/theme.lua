@@ -1,4 +1,4 @@
--- THEME — floating-glass look matching the fabric shell
+-- THEME — floating-glass look matching the shell
 -- Colors come from pywal16 via ~/.cache/wal/colors-hyprland.lua
 -- (template: ~/.config/wal/templates/colors-hyprland.lua).
 -- Run `hyprctl reload` after re-running wal to pick up a new palette.

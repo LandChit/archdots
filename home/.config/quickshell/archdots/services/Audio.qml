@@ -6,7 +6,7 @@ import Quickshell.Services.Pipewire
 import qs.config
 
 // The default output and input devices. PipeWire pushes every change, so
-// there is no polling and no fallback timer (the fabric bar needed both).
+// there is no polling and no fallback timer.
 Singleton {
     id: root
 

@@ -11,7 +11,7 @@ import Quickshell.Services.Notifications
 //   history  the last 50 D-Bus notifications, newest first (toasts are not kept)
 //
 // DND hides popups but still records history; critical notifications show
-// anyway. It is deliberately not persisted, as in fabric: a restart clears
+// anyway. It is deliberately not persisted: a restart clears
 // it, so a muted session never outlives the reason it was muted.
 Singleton {
     id: root

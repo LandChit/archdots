@@ -94,6 +94,9 @@ PKG_UTILS=(
     # External monitor brightness over DDC/CI (the shell's brightness keys on
     # a non-laptop screen). Needs the i2c-dev module and access to /dev/i2c-*.
     ddcutil
+    # Events under the calendar's month grid: khal reads the calendars,
+    # vdirsyncer syncs them with Google or CalDAV (CUSTOMIZING.md, Calendar).
+    khal vdirsyncer
 )
 
 # AUR packages the desktop genuinely needs. Kept apart from PKG_AUR because

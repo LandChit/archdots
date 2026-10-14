@@ -323,10 +323,13 @@ empty boxes.
 
 ```
 tlp fd htop nvtop fastfetch tmux unzip wget curl smartmontools ark ddcutil
+khal vdirsyncer
 ```
 
 `tlp` on laptops only; a desktop gets `power-profiles-daemon` instead (the
-control centre's power profiles need one of the two).
+control centre's power profiles need one of the two). `khal` and
+`vdirsyncer` put your calendar's events in the calendar panel; they need a
+one-time setup (CUSTOMIZING.md, Calendar).
 
 ### AUR — optional
 

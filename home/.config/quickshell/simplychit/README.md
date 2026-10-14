@@ -8,7 +8,7 @@ login by `hypr/config/autorun.lua` (`shell.restart()` in
 ```
 shell.qml        entry point: what is on screen, and the IPC targets
 config/          Config (settings.json over defaults), Colours (pywal16)
-services/        state, no UI: Audio, Battery, Brightness, CpuTemp, Displays,
+services/        state, no UI: Audio, Battery, Brightness, CalendarEvents, CpuTemp, Displays,
                  Events, Hypr, Idle, IdleTimers, Media, Notifs, Panels, Power,
                  PowerProfile, SettingsCheck, SettingsState, Theme, UsageCounts
 widgets/         shared pieces: Panel, SearchPanel, ListPanel, ListRow,

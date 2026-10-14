@@ -231,6 +231,55 @@ luac -p ~/.config/simplychit/hypr/*.lua && hyprctl reload
 still loaded, before `~/.config/simplychit/hypr/`, so a machine set up earlier
 keeps working. To move, copy each file across and delete the old one.
 
+## Calendar
+
+The calendar panel (click the clock) lists the events of the day you click,
+today when it opens. It reads them with `khal`, which reads calendars stored
+as files; `vdirsyncer` keeps those files in step with Google, Nextcloud, iCloud
+or any CalDAV server. Both come with the optional utilities. Without them the
+panel is a plain month.
+
+1. `~/.config/vdirsyncer/config`, for a CalDAV server (Google needs an OAuth
+   client of your own; vdirsyncer's docs, "Google"):
+
+   ```ini
+   [general]
+   status_path = "~/.local/share/vdirsyncer/status/"
+
+   [pair calendar]
+   a = "calendar_local"
+   b = "calendar_remote"
+   collections = ["from a", "from b"]
+   metadata = ["color", "displayname"]
+
+   [storage calendar_local]
+   type = "filesystem"
+   path = "~/.local/share/calendars/"
+   fileext = ".ics"
+
+   [storage calendar_remote]
+   type = "caldav"
+   url = "https://example.com/remote.php/dav/"
+   username = "you"
+   password.fetch = ["command", "secret-tool", "lookup", "service", "caldav"]
+   ```
+
+2. `vdirsyncer discover && vdirsyncer metasync && vdirsyncer sync`, then
+   `systemctl --user enable --now vdirsyncer.timer` to sync every 15 minutes.
+3. `khal configure` finds the synced calendars, or write
+   `~/.config/khal/config` by hand:
+
+   ```ini
+   [calendars]
+   [[mine]]
+   path = ~/.local/share/calendars/*
+   type = discover
+   ```
+
+`metasync` brings each calendar's colour across, and the panel uses it. A
+calendar with no colour, or a terminal colour name, gets the accent.
+`simplychit events` prints what the panel sees.
+
 ## What not to edit
 
 - **Tracked files** in the repo (`home/` and everything under it). An update

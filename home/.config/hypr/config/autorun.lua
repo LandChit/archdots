@@ -9,7 +9,7 @@ hl.on("hyprland.start", function()
     -- notification daemon and the polkit agent.
     shell.restart()
 
-    hl.exec_cmd("hypridle &")   -- dim, lock, screens off, suspend: see ../hypridle.conf
+    hl.exec_cmd("hypridle &")   -- locks before sleep; the idle timeouts are the shell's
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     -- One polkit agent per session, first to register wins. The shell's is the
     -- one meant to; if it has not registered a few seconds in (shell not

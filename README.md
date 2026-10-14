@@ -40,6 +40,10 @@ looks like it belongs together.**
   gets low (and a suspend before it runs out), and small toasts for things
   like the charger, Caps Lock or a VPN coming up.
 - **Its own polkit dialog**, and an optional lock screen, in the same theme.
+- **A settings app** (<kbd>SUPER</kbd> <kbd>,</kbd>) for all of it, including a
+  Windows-style **Displays** page: drag your screens into place, pick modes,
+  scale and rotation, and it reverts by itself unless you keep the change. It
+  remembers a layout for each set of monitors you plug in.
 
 <hr>
 
@@ -87,6 +91,7 @@ keybind, generated from your own config.
 | <kbd>SUPER</kbd> <kbd>/</kbd> | Keybind cheatsheet |
 | <kbd>SUPER</kbd> <kbd>PrtSc</kbd> | Screenshot menu |
 | <kbd>SUPER</kbd> <kbd>Esc</kbd> | Power menu |
+| <kbd>SUPER</kbd> <kbd>,</kbd> | Settings |
 | <kbd>SUPER</kbd> <kbd>Shift</kbd> <kbd>I</kbd> | Stay awake (no dim, lock or suspend) until pressed again |
 
 ### Windows

@@ -95,7 +95,22 @@ through `hypr/config/helpers/shell.lua`. It draws:
 Panels open one at a time (`services/Panels.qml`); a keybind is one IPC call,
 `qs -c archdots ipc call panel toggle <name>`. Settings are
 `~/.config/archdots/settings.json` over the defaults in `config/Config.qml`,
-reloaded live (keys: [CUSTOMIZING.md](CUSTOMIZING.md)).
+reloaded live (keys: [CUSTOMIZING.md](CUSTOMIZING.md)), and edited by the
+settings app (`modules/settings/`, SUPER + `,`).
+
+**The Hyprland config reads the same file.** `config/helpers/json.lua` is a
+small JSON decoder (Hyprland's Lua has none) and `config/helpers/settings.lua`
+loads the file, reporting a broken one and falling back to the defaults.
+`keybind.lua` is a table of binds with stable ids, changed by
+`keybinds.remap` / `keybinds.disabled` and listed for the settings app in
+`~/.cache/archdots/keybinds.json`; `monitor.lua` applies the active display
+profile (`displays`), `input.lua` the known `input` keys. One file, written as
+data, so the settings app never generates code and hand edits keep working.
+
+**Idle is the shell's too.** `services/IdleTimers.qml` dims, locks, turns the
+screens off and suspends after `idle.ac` / `idle.battery`; hypridle only locks
+before sleep and turns the screens on after. `archdots doctor`
+(`home/.local/bin/archdots`) checks the whole setup; the About page shows it.
 
 ### The shell is the notification daemon
 

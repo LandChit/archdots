@@ -8,14 +8,15 @@ login by `hypr/config/autorun.lua` (`shell.restart()` in
 ```
 shell.qml        entry point: what is on screen, and the IPC targets
 config/          Config (settings.json over defaults), Colours (pywal16)
-services/        state, no UI: Audio, Battery, Brightness, CpuTemp, Events,
-                 Hypr, Idle, Media, Notifs, Panels, Power, PowerProfile,
-                 Theme, UsageCounts
+services/        state, no UI: Audio, Battery, Brightness, CpuTemp, Displays,
+                 Events, Hypr, Idle, IdleTimers, Media, Notifs, Panels, Power,
+                 PowerProfile, SettingsState, Theme, UsageCounts
 widgets/         shared pieces: Panel, SearchPanel, ListPanel, ListRow,
                  CardMenu, Island, BarText, Hot, Toggle, Slider, InfoRow, …
 modules/         one folder per surface: bar, launcher, clipboard, emoji,
                  calendar, battery, control, notifications, osd, powermenu,
-                 screenshot, keybinds, wallpaper, polkit, lock
+                 screenshot, keybinds, wallpaper, polkit, lock, settings
+settings.qml     the settings app on its own (qs -p …/settings.qml)
 ```
 
 Imports go through Quickshell's `qs.` module paths (`import qs.config`).
@@ -41,6 +42,8 @@ qs -c archdots ipc call brightness up             # also down, set <percent>
 qs -c archdots ipc call wallpaper set <path>      # also next, random, mode light|dark
 qs -c archdots ipc call notifications toast "Title" "Body"
 qs -c archdots ipc call settings set bar.showCpu false
+qs -c archdots ipc call settings open displays    # the settings app ('' = last page)
+qs -c archdots ipc call displays revert           # also keep, refresh
 qs -c archdots ipc call lock preview              # the lock screen, without locking
 qs -c archdots ipc call shell reload
 ```

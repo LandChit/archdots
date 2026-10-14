@@ -117,12 +117,12 @@ export XDG_RUNTIME_DIR=/run/user/1000
 # The host compositor consumes every SUPER combination before the nested one
 # sees it, so the real binds are unreachable from inside. This makes Caps an
 # additional Super *inside the container*, so every real bind works when pressed
-# with Caps. custom/input.lua is gitignored and loaded after the defaults.
+# with Caps. ~/.config/archdots/hypr/input.lua is loaded after the defaults.
 # Applied to every nested run, not just --ui: the host swallows SUPER in
 # both cases, and a non-interactive run should verify the same setup.
 if [ "${ARCHDOTS_HYPR:-}" = 1 ] && [ -r /ui-input.lua ]; then
-    mkdir -p "$HOME/.config/hypr/config/custom"
-    cp /ui-input.lua "$HOME/.config/hypr/config/custom/input.lua"
+    mkdir -p "$HOME/.config/archdots/hypr"
+    cp /ui-input.lua "$HOME/.config/archdots/hypr/input.lua"
     echo "  Caps mapped to Super for the nested session"
 fi
 
@@ -131,8 +131,8 @@ fi
 # real machine — which reads as a theming bug rather than a scaling one.
 # install.sh only writes rules for the monitors it detected in /sys (the host's),
 # and WAYLAND-1 is not among them, so pin it here. Later rules win.
-mkdir -p "$HOME/.config/hypr/config/custom"
-cat >> "$HOME/.config/hypr/config/custom/monitor.lua" <<'MON'
+mkdir -p "$HOME/.config/archdots/hypr"
+cat >> "$HOME/.config/archdots/hypr/monitor.lua" <<'MON'
 
 -- Added by the test harness: the nested output, at 1:1 so the shell renders at
 -- the same size it would on real hardware.

@@ -11,6 +11,7 @@ import qs.services
 // the Hyprland config on its next reload.
 ShellRoot {
     SettingsWindow {}
+    DisplayOverlays {}
 
     Component.onCompleted: SettingsState.show("")
 

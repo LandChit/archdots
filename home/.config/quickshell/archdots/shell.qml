@@ -57,6 +57,10 @@ ShellRoot {
     Popups {}
     PolkitDialog {}
 
+    // after a display change, and Identify; also run by the Displays service
+    // on hotplug, so it lives here rather than in the settings window
+    DisplayOverlays {}
+
     // built the first time it opens
     LazyLoader {
         active: SettingsState.open
@@ -104,6 +108,21 @@ ShellRoot {
         }
         function clear(): void {
             Notifs.clearHistory();
+        }
+    }
+
+    // qs -c archdots ipc call displays keep|revert   (e.g. from a TTY keybind)
+    IpcHandler {
+        target: "displays"
+
+        function keep(): void {
+            Displays.keep();
+        }
+        function revert(): void {
+            Displays.revert();
+        }
+        function refresh(): void {
+            Displays.refresh();
         }
     }
 

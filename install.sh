@@ -2139,9 +2139,9 @@ update_repo() {
     local before after dirty stashed=0 count
     before="$(git -C "$REPO_ROOT" rev-parse --short HEAD)"
 
-    # The machine-specific values live outside the repo now, but the pywal16
-    # palette is still copied into the tracked colors-fabric.css, so an
-    # installed clone can be dirty for reasons the user did not choose. Stash
+    # The machine-specific values and the pywal16 output live outside the repo
+    # (or in gitignored files) now, but an installed clone can still be dirty
+    # for reasons the user did not choose. Stash
     # whatever is there across the pull and put it back afterwards; git would
     # otherwise refuse to fast-forward over it.
     dirty="$(git -C "$REPO_ROOT" status --porcelain)"

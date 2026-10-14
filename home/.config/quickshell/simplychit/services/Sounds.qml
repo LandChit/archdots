@@ -20,8 +20,8 @@ Singleton {
         Quickshell.execDetached(["pw-play", theme + name + ".oga"]);
     }
 
-    // Called by Notifs for a notification it shows as a popup (so not under
-    // do not disturb). Apps can ask for silence with the suppress-sound hint.
+    // Called by Notifs for each notification while do not disturb is off.
+    // Apps can ask for silence with the suppress-sound hint.
     function notification(critical: bool, hints: var): void {
         if (!Config.sounds.notifications || (hints && hints["suppress-sound"]))
             return;

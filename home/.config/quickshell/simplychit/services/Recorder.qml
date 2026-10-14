@@ -11,6 +11,9 @@ import qs.config
 // the time while it runs; a click there, the screenshot menu or SUPER+SHIFT+R
 // stops it.
 //
+// The recording belongs to the shell: restarting the shell mid-recording
+// kills wf-recorder without letting it finish, and that file will not play.
+//
 // qs -c simplychit ipc call recording region|screen|stop|toggle
 Singleton {
     id: root
@@ -19,6 +22,8 @@ Singleton {
     // slurp is up: not recording yet, so no indicator
     property bool picking: false
     property int seconds: 0
+    // stop() was asked for: the exit is ours, not a failure
+    property bool stopping: false
     property string file: ""
 
     readonly property string directory: Config.recording.directory.replace(/^~/, Quickshell.env("HOME"))
@@ -40,8 +45,10 @@ Singleton {
 
     function stop(): void {
         // SIGINT is wf-recorder's Ctrl+C: it finishes the file and exits
-        if (recording)
+        if (recording) {
+            stopping = true;
             recorder.signal(2);
+        }
     }
 
     // stop a running one, or else record a region
@@ -69,6 +76,7 @@ Singleton {
             exec wf-recorder $A "$@" -f "$F"
         `, "sh", directory, Config.recording.audio, file].concat(where);
         seconds = 0;
+        stopping = false;
         recording = true;
         recorder.running = true;
     }
@@ -97,13 +105,15 @@ Singleton {
 
         onExited: code => {
             const ran = root.seconds;
+            const asked = root.stopping;
             root.recording = false;
-            // wf-recorder exits 0 after SIGINT; a quick non-zero exit is a
-            // failure to start (no encoder, a bad audio device)
-            if (code === 0 || ran >= 2)
-                Quickshell.execDetached(["notify-send", "-a", "SimplyChit", "-i", "video-x-generic", "Recording saved", root.file.replace(Quickshell.env("HOME"), "~")]);
-            else
-                Quickshell.execDetached(["notify-send", "-a", "SimplyChit", "-u", "critical", "Recording failed", errors.text.trim().split("\n").slice(-2).join("\n") || "wf-recorder exited with " + code]);
+            root.stopping = false;
+            if (code === 0 || (asked && ran >= 1))
+                Quickshell.execDetached(["notify-send", "-a", "SimplyChit", "-i", "video-x-generic", "--", "Recording saved", root.file.replace(Quickshell.env("HOME"), "~")]);
+            // stopped within a second, possibly before wf-recorder started:
+            // a cancel, not a failure
+            else if (!asked)
+                Quickshell.execDetached(["notify-send", "-a", "SimplyChit", "-u", "critical", "--", "Recording failed", errors.text.trim().split("\n").slice(-2).join("\n") || "wf-recorder exited with " + code]);
         }
     }
 

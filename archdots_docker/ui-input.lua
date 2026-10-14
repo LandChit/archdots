@@ -1,9 +1,8 @@
--- Container-only input override for `runscript.sh --ui`.
+-- Container-only input override for the nested-session tests.
 --
--- Copied to ~/.config/hypr/config/custom/input.lua inside the test container.
--- NOT part of the repo: custom/*.lua is gitignored precisely so a machine — or
--- a container — can adjust what it needs without touching the committed
--- defaults.
+-- Copied to ~/.config/archdots/hypr/input.lua inside the test container. That
+-- folder is outside the repo precisely so a machine — or a container — can
+-- adjust what it needs without touching the committed defaults.
 --
 -- The problem: in a nested session the HOST compositor sees every SUPER
 -- combination first and acts on it, so none of the real binds ever reach the

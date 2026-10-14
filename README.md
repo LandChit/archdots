@@ -17,10 +17,13 @@ looks like it belongs together.**
   to change it, the battery tells you how long you have left, and the clock
   drops down a calendar.
 - **An app launcher** (<kbd>SUPER</kbd> <kbd>Space</kbd>) that learns what you
-  open most and puts it first. Type `?` and it searches the web instead.
-- **A control centre** (<kbd>SUPER</kbd> <kbd>C</kbd>) for Wi-Fi, Bluetooth,
-  volume, brightness, whatever's playing, and your tray icons — one panel
-  instead of five apps.
+  open most and puts it first. It is also a calculator (`=`), a file search
+  (`/`), a window switcher (`@`), a command runner (`!`), a web search (`?`) and
+  a menu of actions (`>`): light/dark mode, colour schemes, power.
+- **A control centre** (<kbd>SUPER</kbd> <kbd>C</kbd>) for Wi-Fi (passwords
+  included), Bluetooth (pairing included), output and input devices, a volume
+  per app, brightness, power profiles, whatever's playing, and your tray icons
+  — one panel instead of five apps.
 - **Notifications** with a history you can scroll back through
   (<kbd>SUPER</kbd> <kbd>N</kbd>), and a do-not-disturb switch that silences
   popups while still keeping a record.
@@ -33,8 +36,10 @@ looks like it belongs together.**
   (<kbd>SUPER</kbd> <kbd>.</kbd>), both searchable.
 - **A keybind cheatsheet** (<kbd>SUPER</kbd> <kbd>/</kbd>) that reads your
   actual keybinds — so it's never out of date, even after you change them.
-- **On-screen display** for volume and brightness, and a warning when the
-  battery gets low.
+- **On-screen display** for volume and brightness, a warning when the battery
+  gets low (and a suspend before it runs out), and small toasts for things
+  like the charger, Caps Lock or a VPN coming up.
+- **Its own polkit dialog**, and an optional lock screen, in the same theme.
 
 <hr>
 
@@ -43,7 +48,7 @@ looks like it belongs together.**
 | Feature | What is used |
 |---|---|
 | **Compositor** | Hyprland — configured in Lua |
-| **Desktop shell** | `fabric_shell` — the bar, menus and notifications, written for this repo |
+| **Desktop shell** | Quickshell (QML) — the bar, wallpaper, menus, notifications and OSD, written for this repo |
 | **Terminal** | alacritty |
 | **File manager** | dolphin |
 | **Browser** | zen-browser |
@@ -82,6 +87,7 @@ keybind, generated from your own config.
 | <kbd>SUPER</kbd> <kbd>/</kbd> | Keybind cheatsheet |
 | <kbd>SUPER</kbd> <kbd>PrtSc</kbd> | Screenshot menu |
 | <kbd>SUPER</kbd> <kbd>Esc</kbd> | Power menu |
+| <kbd>SUPER</kbd> <kbd>Shift</kbd> <kbd>I</kbd> | Stay awake (no dim, lock or suspend) until pressed again |
 
 ### Windows
 
@@ -179,33 +185,28 @@ cd ~/archdots && stow --target="$HOME" home
 # warns on every GTK 4 app if it is missing
 mkdir -p ~/.config/archdots/local && touch ~/.config/gtk-4.0/user.css
 
-# 2. build the desktop shell
-python -m venv ~/.config/fabric_shell/.venv
-~/.config/fabric_shell/.venv/bin/pip install -r ~/.config/fabric_shell/requirements.txt
-
-# 3. wallpapers live here — the picker reads this folder
+# 2. wallpapers live here — the picker reads this folder
 mkdir -p ~/Pictures/wallpapers && cp ~/archdots/wallpapers/* ~/Pictures/wallpapers/
 # --cols16 dual is what makes colours 8-15 distinct rather than copies of 0-7;
 # the templates and every sheet downstream depend on it.
 wal -i ~/Pictures/wallpapers/<pick-one> --cols16 dual
 
-# 4. the rendered palettes are not tracked, so write them where each consumer
-#    looks. GTK gets its own format because GTK CSS has no var().
-cp ~/.cache/wal/colors-fabric.css ~/.config/fabric_shell/css/
+# 3. the shell reads the palette from ~/.cache/wal itself; GTK needs a copy
+#    beside each gtk.css, in its own format because GTK CSS has no var().
 for d in ~/.themes/archdots/gtk-3.0 ~/.themes/archdots/gtk-4.0 ~/.config/gtk-4.0; do
   cp ~/.cache/wal/colors-gtk.css "$d/colors.css"
 done
 
-# 5. the GTK 4 recolour has to sit *beside* the file that imports it — a flatpak
+# 4. the GTK 4 recolour has to sit *beside* the file that imports it — a flatpak
 #    mounts .config/gtk-4.0 inside its own per-app home, so a relative import
 #    reaching back to ~/.themes silently fails and every flatpak loses its colour
 cp ~/.themes/archdots/gtk-4.0/overrides.css ~/.config/gtk-4.0/
 
-# 6. the desktop and the lock screen read this symlink, not a path in a config
+# 5. the shell and the lock screen start from this symlink
 mkdir -p ~/.local/state/archdots
 ln -sfn ~/Pictures/wallpapers/<pick-one> ~/.local/state/archdots/wallpaper
 
-# 7. only on a machine with two GPUs — put the integrated one first, so the
+# 6. only on a machine with two GPUs — put the integrated one first, so the
 #    desktop doesn't render on the discrete card. uwsm sources this directory.
 mkdir -p ~/.config/uwsm/env-hyprland.d
 echo 'export AQ_DRM_DEVICES="/dev/dri/card1:/dev/dri/card0"' \
@@ -258,22 +259,21 @@ without; everything below it is optional and can be declined.
 ### Core
 
 ```
-hyprland hyprpaper hyprlock hypridle hyprpolkitagent quickshell upower
+hyprland hyprlock hypridle hyprpolkitagent quickshell upower
 xdg-desktop-portal-hyprland xdg-desktop-portal-gtk uwsm sddm alacritty dolphin
-python-gobject gtk3 gtk-layer-shell libdbusmenu-gtk3 python-pip
 cliphist wl-clipboard grim slurp brightnessctl playerctl libnotify
 pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol
 networkmanager bluez bluez-utils blueman
 qt6ct kvantum qt5-wayland qt6-wayland breeze-icons adwaita-fonts
 zsh zsh-autosuggestions zsh-syntax-highlighting stow git
-zoxide fzf eza bat kwallet-pam kwalletmanager
-base-devel cairo gobject-introspection pkgconf
+zoxide fzf eza bat kwallet-pam kwalletmanager base-devel
 ```
 
 `zoxide`, `fzf`, `eza` and `bat` are core rather than optional because `.zshrc`
 calls all four on every login — `alias cd="z"` means a missing zoxide breaks
-`cd` itself. `base-devel`, `cairo`, `gobject-introspection` and `pkgconf` are
-there because pip compiles pycairo and PyGObject from source.
+`cd` itself. `base-devel` is what building `paru` needs. hyprlock and
+hyprpolkitagent are fallbacks: the shell has its own lock screen (opt-in) and
+polkit dialog.
 
 One core package is not in the official repos:
 
@@ -344,8 +344,8 @@ org.gnome.TextEditor
 - Dolphin's list view is broken with this Qt theme — use icon view.
 - Some tray icons show a generic placeholder if the app ships an icon the icon
   theme doesn't have.
-- Bluetooth pairing still needs `bluetoothctl` in a terminal; connecting to an
-  already-paired device is one click in the control centre.
+- Bluetooth devices that need a passkey typed in still need `bluetoothctl`;
+  everything else pairs and connects from the control centre.
 - The installer's monitor layout is a left-to-right guess. If your screens sit
   differently, edit `~/.config/archdots/hypr/monitor.lua` — it's yours and
   it's not tracked by git.

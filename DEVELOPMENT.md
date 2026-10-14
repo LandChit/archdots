@@ -6,7 +6,7 @@ is still on the list. [README.md](README.md) is the tour; this is the manual.
 **Contents**
 
 - [Repo layout](#repo-layout)
-- [fabric_shell](#fabric_shell)
+- [The shell](#the-shell)
 - [Theming pipeline](#theming-pipeline)
 - [Per-machine config](#per-machine-config)
 - [Naming keybinds](#naming-keybinds)
@@ -25,10 +25,9 @@ is still on the list. [README.md](README.md) is the tour; this is the manual.
 ```
 home/                stowed into $HOME: `stow --dir=<repo> --target=$HOME home`
   .config/
-    hypr/            Hyprland — hyprland.lua + config/*.lua, hyprlock, hyprpaper
+    hypr/            Hyprland — hyprland.lua + config/*.lua, hypridle, hyprlock
       config/custom/   old per-machine overrides location, still loaded (untracked)
-    fabric_shell/    the desktop shell (Python + GTK3 layer-shell)
-    quickshell/archdots/   its Quickshell rewrite, the bar so far (README inside)
+    quickshell/archdots/   the desktop shell, QML (README inside)
     wal/templates/   pywal16 templates — the source of all theming
     alacritty/ eza/ fastfetch/ cliphist/ fontconfig/
     Kvantum/ qt6ct/ kdeglobals    Qt theming
@@ -52,90 +51,51 @@ read by install.sh: it ignores everything, so an installer from before the move
 User settings are not in the repo at all: they live in `~/.config/archdots/`
 (see [CUSTOMIZING.md](CUSTOMIZING.md)).
 
-`wallpapers/` is on that list because the picker reads `~/Pictures/wallpapers`
-([`wallpapers.py:29`](home/.config/fabric_shell/wallpapers.py)), not the repo — a
-`~/wallpapers` symlink would just be dead weight. `install.sh` copies them
-across instead.
+`wallpapers/` stays at the root because the picker reads `~/Pictures/wallpapers`
+(`wallpaper.directory` in settings.json), not the repo — a `~/wallpapers`
+symlink would just be dead weight. `install.sh` copies them across instead.
 
 ---
 
-## fabric_shell
+## The shell
 
-A small desktop shell written with [Fabric](https://github.com/Fabric-Development/fabric)
-(Python + GTK3 + layer-shell). It replaces waybar, rofi, dunst and nwg-bar.
+A desktop shell written for this repo in [Quickshell](https://quickshell.org)
+(QML), at `home/.config/quickshell/archdots/`; its own
+[README](home/.config/quickshell/archdots/README.md) has the layout, the IPC
+targets and how to test it next to a running session. Quickshell is packaged
+(`quickshell` in extra), so there is nothing to build: no virtualenv, no pip.
 
-Fabric is not packaged for Arch, so the shell brings its own virtualenv at
-`.config/fabric_shell/.venv`, installed from `fabric_shell/requirements.txt`.
+It replaced `fabric_shell` (Python + GTK 3 layer-shell). Most of what that
+shell shelled out for — PipeWire, MPRIS, notifications, the tray, UPower,
+Hyprland IPC, Wi-Fi, Bluetooth, polkit, PAM — Quickshell has as services, so
+the nmcli and bluetoothctl parsing (and the hangs it needed guarding against)
+are gone.
 
-That file is deliberately **one line** — fabric, pinned to an exact commit.
-`click`, `loguru`, `pycairo` and `PyGObject==3.50.0` are fabric's own declared
-dependencies and arrive with it, so listing them again would only create a
-second place to drift. Pinning the commit matters more than it looks: fabric has
-no releases, so an unpinned install tracks `main` and can change under you.
+**One process**, `qs -c archdots`, started by `hypr/config/autorun.lua`
+through `hypr/config/helpers/shell.lua`. It draws:
 
-pip **compiles** pycairo and PyGObject rather than fetching wheels, so the
-system needs `cairo`, `gobject-introspection` and `pkgconf` present. They are
-listed explicitly in the core package list rather than left to arrive as
-somebody else's dependency.
-
-**Fabric also has runtime dependencies pip cannot express.** They are GObject
-typelibs, not wheels, so nothing in `requirements.txt` can pull them in:
-
-| Namespace | Package | Reached via |
-|---|---|---|
-| `Gtk` | `gtk3` | everything |
-| `GtkLayerShell` | `gtk-layer-shell` | every overlay |
-| `DbusmenuGtk3` | `libdbusmenu-gtk3` | `fabric.system_tray`, imported by `tray.py` |
-
-The last one is the trap. `fabric/system_tray/service.py` calls
-`gi.require_version("DbusmenuGtk3", "0.4")` at **import** time, and `daemon.py`
-imports it transitively through `controlcenter.py` → `tray.py`. Without the
-package the daemon dies on startup and takes every overlay with it — launcher,
-clipboard, emoji, powermenu, control centre, notifications, calendar, wallpaper,
-screenshot, OSD, battery, cheatsheet — while `bar.py` keeps running happily. The
-desktop looks half-alive rather than broken, and `hl.exec_cmd` swallows the
-traceback, so nothing anywhere says why.
-
-It was invisible for a long time because `libdbusmenu-gtk3` arrives as a
-dependency of **waybar** and `libappindicator`. Dropping waybar for
-`fabric_shell` removed the only reason it was installed — but not from any
-machine that had already had waybar. Fabric's other namespaces (`Cvc`,
-`GnomeBluetooth`, `WebKit2`) sit in modules this shell never imports; the audio
-and bluetooth panels shell out to `wpctl` and `bluetoothctl` instead.
-
-**Two long-lived processes**, started by `hypr/config/autorun.lua`:
-
-| Process | Role |
+| Surface | What it is |
 |---|---|
-| `bar.py` | one bar per monitor — workspaces, window title, media, volume/temp/battery, clock |
-| `daemon.py` | notification service + every overlay, listening on `/tmp/fabric-shell.sock` |
-
-**Overlays** are constructed once and kept alive hidden, never respawned — which
-is why the launcher opens instantly:
-
-| Window | What it is |
-|---|---|
-| `launcher` | app search with frequency ranking, `?` prefix for a web search |
-| `clipboard` | `cliphist` history with image thumbnails |
-| `emoji` | searchable grid with a category rail, remembers your most used |
-| `powermenu` | full-screen scrim: lock / logout / restart / shutdown |
-| `control` | Wi-Fi, Bluetooth, volume + brightness, player, tray, DND — tabbed |
-| `notifications` | history with per-urgency styling, clear-all and a DND switch |
-| `calendar` | month grid, dropped from the clock island |
-| `wallpaper` | thumbnail picker that sets the wallpaper *and* re-themes live |
+| bar | per monitor: workspaces, special workspaces, title, media, meters, clock; per-screen settings |
+| wallpaper | the background layer, per monitor, crossfading; pywal16 re-run on change |
+| `launcher` | apps by use; `=` calc, `/` files, `@` windows, `!` run, `?` web, `>` actions |
+| `clipboard` | cliphist history, async image thumbnails of any size |
+| `emoji` | grid with a group rail, most used first |
+| `powermenu` | full-screen scrim: lock / suspend / logout / restart / shutdown |
+| `control` | Wi-Fi (with passwords), Bluetooth (with pairing), audio devices and per-app volume, power profiles, tray |
+| `notifications` | the daemon, popups, history with DND, the shell's own toasts |
+| `calendar` | month grid from the clock island |
+| `battery` | status card; low/critical warnings; suspend at `battery.actionPercent` |
 | `screenshot` | region / window / screen / delayed, to file **and** clipboard |
-| `osd` | volume, mic and brightness level, bottom-centre, auto-dismiss |
-| `battery` | low/critical warning, centred, auto-dismiss unless critical |
 | `keybinds` | cheatsheet of every bind, read live from Hyprland |
+| OSD | volume, mic and brightness, shown on any change |
+| polkit | the agent and its dialog (hyprpolkitagent is the fallback) |
+| lock | ext-session-lock + PAM, opt-in (`lock.enabled`); hyprlock otherwise |
 
-`ctl.py toggle|show|hide <window> [arg]` writes one line to the daemon's socket;
-that is all a keybind does. Window names live in `windows.py`, which `ctl.py`,
-`daemon.py` and `bar.py` all import so the list cannot drift. Shared window,
-animation, keyboard and stylesheet logic lives in `common.py`.
-
-`.config/fabric_shell/todolist.md` is the blow-by-blow build log for the shell —
-every gotcha found while writing it, with the reasoning. Worth reading before
-changing anything in there.
+Panels open one at a time (`services/Panels.qml`); a keybind is one IPC call,
+`qs -c archdots ipc call panel toggle <name>`. Settings are
+`~/.config/archdots/settings.json` over the defaults in `config/Config.qml`,
+reloaded live (keys: [CUSTOMIZING.md](CUSTOMIZING.md)).
 
 ### The shell is the notification daemon
 
@@ -144,14 +104,14 @@ as a shell card and expires on the sender's timeout (5s default; critical waits
 for you).
 
 **Never install a second notification daemon.** dunst, mako and swaync each ship
-a systemd user service that grabs that bus name at login. The fabric daemon
-cannot take a name someone else already owns, so its cards simply never appear
-and nothing anywhere reports an error. If notifications go quiet, check the
-owner first:
+a systemd user service that grabs that bus name at login. The shell cannot
+take a name someone else already owns; Quickshell logs it and registers as soon
+as the other daemon lets go, but until then its cards never appear. If
+notifications go quiet, check the owner first:
 
 ```bash
 busctl --user list | grep Notifications   # name, owning PID, and process
-pgrep -f fabric_shell/daemon.py           # the two PIDs must match
+pgrep -f 'qs -c archdots'                 # the two PIDs must match
 ```
 
 `busctl --user status org.freedesktop.Notifications` works too, but note it
@@ -186,11 +146,11 @@ misconfigured — the pywal16 palette is applied correctly on top of a light bas
 
 `.themes/archdots/` holds no colours of its own. The palette is pywal16 output:
 `wal/templates/colors-gtk.css` renders to `~/.cache/wal/colors-gtk.css`, and the
-wallpaper picker copies it in as `colors.css` beside each sheet, the same way it
-copies `colors-fabric.css` into the shell's `css/`.
+wallpaper picker copies it in as `colors.css` beside each sheet. The shell
+itself needs no copy: it reads `~/.cache/wal/colors.json` directly.
 
 It needs its own template because **GTK CSS has no `var()`** — named colours are
-`@define-color` and `@name`, so the shell's `colors-fabric.css` cannot be reused.
+`@define-color` and `@name`.
 
 The two halves are built on opposite principles, and the reason matters:
 
@@ -273,7 +233,7 @@ wallpaper, and templates in `.config/wal/templates/` push them everywhere:
 | Template | Feeds | How |
 |---|---|---|
 | `colors-hyprland.lua` | borders, shadows | `theme.lua` does `dofile` on `~/.cache/wal/colors-hyprland.lua` |
-| `colors-fabric.css` | the whole shell | copied into `fabric_shell/css/`, live-reloaded on change |
+| *(none: `colors.json`)* | the whole shell | `config/Colours.qml` reads `~/.cache/wal/colors.json`, watched |
 | `colors-gtk.css` | GTK 3 + GTK 4 apps | copied next to each `gtk.css` (GTK CSS has no `var()`) |
 | `colors-alacritty.toml` | terminal | imported by the alacritty config |
 
@@ -283,8 +243,7 @@ when `~/.cache/wal/` is missing, so a fresh install works before the first `wal`
 run.
 
 **Hyprland is the one consumer that does not pick up a new palette on its own.**
-The shell watches `colors-fabric.css` with a `Gio.FileMonitor` and alacritty
-re-reads its import on write, but `theme.lua` `dofile`s the palette at
+The shell watches `colors.json` and alacritty re-reads its import on write, but `theme.lua` `dofile`s the palette at
 *config-parse* time, so a freshly written one changes nothing until the config is
 parsed again. The picker therefore runs `hyprctl reload` after syncing. That is
 safe on every wallpaper change because everything in `autorun.lua` hangs off the
@@ -307,8 +266,8 @@ unchanged. Two things about it are load-bearing here:
   them into slots 9-15, so `color9` was literally `color1`. pywal16 generates a
   distinct bright half instead, which is what `--accent-bright` and the
   `*-bright` status tokens spend. Both callers pass the flag and must stay in
-  step: `WAL_ARGS` in `install.sh`, and `WAL_ARGS` in
-  `fabric_shell/wallpapers.py`. A run without it rewrites the palette with a
+  step: `WAL_ARGS` in `install.sh`, and the `wal` command in the shell's
+  `services/Theme.qml`. A run without it rewrites the palette with a
   duplicated bright half and every state that relies on hue separation
   collapses. `wal -R` needs no flag — it restores a cached scheme that already
   carries its generation settings. Be aware that on a near-monochrome wallpaper
@@ -329,22 +288,19 @@ absorbed in one place. Two traps when editing a template:
   wallpaper. Use `lighten`/`darken` instead.
 
 Colours that must not follow the wallpaper stay hardcoded on purpose — the
-critical-battery red `rgb(224, 96, 78)` in `battery.css`, `osd.css` and
-`notifications.css` has to read as alarming on every palette, so it is
-deliberately not a `--colorN`.
+critical-battery red `rgb(224, 96, 78)` in the battery card, the OSD and
+critical notifications has to read as alarming on every palette, so it is
+deliberately not a `colorN`.
 
-The wallpaper picker (`SUPER` + `W`) sets the wallpaper on every monitor, runs
-pywal16, copies the palette into `fabric_shell/css/`, and re-points
-`~/.local/state/archdots/wallpaper` so the choice survives a reboot
-([below](#the-wallpaper-is-a-pointer)).
+The wallpaper picker (`SUPER` + `W`) sets the wallpaper on every monitor (or,
+with Shift, the focused one), runs pywal16, copies the GTK palette, reloads
+Hyprland, and re-points `~/.local/state/archdots/wallpaper` so the choice
+survives a reboot ([below](#the-wallpaper-is-a-pointer)). The shell draws the
+wallpaper itself, crossfading, so hyprpaper is not used.
 
-**The shell recolours in place** because every window watches that palette file
-through `common._watch_palette()`. One catch worth knowing: `monitor_file()`
-returns a `Gio.FileMonitor` that stops watching the moment it is garbage
-collected, so the monitors are parked in `common._MONITORS` for the life of the
-process. Dropping that reference is what made colors apply only after a restart.
-The same applies to `watch_audio()` and `media.watch()`, which return
-subprocesses.
+**The shell recolours in place** because `config/Colours.qml` reads
+`colors.json` through a `FileView` with `watchChanges`. No restart, and no
+copy of the palette into the shell.
 
 ---
 
@@ -379,7 +335,7 @@ file stays machine-neutral and `install.sh` never edits it:
 | Setting | Committed default | This machine |
 |---|---|---|
 | `AQ_DRM_DEVICES` (which GPU renders) | `uwsm/env-hyprland` — comments only | `uwsm/env-hyprland.d/10-gpu.sh` |
-| Desktop wallpaper | `hypr/hyprpaper.conf` — names the pointer | `~/.local/state/archdots/wallpaper` |
+| Desktop wallpaper | the shell starts from the pointer | `~/.local/state/archdots/wallpaper`, and `wallpapers.json` beside it for per-monitor ones |
 | Lock screen wallpaper | `hypr/hyprlock.conf` — names the same pointer | the same symlink |
 
 **uwsm sources a directory.** `/usr/lib/uwsm/prepare-env.sh` calls `source_file`
@@ -395,19 +351,17 @@ Do not put a `README.md` in that directory the way `config/custom/` has one:
 
 ### The wallpaper is a pointer
 
-`hyprpaper.conf` and `hyprlock.conf` name `~/.local/state/archdots/wallpaper`,
-a symlink, rather than a picture. `install.sh` creates it and the picker
-re-points it, so choosing a wallpaper touches nothing tracked — before this,
-every wallpaper change rewrote a `path =` line in two stowed files and turned up
-in `git status`.
+`hyprlock.conf` names `~/.local/state/archdots/wallpaper`, a symlink, rather
+than a picture, and the shell starts from it. `install.sh` creates it and the
+picker re-points it, so choosing a wallpaper touches nothing tracked — before
+this, every wallpaper change rewrote a `path =` line in stowed files and turned
+up in `git status`.
 
-Both programs also degrade well if the pointer is missing: hyprpaper logs
-`Failed to resolve path` and carries on, and hyprlock falls back to the `color =`
-in its `background` block. That is why this is a pointer rather than a
+A missing pointer is harmless: the shell paints its background colour, and
+hyprlock falls back to the `color =` in its `background` block. That is why this is a pointer rather than a
 `source =` of a gitignored fragment — **hyprlang treats a missing `source` path
 as a config error**, and it validates the path before expanding it, so a glob
-over an empty directory fails too (tested with hyprpaper 0.8.4 / hyprlang
-0.6.8). A fresh clone that had not run `install.sh` yet would have started with
+over an empty directory fails too (tested with hyprlang 0.6.8). A fresh clone that had not run `install.sh` yet would have started with
 a broken config.
 
 `install.sh` only ever creates a *missing* pointer. An existing one is the
@@ -567,25 +521,16 @@ flatpak list --app --columns=application
 - **CPU temperature is detected, not hardcoded.** `thermal_zone0` is not the CPU
   on every machine — on this laptop it is `acpitz`, a chassis probe reading ~20°C
   below the package sensor at `thermal_zone3`, and on other hardware zone0 is
-  `INT3400`, which reports a constant 20°C. `common.find_cpu_temp()` prefers the
+  `INT3400`, which reports a constant 20°C. The shell's `services/CpuTemp.qml` prefers the
   `coretemp`/`k10temp` hwmon and falls back to thermal zones by `type`, never by
   index. If the bar shows `--°C`, no known sensor matched.
 - **Some tray icons fall back to a generic glyph.** Apps advertising an icon
-  name breeze-dark does not carry (spotify's, for one) get a placeholder;
-  `fabric_shell/tray.py` keeps them clickable rather than dropping the item —
-  fabric's own tray drops the whole item, which is why the tray once looked
-  empty.
-
-  `tray.py` also exists for a second, worse reason: **fabric's tray replaces the
-  process-wide icon theme's search path** with whatever single directory a tray
-  item advertises (`service.py`: `Gtk.IconTheme.get_default()` followed by
-  `set_search_path([...])`). One such item — spotify — and every icon in the
-  daemon stops resolving, launcher and notifications included, permanently and
-  across restarts. `tray.py` resolves icons in a private theme built from a
-  search path captured at import, and never touches fabric's `item.icon_theme`.
-  **Do not "simplify" it back to `super().do_update_properties()`.**
-- **Bluetooth pairing is not in the control centre** — connecting to an
-  already-paired device is one click, first-time pairing is `bluetoothctl`.
+  name breeze-dark does not carry get a placeholder in the control centre's
+  tray tab; the item stays clickable. (The fabric shell needed a private icon
+  theme here, because fabric's tray replaced the process-wide icon search path;
+  Quickshell's does not.)
+- **Bluetooth devices that need a passkey typed in** still need `bluetoothctl`;
+  everything else pairs and connects from the control centre.
 
 ---
 
@@ -604,7 +549,7 @@ rewrite and still installed waybar, nwg-bar, yazi and **dunst**.
 
 It runs from either direction — piped from curl on a bare install, or `./install.sh`
 inside an existing clone. `find_repo_root()` tells the two apart by looking for
-`install.sh` **and** `home/.config/fabric_shell`, a pair that exists nowhere
+`install.sh` **and** `home/.config/quickshell/archdots`, a pair that exists nowhere
 else; when piped there is no `BASH_SOURCE` path to resolve, so it clones and
 `exec`s the copy on disk with `ARCHDOTS_REEXEC=1` guarding against a loop.
 
@@ -624,9 +569,9 @@ both land there — and `libnewt` is in `PKG_CORE`, so the *second* run gets box
 even when the first could not.
 
 **A dialog run asks once and then gets on with it.** The menu — and the
-checklist behind *Custom install* — is the consent: ticking `venv` already means
-"yes, build the venv", so asking again mid-run would be asking the same question
-twice. `choose_mode()` sets `ASSUME_YES=1` on the way out, and everything after
+checklist behind *Custom install* — is the consent: ticking `stow` already means
+"yes, link the dotfiles", so asking again mid-run would be asking the same
+question twice. `choose_mode()` sets `ASSUME_YES=1` on the way out, and everything after
 that takes the answer it was given. `--no-gui` is the mode that stops at each
 step.
 
@@ -651,7 +596,7 @@ instead. With a real `--yes`, nothing asks anything.
 
 Everything else is foregone once the run has started: the utilities, the AUR
 packages, the flatpaks (on by default), oh-my-zsh, zsh as the login shell, the
-SDDM theme and its `IgnorePkg` pin, the services, stow, the venv.
+SDDM theme and its `IgnorePkg` pin, the services, stow.
 
 That is also what makes the progress bar honest. `gauge_open()` refuses to raise
 unless the run is unattended, so a question can never end up hidden behind it —
@@ -753,10 +698,10 @@ Five details are load-bearing:
   rest (tested). So `gauge_body()` composes one line, `step — detail`, trimmed
   to 68 columns, and the package counter is parsed out of pacman's own
   `( 12/692) installing glibc-common` to fill it.
-- **The kill pattern is anchored to `$HOME`.** `pkill -f fabric_shell/...` matches
-  by path, not by user's session, so an installer run with `HOME` pointed
-  somewhere else will happily kill the desktop that is running right now. Found
-  the hard way, from a test.
+- **The kill pattern is anchored to `$HOME`.** `pkill -f fabric_shell/...` (now
+  only in `retire_fabric`, for the old shell) matches by path, not by user's
+  session, so an installer run with `HOME` pointed somewhere else would happily
+  kill the desktop that is running right now. Found the hard way, from a test.
 
 - **whiptail answers on stderr** and draws on stdout, hence `2>&1 1>/dev/tty`
   in `wt()`. Prompts read from `/dev/tty` for the same reason the plain ones do:
@@ -781,7 +726,8 @@ Five details are load-bearing:
 | Step | Why it cannot be a symlink |
 |---|---|
 | Remove dunst / mako / swaync | they take `org.freedesktop.Notifications` at login and the shell's cards then never appear — see [above](#the-shell-is-the-notification-daemon) |
-| Build `.venv` | Fabric is not packaged for Arch |
+| Retire the fabric shell | an update across the switch to Quickshell leaves its untracked venv and caches, and maybe its processes — `retire_fabric` removes them, only where git tracks nothing |
+| Disable hyprpolkitagent's unit, offer `tlp-pd` | one polkit agent per session (the shell's); TLP's power-profiles service for the control centre |
 | oh-my-zsh | `.zshrc` sources it; installed with `--keep-zshrc` or the installer overwrites the symlink stow just made |
 | Copy wallpapers to `~/Pictures/wallpapers` | that is where the picker looks |
 | First `wal -i` run | otherwise the shell starts on its fallback palette |
@@ -795,11 +741,7 @@ against one libalpm soname; the moment pacman bumps it, paru dies with
 the script fails with it. Compiling links against the pacman actually installed.
 The script also treats an existing-but-broken paru as absent and rebuilds it.
 
-The venv install uses the **absolute** path to `requirements.txt`. A bare
-`-r requirements.txt` resolves against the working directory, which at that point
-is the repo root, where no such file exists.
-
-The script refuses to run as root. `stow`, the venv and every `gsettings` call
+The script refuses to run as root. `stow`, the shell and every `gsettings` call
 have to be the user's; it calls `sudo` only for pacman and `systemctl enable`.
 
 ### Machine-specific detection
@@ -815,13 +757,10 @@ Three things are detected, shown for review, and only then written:
 None of those are tracked files, so a finished install leaves `git status` clean
 ([above](#programs-that-are-not-hyprland)).
 
-`hyprpaper.conf` ships with an **empty** `monitor =`, which means *every
-output*. Naming the detected monitors instead reads better and is a trap: the
-moment an output is named differently than it was at install time — a dock, a
-different cable, a nested session — hyprpaper matches nothing and paints
-nothing, with no error anywhere. A black desktop is the only symptom. The same
-catch-all is what the picker sends at runtime (`hyprctl hyprpaper wallpaper
-",path"`).
+The shell draws one wallpaper window per screen it finds, so a dock, a
+different cable or a nested session still gets a wallpaper; a per-monitor
+choice keyed by a connector name that no longer exists just falls back to the
+main one.
 
 Two traps found while writing it:
 
@@ -838,9 +777,7 @@ Two traps found while writing it:
 Everything the script generates is gitignored or outside the repo altogether —
 `~/.config/archdots/hypr/monitor.lua`, `env-hyprland.d/10-gpu.sh`, the wallpaper pointer —
 so an install leaves the worktree clean and nothing detected here can be pushed
-onto anybody else. The one tracked file still written is
-`fabric_shell/css/colors-fabric.css`, the pywal16 palette, which the picker
-rewrites too.
+onto anybody else.
 
 The generated layout places monitors left to right at 1920 intervals, which is a
 guess. It is `luac -p`-checked when luac is present, since a broken override is
@@ -894,7 +831,8 @@ editing `.themes_sddm/…/default.conf` is not enough on its own — re-run
 ### Update mode
 
 `install.sh update` is the "I already have this installed" path. It runs
-`update_repo`, `update_packages`, `stage_stow`, `stage_venv upgrade`,
+`update_repo` (which re-runs the new install.sh if the pull changed it),
+`update_packages`, `stage_stow`, `stage_user_dir`, `retire_fabric`,
 `stage_wallpapers` and `restart_shell`, and deliberately skips the machine
 detection — the GPU, monitor and wallpaper answers were settled at install time,
 and rewriting them on every update would keep asking about hardware that has not
@@ -939,7 +877,7 @@ from. The harness lives outside the repo and is reached through the gitignored
 ```bash
 cd archdots_docker
 ./runscript.sh --fast     # no packages, ~10s — structure, stow, detection
-./runscript.sh --full     # every package, the venv build, paru, the theme
+./runscript.sh --full     # every package, paru, the theme
 ./runscript.sh --hypr     # starts Hyprland and the shell for real, screenshots it
 ./runscript.sh --ui       # same, but leaves it up so you can click around
 ./runscript.sh            # interactive shell with the repo at ~/archdots
@@ -951,14 +889,14 @@ than inlined into `docker run bash -c '…'` — they need both quote characters
 and nesting those in one shell string truncates the script silently.
 
 The repo is mounted **read-only** and copied to a writable path inside, so a
-test cannot modify the working tree. The copy strips `config/custom/*.lua` and
-`.venv` first — without that the test inherits the host's machine-specific
+test cannot modify the working tree. The copy strips `config/custom/*.lua`
+first — without that the test inherits the host's machine-specific
 files and reports `monitor.lua already exists`, which is the opposite of what a
 new machine sees.
 
 ### The container is not 1:1 with a real session — yet
 
-Package resolution, stow folding, the fabric build, the AUR path and the
+Package resolution, stow folding, the AUR path and the
 config parse are all real. The *rendered desktop* is not, and these differences
 are known:
 
@@ -1005,9 +943,11 @@ harness reports is trustworthy.
 - **A nested session.** Hyprland runs as a Wayland *client* of the host
   compositor, so the whole desktop appears in a window. `checks.sh` then waits
   for `hyprctl` to answer, counts the registered binds (and how many lack a
-  `desc`, which is what the cheatsheet keys off), waits for `bar.py` and
-  `daemon.py`, checks who owns `org.freedesktop.Notifications`, and screenshots
-  the result to `artifacts/hyprland.png`.
+  `desc`, which is what the cheatsheet keys off), waits for `qs -c archdots`,
+  prints any errors from its log, lists its `archdots-*` layers, checks that it
+  owns `org.freedesktop.Notifications`, and screenshots the result to
+  `artifacts/hyprland.png`. A re-theme through `ipc call wallpaper set` then
+  checks the palette changes in place.
 
 **`--ui` is the one to use for looking at the desktop.** It does the same thing
 and then hands you a shell instead of tearing the session down, so the window
@@ -1015,15 +955,10 @@ stays up and can be clicked through.
 
 The keybinds are the catch. A nested compositor only receives what the host
 does not claim first, and every real bind here is `SUPER`-based — so none of
-them ever arrive. `--ui` writes a container-only `config/custom/keybind.lua`
-adding **`INSERT` as a leader**: press `INSERT`, then a key.
-
-`INSERT` cannot be a modifier, though `"INSERT + SPACE"` *does* pass
-`--verify-config`. Hyprland resolves the unrecognised token to modmask 0, so
-that bind ends up firing on bare `SPACE` — a silent mis-bind rather than an
-error. It works as a leader via `hl.define_submap` instead, and every bind in
-the submap resets it as it fires; a sticky submap swallows all typing, so the
-launcher would open and then ignore the keyboard.
+them ever arrive. Every nested run writes a container-only
+`~/.config/archdots/hypr/input.lua` (from `ui-input.lua`) that maps **Caps Lock
+to an extra Super** inside the container, so the real binds work when pressed
+with Caps instead.
 
 Three details that make nesting work:
 
@@ -1034,8 +969,8 @@ Three details that make nesting work:
   nested Hyprland opens **its own** socket in that same directory, and a name
   collision there breaks one or the other. `grim` must then be pointed at the
   nested socket, or it screenshots the host's desktop instead.
-- `dbus-run-session`, because the shell daemon claims a bus name and a container
-  has no session bus.
+- `dbus-run-session`, because the shell claims a bus name and a container has no
+  session bus.
 
 `--hypr` passes `--no-aur`: the browser, editor, LSP and SDDM theme have no
 bearing on whether the session comes up, and paru's source build alone costs
@@ -1049,12 +984,11 @@ Two traps found building this:
   compositor is perfectly healthy. Hyprland exports that variable only to its
   own children, so a sibling process has to read the signature back out of
   `$XDG_RUNTIME_DIR/hypr/`.
-- **`hl.exec_cmd` swallows its children's stderr.** A shell process that dies
-  on startup leaves nothing in Hyprland's log, so `checks.sh` re-runs
-  `daemon.py` in the foreground when it is missing, purely to see the error.
-- **The notification bus name is acquired asynchronously.** `Gio.bus_own_name`
-  returns immediately and the name lands later on the main loop, so a single
-  query right after the daemon appears reports the bus as unowned on a perfectly
+- **`hl.exec_cmd` swallows its children's stderr.** A shell that dies on
+  startup leaves nothing in Hyprland's log, so `checks.sh` reads the shell's own
+  log with `qs log -c archdots`.
+- **The notification bus name is acquired asynchronously**, so a single query
+  right after the shell appears can report the bus as unowned on a perfectly
   healthy session. The check retries for 15s.
 
 Bugs this harness caught that reading the script did not:
@@ -1094,11 +1028,13 @@ Bugs this harness caught that reading the script did not:
 - [x] Shell: OSD, control centre, notification history, calendar, wallpaper
       picker, screenshot menu, media island, keybind cheatsheet
 - [ ] Create a custom uniform theme
-- [ ] Bluetooth pairing (needs a passkey dialog) in the control centre
+- [x] Bluetooth pairing in the control centre (devices needing a typed passkey
+      still need `bluetoothctl`)
+- [x] The shell rewritten in Quickshell (TODO.md, phases 3 and 4)
 - [x] Rewrite the install script — `install.sh` ([above](#the-install-script))
 - [x] Detect the CPU temperature sensor instead of assuming `thermal_zone0`
 - [x] Test the installer in a container ([above](#testing-it))
 - [x] Separate the remaining machine-specific bits (per-program configs) —
       `uwsm/env-hyprland` keeps its values in `env-hyprland.d/`, and
-      `hyprpaper.conf` / `hyprlock.conf` name a wallpaper pointer instead of a
+      `hyprlock.conf` and the shell use a wallpaper pointer instead of a
       picture ([above](#programs-that-are-not-hyprland))

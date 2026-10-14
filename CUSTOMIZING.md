@@ -38,19 +38,23 @@ GTK only reads its own folders, so those two files live there:
 | Terminal font, size, opacity, padding | `local/alacritty.toml` | `[font]` `size = 14.0` |
 | GTK 4 / libadwaita apps | `~/.config/gtk-4.0/user.css` | |
 | GTK 3 apps | `~/.config/gtk-3.0/gtk.css` | |
-| Wallpaper and colours | the wallpaper picker (SUPER + W); colours follow the wallpaper | |
+| Wallpaper and colours | the wallpaper picker (SUPER + W); colours follow the wallpaper. Shift+Enter sets it for one screen | |
+| Light or dark colours, colour scheme | `theme.mode`, `theme.backend` in `settings.json`, or the launcher's `>` actions | |
+| Bar contents, per screen | `bar.*` and `bar.monitors` in `settings.json` | `"monitors": {"HDMI-A-1": {"showCpu": false}}` |
 | Stay awake (no dim, lock or suspend) | SUPER + SHIFT + I toggles it | |
 
 Not yet: idle timeouts (they are in the tracked `~/.config/hypr/hypridle.conf`
-for now), and settings for anything but the new bar. They come with the
-settings app and the rest of the shell port (TODO.md, phases 4 and 5).
+for now). They come with the settings app (TODO.md, phase 5).
 
-## The new bar: `settings.json`
+## The shell: `settings.json`
 
-The Quickshell bar replaces fabric's when `ARCHDOTS_BAR=quickshell` is set:
-put `hl.env("ARCHDOTS_BAR", "quickshell")` in `hypr/environment.lua` and log in
-again. It reads `~/.config/archdots/settings.json`, and edits apply as soon as
-you save. Only the keys you set matter; everything else keeps its default.
+The shell (bar, panels, wallpaper, notifications, lock screen) reads
+`~/.config/archdots/settings.json`, and edits apply as soon as you save. Only
+the keys you set matter; everything else keeps its default. The file is
+created by the shell itself the first time it changes a setting (pinning an
+app, switching light mode); unknown keys and your own formatting are kept.
+
+Every key, with its default:
 
 ```json
 {
@@ -61,7 +65,43 @@ you save. Only the keys you set matter; everything else keeps its default.
     "clockFormat": "hh:mm AP",
     "emptyTitle": "Chit",
     "titleChars": 20,
-    "mediaChars": 28
+    "mediaChars": 28,
+    "monitors": {},
+    "excluded": []
+  },
+  "launcher": {
+    "favourites": [],
+    "hidden": [],
+    "terminal": "alacritty",
+    "searchUrl": "https://www.google.com/search?q=%s"
+  },
+  "wallpaper": {
+    "directory": "~/Pictures/wallpapers",
+    "cycleMinutes": 0,
+    "transitionMs": 700
+  },
+  "theme": {
+    "mode": "dark",
+    "backend": "wal"
+  },
+  "battery": {
+    "lowPercent": 20,
+    "criticalPercent": 10,
+    "actionPercent": 5,
+    "criticalAction": "suspend"
+  },
+  "toasts": {
+    "charging": true,
+    "locks": true,
+    "keyboardLayout": true,
+    "audioDevice": true,
+    "vpn": true,
+    "nowPlaying": false,
+    "dnd": true
+  },
+  "lock": {
+    "enabled": false,
+    "pamConfig": "login"
   },
   "audio": {
     "scrollStep": 5,
@@ -70,8 +110,20 @@ you save. Only the keys you set matter; everything else keeps its default.
 }
 ```
 
-`clockFormat` takes [Qt's date format](https://doc.qt.io/qt-6/qml-qtqml-qt.html#formatDateTime-method)
-(`HH:mm` for 24-hour, add `:ss` for seconds). `maxVolume` is 1.0 for 100%.
+| Key | What it does |
+|---|---|
+| `bar.clockFormat` | [Qt's date format](https://doc.qt.io/qt-6/qml-qtqml-qt.html#formatDateTime-method): `HH:mm` for 24-hour, add `:ss` for seconds |
+| `bar.monitors` | any `bar` key per screen: `{"HDMI-A-1": {"showCpu": false}}` |
+| `bar.excluded` | screens with no bar: `["DP-2"]` |
+| `launcher.favourites` / `hidden` | desktop entry ids; easier with Ctrl+P / Ctrl+H in the launcher |
+| `wallpaper.cycleMinutes` | switch to another wallpaper from the folder every N minutes; 0 is off |
+| `theme.mode` | `light` or `dark` palette from the wallpaper (the launcher's `>` has it too) |
+| `theme.backend` | pywal16's colour backend: `wal`, `colorthief`, `colorz`, `haishoku`, … |
+| `battery.criticalAction` | at `actionPercent`, after a 30 s countdown you can cancel: `suspend`, `hibernate`, `poweroff` or `none` |
+| `toasts.*` | which events pop up a small message |
+| `lock.enabled` | use the shell's lock screen instead of hyprlock (hyprlock stays the fallback). Try `qs -c archdots ipc call lock preview` first |
+| `audio.maxVolume` | 1.0 is 100%; the default allows boosting to 200% |
+
 To change one from a script: `qs -c archdots ipc call settings set bar.showCpu false`.
 
 ## Hyprland overrides

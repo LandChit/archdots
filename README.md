@@ -150,6 +150,17 @@ restart the running shell. Your machine-specific values — graphics card, monit
 layout, wallpaper — are not in the repo at all, so an update cannot overwrite
 them.
 
+> **Updating an install from before the dotfiles moved into `home/`:** the
+> installer you have cannot know about the move. Pull first, then run the new
+> one, which moves your untracked files across and relinks everything:
+>
+> ```bash
+> git -C ~/archdots pull && ~/archdots/install.sh update
+> ```
+>
+> Until that second command runs, the links in `~/.config` point at paths
+> that no longer exist, so do it before logging out.
+
 **When it finishes, log out and pick Hyprland at the login screen.** The desktop
 starts itself. Press <kbd>SUPER</kbd> <kbd>/</kbd> for the cheatsheet.
 

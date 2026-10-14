@@ -2449,11 +2449,20 @@ stage_gtk4_base() {
         # flatpak's sandbox among them — so it has to be world-readable.
         chmod 644 "$dir/adw-base.css"
         mkdir -p "$dir/assets"
-        # The sheet names these four by relative path, so they travel with it.
-        for asset in bullet check dash devel; do
-            gresource extract "$lib" "$res/assets/$asset-symbolic.svg" \
-                > "$dir/assets/$asset-symbolic.svg" 2>/dev/null || true
-        done
+        # The sheet names its assets by relative path, so they travel with it.
+        # Take whatever the library ships rather than a fixed list: libadwaita
+        # 1.10 renamed check-symbolic.svg to check.svg (and devel to
+        # devel-stripes). Through a temp file again, so a failed extract never
+        # leaves an empty asset behind.
+        while IFS= read -r asset; do
+            tmp="$(mktemp)"
+            if gresource extract "$lib" "$asset" > "$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
+                mv "$tmp" "$dir/assets/${asset##*/}"
+                chmod 644 "$dir/assets/${asset##*/}"
+            else
+                rm -f "$tmp"
+            fi
+        done < <(gresource list "$lib" 2>/dev/null | grep "^$res/assets/")
         ok "refreshed from $(pacman -Q libadwaita 2>/dev/null || echo libadwaita)"
         note "edited tracked file .themes/simplychit/gtk-4.0/adw-base.css (libadwaita)"
     else

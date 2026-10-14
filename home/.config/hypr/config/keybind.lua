@@ -51,6 +51,7 @@ local binds = {
     { "control-centre", mainMod .. " + C", shell.toggle("control"), "Shell: Control centre" },
     { "wallpaper", mainMod .. " + W", shell.toggle("wallpaper"), "Shell: Wallpaper picker" },
     { "cheatsheet", mainMod .. " + SLASH", shell.toggle("keybinds"), "Shell: This cheatsheet" },
+    { "notepad", mainMod .. " + SHIFT + N", shell.toggle("notepad"), "Shell: Notepad" },
     -- the direct region/full binds above still work; this is the menu with
     -- window capture and a delayed shot as well
     { "screenshot-menu", mainMod .. " + PRINT", shell.toggle("screenshot"), "Shell: Screenshot menu" },

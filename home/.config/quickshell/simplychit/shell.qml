@@ -13,6 +13,7 @@ import qs.modules.emoji
 import qs.modules.keybinds
 import qs.modules.launcher
 import qs.modules.lock
+import qs.modules.notepad
 import qs.modules.notifications
 import qs.modules.osd
 import qs.modules.polkit
@@ -50,6 +51,9 @@ ShellRoot {
     Clipboard {}
     Emoji {}
     Keybinds {}
+    Notepad {
+        id: notepad
+    }
     Screenshot {}
     Picker {}
     ControlCentre {}
@@ -109,6 +113,15 @@ ShellRoot {
         }
         function clear(): void {
             Notifs.clearHistory();
+        }
+    }
+
+    // qs -c simplychit ipc call notepad append "call the plumber"
+    IpcHandler {
+        target: "notepad"
+
+        function append(line: string): void {
+            notepad.append(line);
         }
     }
 

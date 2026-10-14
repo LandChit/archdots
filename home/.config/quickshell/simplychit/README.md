@@ -15,7 +15,8 @@ widgets/         shared pieces: Panel, SearchPanel, ListPanel, ListRow,
                  CardMenu, Island, BarText, Hot, Toggle, Slider, InfoRow, …
 modules/         one folder per surface: bar, launcher, clipboard, emoji,
                  calendar, battery, control, notifications, osd, powermenu,
-                 screenshot, keybinds, wallpaper, polkit, lock, settings
+                 screenshot, keybinds, notepad, wallpaper, polkit, lock,
+                 settings
 settings.qml     the settings app on its own (qs -p …/settings.qml)
 greeter.qml      the login screen for greetd (install.sh --greeter); a preview
                  when run by hand
@@ -43,6 +44,7 @@ qs -c simplychit ipc call control open audio        # a control-centre tab
 qs -c simplychit ipc call brightness up             # also down, set <percent>
 qs -c simplychit ipc call wallpaper set <path>      # also next, random, mode light|dark
 qs -c simplychit ipc call notifications toast "Title" "Body"
+qs -c simplychit ipc call notepad append "a line"   # adds to the notepad, saved at once
 qs -c simplychit ipc call settings set bar.showCpu false
 qs -c simplychit ipc call settings open displays    # the settings app ('' = last page)
 qs -c simplychit ipc call displays revert           # also keep, refresh

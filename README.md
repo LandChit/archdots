@@ -89,6 +89,7 @@ keybind, generated from your own config.
 | <kbd>SUPER</kbd> <kbd>.</kbd> | Emoji picker |
 | <kbd>SUPER</kbd> <kbd>W</kbd> | Wallpaper picker |
 | <kbd>SUPER</kbd> <kbd>/</kbd> | Keybind cheatsheet |
+| <kbd>SUPER</kbd> <kbd>Shift</kbd> <kbd>N</kbd> | Notepad (saved to `~/.local/share/simplychit/notepad.md`) |
 | <kbd>SUPER</kbd> <kbd>PrtSc</kbd> | Screenshot menu |
 | <kbd>SUPER</kbd> <kbd>Esc</kbd> | Power menu |
 | <kbd>SUPER</kbd> <kbd>,</kbd> | Settings |

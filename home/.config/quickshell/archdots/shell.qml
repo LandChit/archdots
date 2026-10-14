@@ -8,6 +8,7 @@ import qs.modules.bar
 import qs.modules.battery
 import qs.modules.calendar
 import qs.modules.clipboard
+import qs.modules.control
 import qs.modules.emoji
 import qs.modules.keybinds
 import qs.modules.launcher
@@ -49,6 +50,7 @@ ShellRoot {
     Keybinds {}
     Screenshot {}
     Picker {}
+    ControlCentre {}
     BatteryCard {}
 
     Osd {

@@ -350,22 +350,28 @@ subprocesses.
 ## Per-machine config
 
 `hyprland.lua` requires every module in `config/`, then loads the file of the
-same name in `config/custom/` if it exists. Later calls win, so an override only
-restates the part that differs:
+same name from each override folder, in order. Later calls win, so an override
+only restates the part that differs:
 
 ```
-config/monitor.lua          committed default — the owner's layout
-config/custom/monitor.lua   loaded after, wins
+config/monitor.lua                    committed default — the owner's layout
+config/custom/monitor.lua             old location, still loaded (gitignored)
+~/.config/archdots/hypr/monitor.lua   loaded last, wins
 ```
 
-`config/custom/*.lua` is gitignored; `config/custom/README.md` is tracked and
-documents what belongs there. What usually differs: monitor layout and the
+`~/.config/archdots/` is outside the repo entirely; `config/custom/` is kept
+only so machines set up before the move keep working. User-facing docs:
+[CUSTOMIZING.md](CUSTOMIZING.md).
+
+Keybinds do not follow "later wins": binding a combo twice keeps both binds
+and fires both. `config/helpers/bind.lua` wraps `hl.unbind` for that
+(`bind.rebind`, `bind.remove`). What usually differs: monitor layout and the
 workspace rules that name monitors, GPU env vars, `hl.device` blocks (they key
 off exact device names), and hardware-bound autostarts like `solaar`.
 
 ### Programs that are not Hyprland
 
-Three settings live outside Lua, so `config/custom/` cannot hold them. Each one
+Three settings live outside Lua, so `~/.config/archdots/hypr/` cannot hold them. Each one
 uses the escape hatch its own program provides, and in every case the tracked
 file stays machine-neutral and `install.sh` never edits it:
 
@@ -422,7 +428,7 @@ Two things that are not obvious, both found by testing:
 Check syntax before reloading — cheaper than debugging a dead session:
 
 ```bash
-luac -p ~/.config/hypr/config/custom/*.lua && hyprctl reload
+luac -p ~/.config/archdots/hypr/*.lua && hyprctl reload
 ```
 
 ---
@@ -430,7 +436,7 @@ luac -p ~/.config/hypr/config/custom/*.lua && hyprctl reload
 ## Naming keybinds
 
 The cheatsheet (`SUPER` + `/`) is generated from `hyprctl binds -j` every time
-it opens, so binds added in `config/custom/keybind.lua` appear with no code
+it opens, so binds added in `~/.config/archdots/hypr/keybind.lua` appear with no code
 change.
 
 The catch: **hyprctl knows the key combo but not the action.** Under the Lua
@@ -554,7 +560,7 @@ flatpak list --app --columns=application
   paths with stable ones from `/dev/dri/by-path/`
   ([above](#programs-that-are-not-hyprland)).
 - **`config/monitor.lua` keeps one laptop's layout as the default**, which is
-  wrong elsewhere until overridden in `config/custom/`. `install.sh` writes a
+  wrong elsewhere until overridden in `~/.config/archdots/hypr/`. `install.sh` writes a
   starter override from the detected outputs, but the positions in it are a
   left-to-right guess.
 - **CPU temperature is detected, not hardcoded.** `thermal_zone0` is not the CPU
@@ -802,7 +808,7 @@ Three things are detected, shown for review, and only then written:
 | What | Detected from | Written to |
 |---|---|---|
 | GPU order (`AQ_DRM_DEVICES`) | `/sys/class/drm/card*/device/vendor` — anything that is not `0x10de` goes first, so Hyprland lands on the iGPU | `.config/uwsm/env-hyprland.d/10-gpu.sh` |
-| Monitor layout | `hyprctl monitors -j` when Hyprland is up, otherwise the connected connectors under `/sys/class/drm/card*-*` — the sysfs names are the same names Hyprland uses | `config/custom/monitor.lua` |
+| Monitor layout | `hyprctl monitors -j` when Hyprland is up, otherwise the connected connectors under `/sys/class/drm/card*-*` — the sysfs names are the same names Hyprland uses | `~/.config/archdots/hypr/monitor.lua` |
 | Wallpaper | the first file in `~/Pictures/wallpapers`, and only when no pointer exists yet | `~/.local/state/archdots/wallpaper` |
 
 None of those are tracked files, so a finished install leaves `git status` clean
@@ -829,7 +835,7 @@ Two traps found while writing it:
   target.
 
 Everything the script generates is gitignored or outside the repo altogether —
-`config/custom/monitor.lua`, `env-hyprland.d/10-gpu.sh`, the wallpaper pointer —
+`~/.config/archdots/hypr/monitor.lua`, `env-hyprland.d/10-gpu.sh`, the wallpaper pointer —
 so an install leaves the worktree clean and nothing detected here can be pushed
 onto anybody else. The one tracked file still written is
 `fabric_shell/css/colors-fabric.css`, the pywal16 palette, which the picker
@@ -1071,7 +1077,7 @@ Bugs this harness caught that reading the script did not:
 
 ### Still not handled
 
-- `hl.device` blocks in `config/custom/input.lua` — they key off exact device
+- `hl.device` blocks in `~/.config/archdots/hypr/input.lua` — they key off exact device
   names and there is no sensible default to generate.
 - Monitor *positions* and refresh rates. The script writes `mode = "preferred"`
   and a left-to-right guess; anything else is a decision only the owner can make.

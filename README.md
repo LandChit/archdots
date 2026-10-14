@@ -212,7 +212,7 @@ echo 'export AQ_DRM_DEVICES="/dev/dri/card1:/dev/dri/card0"' \
   > ~/.config/uwsm/env-hyprland.d/10-gpu.sh
 ```
 
-You'll also want a monitor layout in `.config/hypr/config/custom/monitor.lua`,
+You'll also want a monitor layout in `~/.config/archdots/hypr/monitor.lua`,
 and the settings in
 [DEVELOPMENT.md](DEVELOPMENT.md#settings-that-cannot-be-stowed) that can't be
 stowed.
@@ -229,22 +229,24 @@ open keep their old colours until you restart them — GTK reads a theme once.
 **Retune the theme itself:** the colours are derived, not written down. Every
 surface, border and highlight comes from the wallpaper's palette by way of
 `mix()` and `alpha()`, so changing one line changes all of them consistently —
-`.themes/archdots/gtk-3.0/gtk.css` for GTK 3, `gtk-4.0/overrides.css` for GTK 4.
+`home/.themes/archdots/gtk-3.0/gtk.css` for GTK 3, `gtk-4.0/overrides.css` for GTK 4.
 The accent is `color4` throughout, the same one the bar and window borders use.
 
-**Change settings for your machine** — your monitors, your mouse, your
-graphics card — without touching the originals: put them in
-`.config/hypr/config/custom/`. There's a file in there for each part of the
-config, they're loaded after the defaults, and whatever you write wins. They're
-also kept out of git, so your changes stay yours.
-[More detail here](DEVELOPMENT.md#per-machine-config).
+**Change anything else** — your monitors, keybinds, mouse, terminal font,
+shell aliases — without touching the originals: everything you edit lives in
+`~/.config/archdots/`. Those files are loaded after the defaults, so whatever
+you write wins, and they are not in the repo, so updates never overwrite them.
+[CUSTOMIZING.md](CUSTOMIZING.md) has a "to change X, edit Y" table.
 
-**Add a keybind:** edit `.config/hypr/config/custom/keybind.lua` and give it a
+**Add a keybind:** edit `~/.config/archdots/hypr/keybind.lua` and give it a
 `desc` so it shows up on the cheatsheet:
 
 ```lua
 hl.bind("SUPER + G", hl.dsp.exec_cmd("gimp"), { desc = "Launch: GIMP" })
 ```
+
+To change or remove a default bind, use the helper in that file's comments:
+binding a combo twice runs both actions.
 
 <hr>
 
@@ -345,7 +347,7 @@ org.gnome.TextEditor
 - Bluetooth pairing still needs `bluetoothctl` in a terminal; connecting to an
   already-paired device is one click in the control centre.
 - The installer's monitor layout is a left-to-right guess. If your screens sit
-  differently, edit `~/.config/hypr/config/custom/monitor.lua` — it's yours and
+  differently, edit `~/.config/archdots/hypr/monitor.lua` — it's yours and
   it's not tracked by git.
 
 <hr>

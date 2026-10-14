@@ -1,7 +1,7 @@
 """Keybind cheatsheet — reads the live binds out of Hyprland.
 
 Nothing here is hardcoded: it asks `hyprctl binds -j` every time it opens, so
-binds added in hypr/config/custom/keybind.lua appear without touching this file.
+binds added in ~/.config/archdots/hypr/keybind.lua appear without touching this file.
 
 Naming them is the awkward part. Under the Lua config provider every bind is
 registered as a `__lua` callback, so hyprctl reports `dispatcher: "__lua"` with
@@ -288,7 +288,7 @@ class KeybindsOverlay(Overlay):
     # ── show / hide ─────────────────────────────────────────────────────────
 
     def reveal(self) -> None:
-        self._rebuild()  # always current, including custom/keybind.lua
+        self._rebuild()  # always current, including the user's keybind.lua
         self.show()
 
     def on_key(self, event) -> bool:

@@ -16,7 +16,7 @@ end
 
 -- Your overrides.
 --
--- Every module above can have a twin in ~/.config/archdots/hypr/, loaded here
+-- Every module above can have a twin in ~/.config/simplychit/hypr/, loaded here
 -- after all the defaults, so whatever it sets wins. Those files are yours: not
 -- tracked, never written by updates. The configs above stay the committed
 -- defaults, and each machine adjusts only what differs (monitor layout, GPU
@@ -28,7 +28,7 @@ end
 local home = os.getenv("HOME")
 local override_dirs = {
     { dir = home .. "/.config/hypr/config/custom/", label = "config/custom/" },
-    { dir = home .. "/.config/archdots/hypr/", label = "~/.config/archdots/hypr/" },
+    { dir = home .. "/.config/simplychit/hypr/", label = "~/.config/simplychit/hypr/" },
 }
 local error_log = home .. "/.cache/hypr-custom.log"
 

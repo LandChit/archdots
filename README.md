@@ -1,4 +1,4 @@
-# archdots
+# SimplyChit
 
 My personal Arch + Hyprland desktop — the whole thing, ready to install.
 
@@ -59,7 +59,7 @@ looks like it belongs together.**
 | **Login screen** | SDDM, `silent` theme |
 | **Shell** | zsh + oh-my-zsh |
 | **Colors** | pywal16 — everything follows the wallpaper, 16 distinct colours |
-| **App theme** | `archdots` — GTK 3 hand-written, GTK 4 recolours libadwaita |
+| **App theme** | `simplychit` — GTK 3 hand-written, GTK 4 recolours libadwaita |
 
 <hr>
 
@@ -140,7 +140,7 @@ paths. It shows you each of those before writing it.
 The questions come up as dialog boxes when the machine has `whiptail`. There you
 choose once — install, update, or pick the parts yourself — and the rest runs on
 its own behind a progress bar, with everything it did kept in
-`~/.local/state/archdots/`. Pass `--no-gui` to be asked about each step in plain
+`~/.local/state/simplychit/`. Pass `--no-gui` to be asked about each step in plain
 text and watch the output as it happens, `--yes` to accept every default and ask
 nothing at all, `--no-flatpak` to skip the flatpak applications, or `--help` for
 the full list.
@@ -152,7 +152,7 @@ duplicates.
 **To update later:**
 
 ```bash
-~/archdots/install.sh update
+~/simplychit/install.sh update
 ```
 
 That pulls the repo, re-links anything new, installs packages the repo has
@@ -166,7 +166,7 @@ them.
 > one, which moves your untracked files across and relinks everything:
 >
 > ```bash
-> git -C ~/archdots pull && ~/archdots/install.sh update
+> git -C ~/simplychit pull && ~/simplychit/install.sh update
 > ```
 >
 > Until that second command runs, the links in `~/.config` point at paths
@@ -184,32 +184,32 @@ starts itself. Press <kbd>SUPER</kbd> <kbd>/</kbd> for the cheatsheet.
 
 ```bash
 # 1. install the packages listed below, then:
-git clone https://github.com/LandChit/archdots ~/archdots
-cd ~/archdots && stow --target="$HOME" home
+git clone https://github.com/LandChit/archdots ~/simplychit
+cd ~/simplychit && stow --target="$HOME" home
 # your own config goes in these (untracked); gtk.css imports user.css and
 # warns on every GTK 4 app if it is missing
-mkdir -p ~/.config/archdots/local && touch ~/.config/gtk-4.0/user.css
+mkdir -p ~/.config/simplychit/local && touch ~/.config/gtk-4.0/user.css
 
 # 2. wallpapers live here — the picker reads this folder
-mkdir -p ~/Pictures/wallpapers && cp ~/archdots/wallpapers/* ~/Pictures/wallpapers/
+mkdir -p ~/Pictures/wallpapers && cp ~/simplychit/wallpapers/* ~/Pictures/wallpapers/
 # --cols16 dual is what makes colours 8-15 distinct rather than copies of 0-7;
 # the templates and every sheet downstream depend on it.
 wal -i ~/Pictures/wallpapers/<pick-one> --cols16 dual
 
 # 3. the shell reads the palette from ~/.cache/wal itself; GTK needs a copy
 #    beside each gtk.css, in its own format because GTK CSS has no var().
-for d in ~/.themes/archdots/gtk-3.0 ~/.themes/archdots/gtk-4.0 ~/.config/gtk-4.0; do
+for d in ~/.themes/simplychit/gtk-3.0 ~/.themes/simplychit/gtk-4.0 ~/.config/gtk-4.0; do
   cp ~/.cache/wal/colors-gtk.css "$d/colors.css"
 done
 
 # 4. the GTK 4 recolour has to sit *beside* the file that imports it — a flatpak
 #    mounts .config/gtk-4.0 inside its own per-app home, so a relative import
 #    reaching back to ~/.themes silently fails and every flatpak loses its colour
-cp ~/.themes/archdots/gtk-4.0/overrides.css ~/.config/gtk-4.0/
+cp ~/.themes/simplychit/gtk-4.0/overrides.css ~/.config/gtk-4.0/
 
 # 5. the shell and the lock screen start from this symlink
-mkdir -p ~/.local/state/archdots
-ln -sfn ~/Pictures/wallpapers/<pick-one> ~/.local/state/archdots/wallpaper
+mkdir -p ~/.local/state/simplychit
+ln -sfn ~/Pictures/wallpapers/<pick-one> ~/.local/state/simplychit/wallpaper
 
 # 6. only on a machine with two GPUs — put the integrated one first, so the
 #    desktop doesn't render on the discrete card. uwsm sources this directory.
@@ -218,7 +218,7 @@ echo 'export AQ_DRM_DEVICES="/dev/dri/card1:/dev/dri/card0"' \
   > ~/.config/uwsm/env-hyprland.d/10-gpu.sh
 ```
 
-You'll also want a monitor layout in `~/.config/archdots/hypr/monitor.lua`,
+You'll also want a monitor layout in `~/.config/simplychit/hypr/monitor.lua`,
 and the settings in
 [DEVELOPMENT.md](DEVELOPMENT.md#settings-that-cannot-be-stowed) that can't be
 stowed.
@@ -235,16 +235,16 @@ open keep their old colours until you restart them — GTK reads a theme once.
 **Retune the theme itself:** the colours are derived, not written down. Every
 surface, border and highlight comes from the wallpaper's palette by way of
 `mix()` and `alpha()`, so changing one line changes all of them consistently —
-`home/.themes/archdots/gtk-3.0/gtk.css` for GTK 3, `gtk-4.0/overrides.css` for GTK 4.
+`home/.themes/simplychit/gtk-3.0/gtk.css` for GTK 3, `gtk-4.0/overrides.css` for GTK 4.
 The accent is `color4` throughout, the same one the bar and window borders use.
 
 **Change anything else** — your monitors, keybinds, mouse, terminal font,
 shell aliases — without touching the originals: everything you edit lives in
-`~/.config/archdots/`. Those files are loaded after the defaults, so whatever
+`~/.config/simplychit/`. Those files are loaded after the defaults, so whatever
 you write wins, and they are not in the repo, so updates never overwrite them.
 [CUSTOMIZING.md](CUSTOMIZING.md) has a "to change X, edit Y" table.
 
-**Add a keybind:** edit `~/.config/archdots/hypr/keybind.lua` and give it a
+**Add a keybind:** edit `~/.config/simplychit/hypr/keybind.lua` and give it a
 `desc` so it shows up on the cheatsheet:
 
 ```lua
@@ -352,7 +352,7 @@ org.gnome.TextEditor
 - Bluetooth devices that need a passkey typed in still need `bluetoothctl`;
   everything else pairs and connects from the control centre.
 - The installer's monitor layout is a left-to-right guess. If your screens sit
-  differently, edit `~/.config/archdots/hypr/monitor.lua` — it's yours and
+  differently, edit `~/.config/simplychit/hypr/monitor.lua` — it's yours and
   it's not tracked by git.
 
 <hr>

@@ -50,10 +50,10 @@ hl.window_rule({
 
 -- The shell's settings app: a dialog-sized window in the middle, not a tile.
 hl.window_rule({
-    name = "archdots-settings",
+    name = "simplychit-settings",
     match = {
         class = "^(org.quickshell)$",
-        title = "^(archdots settings)$",
+        title = "^(SimplyChit settings)$",
     },
     float = true,
     size = "1000 700",
@@ -151,13 +151,13 @@ hl.window_rule({
     workspace = "4",
 })
 
--- Frosted glass for the shell's surfaces (namespaces "archdots-<name>").
+-- Frosted glass for the shell's surfaces (namespaces "simplychit-<name>").
 -- ignore_alpha 0.5 blurs behind the 0.88-0.94 alpha islands and cards but not
 -- behind their soft edges. The wallpaper layer is opaque and left out.
 hl.layer_rule(
     {
-        name = "archdots-surfaces",
-        match = { namespace = "archdots-(bar|launcher|clipboard|emoji|calendar|control|notifications|battery|osd|wallpaper)" },
+        name = "simplychit-surfaces",
+        match = { namespace = "simplychit-(bar|launcher|clipboard|emoji|calendar|control|notifications|battery|osd|wallpaper)" },
         blur = true,
         ignore_alpha = 0.5,
     }
@@ -166,8 +166,8 @@ hl.layer_rule(
 -- The full-screen menus: the whole scrim is frosted.
 hl.layer_rule(
     {
-        name = "archdots-scrims",
-        match = { namespace = "archdots-(powermenu|screenshot|keybinds|polkit|lock-preview)" },
+        name = "simplychit-scrims",
+        match = { namespace = "simplychit-(powermenu|screenshot|keybinds|polkit|lock-preview)" },
         blur = true,
         ignore_alpha = 0.1,
     }

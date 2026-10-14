@@ -1,9 +1,9 @@
--- Helpers for the desktop shell: Quickshell, config ~/.config/quickshell/archdots.
--- Everything goes through `qs -c archdots`: start it, stop it, and send it IPC
--- calls (`qs -c archdots ipc show` lists every target).
+-- Helpers for the desktop shell: Quickshell, config ~/.config/quickshell/simplychit.
+-- Everything goes through `qs -c simplychit`: start it, stop it, and send it IPC
+-- calls (`qs -c simplychit ipc show` lists every target).
 local M = {}
 
-local QS = "qs -c archdots"
+local QS = "qs -c simplychit"
 
 -- An IPC call as a shell command: M.ipc("panel", "toggle", "launcher").
 function M.ipc(...)
@@ -13,7 +13,7 @@ end
 -- Stop the running shell, if any, and start a fresh one, detached. -n refuses
 -- a second instance, so a double press cannot leave two shells running.
 function M.restart()
-    hl.exec_cmd("qs kill -c archdots >/dev/null 2>&1; " .. QS .. " -n -d")
+    hl.exec_cmd("qs kill -c simplychit >/dev/null 2>&1; " .. QS .. " -n -d")
 end
 
 -- Open or close one of the shell's panels. Names: services/Panels.qml.

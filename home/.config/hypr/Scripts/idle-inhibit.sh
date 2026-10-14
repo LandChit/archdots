@@ -5,7 +5,7 @@
 # (ignore_systemd_inhibit is off), so no dim, lock, screen-off or suspend
 # while it is on. The lock dies with the session; nothing persists.
 
-pidfile="${XDG_RUNTIME_DIR:-/tmp}/archdots-idle-inhibit.pid"
+pidfile="${XDG_RUNTIME_DIR:-/tmp}/simplychit-idle-inhibit.pid"
 
 running() {
     [ -r "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null
@@ -13,16 +13,16 @@ running() {
 
 on() {
     running && return 0
-    systemd-inhibit --what=idle --who=archdots --why="Idle inhibit toggle" \
+    systemd-inhibit --what=idle --who=simplychit --why="Idle inhibit toggle" \
         --mode=block sleep infinity &
     echo $! > "$pidfile"
-    notify-send -t 2000 -a archdots "Staying awake" "Idle lock and suspend are off"
+    notify-send -t 2000 -a SimplyChit "Staying awake" "Idle lock and suspend are off"
 }
 
 off() {
     if running; then
         kill "$(cat "$pidfile")"
-        notify-send -t 2000 -a archdots "Idle back on" "The screen locks and suspends when idle again"
+        notify-send -t 2000 -a SimplyChit "Idle back on" "The screen locks and suspends when idle again"
     fi
     rm -f "$pidfile"
 }

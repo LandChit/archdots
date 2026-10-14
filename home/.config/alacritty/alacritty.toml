@@ -1,12 +1,12 @@
 # Only imports. Alacritty loads the importing file *last*, so any setting kept
-# here would beat the user's file. The settings live in archdots.toml instead.
+# here would beat the user's file. The settings live in simplychit.toml instead.
 #
-#   archdots.toml                            defaults (tracked)
+#   simplychit.toml                            defaults (tracked)
 #   ~/.cache/wal/colors-alacritty.toml       pywal16 colours (generated)
-#   ~/.config/archdots/local/alacritty.toml  yours (untracked, wins)
+#   ~/.config/simplychit/local/alacritty.toml  yours (untracked, wins)
 [general]
 import = [
-    "~/.config/alacritty/archdots.toml",
+    "~/.config/alacritty/simplychit.toml",
     "~/.cache/wal/colors-alacritty.toml",
-    "~/.config/archdots/local/alacritty.toml",
+    "~/.config/simplychit/local/alacritty.toml",
 ]

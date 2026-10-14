@@ -3,7 +3,7 @@
 # ~/.cache/wal/sequences (sourced in .zshrc), so the prompt re-themes
 # automatically with every wallpaper change. Accent = color4, like the shell.
 #
-#   ╭─ chit at lancetop in ~/archdots on (main ✗) using «.venv»
+#   ╭─ chit at lancetop in ~/simplychit on (main ✗) using «.venv»
 #   ╰─❯
 
 setopt prompt_subst

@@ -27,7 +27,7 @@ home/                stowed into $HOME: `stow --dir=<repo> --target=$HOME home`
   .config/
     hypr/            Hyprland — hyprland.lua + config/*.lua, hypridle, hyprlock
       config/custom/   old per-machine overrides location, still loaded (untracked)
-    quickshell/archdots/   the desktop shell, QML (README inside)
+    quickshell/simplychit/   the desktop shell, QML (README inside)
     wal/templates/   pywal16 templates — the source of all theming
     alacritty/ eza/ fastfetch/ cliphist/ fontconfig/
     Kvantum/ qt6ct/ kdeglobals    Qt theming
@@ -39,7 +39,7 @@ home/                stowed into $HOME: `stow --dir=<repo> --target=$HOME home`
 .themes_sddm/        SDDM theme (install.sh copies it into /usr/share/sddm)
 kvantum/             Kvantum theme sources
 wallpapers/          copied to ~/Pictures/wallpapers
-archdots_docker/     container test harness
+simplychit_docker/     container test harness
 install.sh  README.md  DEVELOPMENT.md  CUSTOMIZING.md  TODO.md
 ```
 
@@ -48,7 +48,7 @@ adding a file there needs no ignore list. The root `.stow-local-ignore` is not
 read by install.sh: it ignores everything, so an installer from before the move
 (which ran `stow .` at the root) links nothing.
 
-User settings are not in the repo at all: they live in `~/.config/archdots/`
+User settings are not in the repo at all: they live in `~/.config/simplychit/`
 (see [CUSTOMIZING.md](CUSTOMIZING.md)).
 
 `wallpapers/` stays at the root because the picker reads `~/Pictures/wallpapers`
@@ -60,8 +60,8 @@ symlink would just be dead weight. `install.sh` copies them across instead.
 ## The shell
 
 A desktop shell written for this repo in [Quickshell](https://quickshell.org)
-(QML), at `home/.config/quickshell/archdots/`; its own
-[README](home/.config/quickshell/archdots/README.md) has the layout, the IPC
+(QML), at `home/.config/quickshell/simplychit/`; its own
+[README](home/.config/quickshell/simplychit/README.md) has the layout, the IPC
 targets and how to test it next to a running session. Quickshell is packaged
 (`quickshell` in extra), so there is nothing to build: no virtualenv, no pip.
 
@@ -71,7 +71,7 @@ Hyprland IPC, Wi-Fi, Bluetooth, polkit, PAM — Quickshell has as services, so
 the nmcli and bluetoothctl parsing (and the hangs it needed guarding against)
 are gone.
 
-**One process**, `qs -c archdots`, started by `hypr/config/autorun.lua`
+**One process**, `qs -c simplychit`, started by `hypr/config/autorun.lua`
 through `hypr/config/helpers/shell.lua`. It draws:
 
 | Surface | What it is |
@@ -93,8 +93,8 @@ through `hypr/config/helpers/shell.lua`. It draws:
 | lock | ext-session-lock + PAM, opt-in (`lock.enabled`); hyprlock otherwise |
 
 Panels open one at a time (`services/Panels.qml`); a keybind is one IPC call,
-`qs -c archdots ipc call panel toggle <name>`. Settings are
-`~/.config/archdots/settings.json` over the defaults in `config/Config.qml`,
+`qs -c simplychit ipc call panel toggle <name>`. Settings are
+`~/.config/simplychit/settings.json` over the defaults in `config/Config.qml`,
 reloaded live (keys: [CUSTOMIZING.md](CUSTOMIZING.md)), and edited by the
 settings app (`modules/settings/`, SUPER + `,`).
 
@@ -103,14 +103,14 @@ small JSON decoder (Hyprland's Lua has none) and `config/helpers/settings.lua`
 loads the file, reporting a broken one and falling back to the defaults.
 `keybind.lua` is a table of binds with stable ids, changed by
 `keybinds.remap` / `keybinds.disabled` and listed for the settings app in
-`~/.cache/archdots/keybinds.json`; `monitor.lua` applies the active display
+`~/.cache/simplychit/keybinds.json`; `monitor.lua` applies the active display
 profile (`displays`), `input.lua` the known `input` keys. One file, written as
 data, so the settings app never generates code and hand edits keep working.
 
 **Idle is the shell's too.** `services/IdleTimers.qml` dims, locks, turns the
 screens off and suspends after `idle.ac` / `idle.battery`; hypridle only locks
-before sleep and turns the screens on after. `archdots doctor`
-(`home/.local/bin/archdots`) checks the whole setup; the About page shows it.
+before sleep and turns the screens on after. `simplychit doctor`
+(`home/.local/bin/simplychit`) checks the whole setup; the About page shows it.
 
 ### The shell is the notification daemon
 
@@ -126,7 +126,7 @@ notifications go quiet, check the owner first:
 
 ```bash
 busctl --user list | grep Notifications   # name, owning PID, and process
-pgrep -f 'qs -c archdots'                 # the two PIDs must match
+pgrep -f 'qs -c simplychit'                 # the two PIDs must match
 ```
 
 `busctl --user status org.freedesktop.Notifications` works too, but note it
@@ -148,7 +148,7 @@ when a headset auto-connects before the shell is up. See
 `.themes/` ships the theme; `.config/gtk-3.0/settings.ini` is what chooses it:
 
 ```ini
-gtk-theme-name=archdots
+gtk-theme-name=simplychit
 gtk-icon-theme-name=breeze-dark
 gtk-application-prefer-dark-theme=1
 ```
@@ -159,7 +159,7 @@ misconfigured — the pywal16 palette is applied correctly on top of a light bas
 
 ### The GTK theme follows the wallpaper
 
-`.themes/archdots/` holds no colours of its own. The palette is pywal16 output:
+`.themes/simplychit/` holds no colours of its own. The palette is pywal16 output:
 `wal/templates/colors-gtk.css` renders to `~/.cache/wal/colors-gtk.css`, and the
 wallpaper picker copies it in as `colors.css` beside each sheet. The shell
 itself needs no copy: it reads `~/.cache/wal/colors.json` directly.
@@ -192,7 +192,7 @@ Which file an app reads depends on where it runs, and there are two paths:
   forces `gtk-theme-name` to `Adwaita-empty` so a custom theme cannot displace
   it — so only the colour is missing.
 - **Flatpaks** get nothing from `~/.config` by default, and read
-  `~/.themes/archdots/gtk-4.0/gtk.css` instead — which is why that one bundles
+  `~/.themes/simplychit/gtk-4.0/gtk.css` instead — which is why that one bundles
   libadwaita's whole sheet. `~/.themes` reaches them because the global flatpak
   override grants it (`flatpak override --user --show`) and because most app
   manifests request it themselves.
@@ -309,7 +309,7 @@ deliberately not a `colorN`.
 
 The wallpaper picker (`SUPER` + `W`) sets the wallpaper on every monitor (or,
 with Shift, the focused one), runs pywal16, copies the GTK palette, reloads
-Hyprland, and re-points `~/.local/state/archdots/wallpaper` so the choice
+Hyprland, and re-points `~/.local/state/simplychit/wallpaper` so the choice
 survives a reboot ([below](#the-wallpaper-is-a-pointer)). The shell draws the
 wallpaper itself, crossfading, so hyprpaper is not used.
 
@@ -328,10 +328,10 @@ only restates the part that differs:
 ```
 config/monitor.lua                    committed default — the owner's layout
 config/custom/monitor.lua             old location, still loaded (gitignored)
-~/.config/archdots/hypr/monitor.lua   loaded last, wins
+~/.config/simplychit/hypr/monitor.lua   loaded last, wins
 ```
 
-`~/.config/archdots/` is outside the repo entirely; `config/custom/` is kept
+`~/.config/simplychit/` is outside the repo entirely; `config/custom/` is kept
 only so machines set up before the move keep working. User-facing docs:
 [CUSTOMIZING.md](CUSTOMIZING.md).
 
@@ -343,14 +343,14 @@ off exact device names), and hardware-bound autostarts like `solaar`.
 
 ### Programs that are not Hyprland
 
-Three settings live outside Lua, so `~/.config/archdots/hypr/` cannot hold them. Each one
+Three settings live outside Lua, so `~/.config/simplychit/hypr/` cannot hold them. Each one
 uses the escape hatch its own program provides, and in every case the tracked
 file stays machine-neutral and `install.sh` never edits it:
 
 | Setting | Committed default | This machine |
 |---|---|---|
 | `AQ_DRM_DEVICES` (which GPU renders) | `uwsm/env-hyprland` — comments only | `uwsm/env-hyprland.d/10-gpu.sh` |
-| Desktop wallpaper | the shell starts from the pointer | `~/.local/state/archdots/wallpaper`, and `wallpapers.json` beside it for per-monitor ones |
+| Desktop wallpaper | the shell starts from the pointer | `~/.local/state/simplychit/wallpaper`, and `wallpapers.json` beside it for per-monitor ones |
 | Lock screen wallpaper | `hypr/hyprlock.conf` — names the same pointer | the same symlink |
 
 **uwsm sources a directory.** `/usr/lib/uwsm/prepare-env.sh` calls `source_file`
@@ -366,7 +366,7 @@ Do not put a `README.md` in that directory the way `config/custom/` has one:
 
 ### The wallpaper is a pointer
 
-`hyprlock.conf` names `~/.local/state/archdots/wallpaper`, a symlink, rather
+`hyprlock.conf` names `~/.local/state/simplychit/wallpaper`, a symlink, rather
 than a picture, and the shell starts from it. `install.sh` creates it and the
 picker re-points it, so choosing a wallpaper touches nothing tracked — before
 this, every wallpaper change rewrote a `path =` line in stowed files and turned
@@ -398,7 +398,7 @@ Two things that are not obvious, both found by testing:
 Check syntax before reloading — cheaper than debugging a dead session:
 
 ```bash
-luac -p ~/.config/archdots/hypr/*.lua && hyprctl reload
+luac -p ~/.config/simplychit/hypr/*.lua && hyprctl reload
 ```
 
 ---
@@ -406,7 +406,7 @@ luac -p ~/.config/archdots/hypr/*.lua && hyprctl reload
 ## Naming keybinds
 
 The cheatsheet (`SUPER` + `/`) is generated from `hyprctl binds -j` every time
-it opens, so binds added in `~/.config/archdots/hypr/keybind.lua` appear with no code
+it opens, so binds added in `~/.config/simplychit/hypr/keybind.lua` appear with no code
 change.
 
 The catch: **hyprctl knows the key combo but not the action.** Under the Lua
@@ -530,7 +530,7 @@ flatpak list --app --columns=application
   paths with stable ones from `/dev/dri/by-path/`
   ([above](#programs-that-are-not-hyprland)).
 - **`config/monitor.lua` keeps one laptop's layout as the default**, which is
-  wrong elsewhere until overridden in `~/.config/archdots/hypr/`. `install.sh` writes a
+  wrong elsewhere until overridden in `~/.config/simplychit/hypr/`. `install.sh` writes a
   starter override from the detected outputs, but the positions in it are a
   left-to-right guess.
 - **CPU temperature is detected, not hardcoded.** `thermal_zone0` is not the CPU
@@ -564,9 +564,9 @@ rewrite and still installed waybar, nwg-bar, yazi and **dunst**.
 
 It runs from either direction — piped from curl on a bare install, or `./install.sh`
 inside an existing clone. `find_repo_root()` tells the two apart by looking for
-`install.sh` **and** `home/.config/quickshell/archdots`, a pair that exists nowhere
+`install.sh` **and** `home/.config/quickshell/simplychit`, a pair that exists nowhere
 else; when piped there is no `BASH_SOURCE` path to resolve, so it clones and
-`exec`s the copy on disk with `ARCHDOTS_REEXEC=1` guarding against a loop.
+`exec`s the copy on disk with `SIMPLYCHIT_REEXEC=1` guarding against a loop.
 
 Every step is idempotent, so a second run updates rather than duplicates.
 
@@ -620,7 +620,7 @@ and therefore gets dialogs and visible output instead of a bar.
 
 **The output goes to a log, not the screen** — in dialog mode. `run_logged`
 sends every command through `log_filter`, which writes each line to
-`~/.local/state/archdots/<mode>-<date>.log` and turns the interesting ones into
+`~/.local/state/simplychit/<mode>-<date>.log` and turns the interesting ones into
 gauge text; the last nine logs are kept. In `--no-gui` mode the same function
 `tee`s to the terminal instead, because there the output *is* the interface.
 Either way the log is written, and the path is printed at the end and on any
@@ -646,7 +646,7 @@ does, `sudo_askpass_setup` has pointed `SUDO_ASKPASS` at a helper that
 scratch, because a resumed newt does not repaint its own frame — it would carry
 on writing text into a box that is no longer there.
 
-The helper opens `$ARCHDOTS_TTY` rather than `/dev/tty`, resolved once in the
+The helper opens `$SIMPLYCHIT_TTY` rather than `/dev/tty`, resolved once in the
 parent by `current_tty()` (`tty`, else `/proc/$$/fd/{1,2}`, else `ps -o tty=`,
 which between them cover being piped from curl). `/dev/tty` is by definition the
 *controlling* terminal, and a child detached from one cannot open it at all —
@@ -766,8 +766,8 @@ Three things are detected, shown for review, and only then written:
 | What | Detected from | Written to |
 |---|---|---|
 | GPU order (`AQ_DRM_DEVICES`) | `/sys/class/drm/card*/device/vendor` — anything that is not `0x10de` goes first, so Hyprland lands on the iGPU | `.config/uwsm/env-hyprland.d/10-gpu.sh` |
-| Monitor layout | `hyprctl monitors -j` when Hyprland is up, otherwise the connected connectors under `/sys/class/drm/card*-*` — the sysfs names are the same names Hyprland uses | `~/.config/archdots/hypr/monitor.lua` |
-| Wallpaper | the first file in `~/Pictures/wallpapers`, and only when no pointer exists yet | `~/.local/state/archdots/wallpaper` |
+| Monitor layout | `hyprctl monitors -j` when Hyprland is up, otherwise the connected connectors under `/sys/class/drm/card*-*` — the sysfs names are the same names Hyprland uses | `~/.config/simplychit/hypr/monitor.lua` |
+| Wallpaper | the first file in `~/Pictures/wallpapers`, and only when no pointer exists yet | `~/.local/state/simplychit/wallpaper` |
 
 None of those are tracked files, so a finished install leaves `git status` clean
 ([above](#programs-that-are-not-hyprland)).
@@ -790,7 +790,7 @@ Two traps found while writing it:
   target.
 
 Everything the script generates is gitignored or outside the repo altogether —
-`~/.config/archdots/hypr/monitor.lua`, `env-hyprland.d/10-gpu.sh`, the wallpaper pointer —
+`~/.config/simplychit/hypr/monitor.lua`, `env-hyprland.d/10-gpu.sh`, the wallpaper pointer —
 so an install leaves the worktree clean and nothing detected here can be pushed
 onto anybody else.
 
@@ -808,7 +808,7 @@ Three separate pieces, none of them stowable because none of them live in
 |---|---|---|
 | the package | `sddm-silent-theme` (AUR) | pinned to a version, see below |
 | the config | `/usr/share/sddm/themes/silent/configs/default.conf` | root-owned; the repo keeps an edited copy in `.themes_sddm/` |
-| the greeter | `/etc/sddm.conf.d/10-archdots.conf` | selects the theme and sets `QML2_IMPORT_PATH` |
+| the greeter | `/etc/sddm.conf.d/10-simplychit.conf` | selects the theme and sets `QML2_IMPORT_PATH` |
 
 **The version is pinned on purpose.** The theme's `default.conf` schema changes
 between releases, and an upgrade overwrites that file outright — so an upgrade
@@ -887,15 +887,15 @@ does the same thing later.
 
 `install.sh` is testable in a container without touching the machine it is run
 from. The harness lives outside the repo and is reached through the gitignored
-`archdots_docker` symlink:
+`simplychit_docker` symlink:
 
 ```bash
-cd archdots_docker
+cd simplychit_docker
 ./runscript.sh --fast     # no packages, ~10s — structure, stow, detection
 ./runscript.sh --full     # every package, paru, the theme
 ./runscript.sh --hypr     # starts Hyprland and the shell for real, screenshots it
 ./runscript.sh --ui       # same, but leaves it up so you can click around
-./runscript.sh            # interactive shell with the repo at ~/archdots
+./runscript.sh            # interactive shell with the repo at ~/simplychit
 ./runscript.sh -- --yes --no-aur   # anything after -- goes to install.sh
 ```
 
@@ -958,8 +958,8 @@ harness reports is trustworthy.
 - **A nested session.** Hyprland runs as a Wayland *client* of the host
   compositor, so the whole desktop appears in a window. `checks.sh` then waits
   for `hyprctl` to answer, counts the registered binds (and how many lack a
-  `desc`, which is what the cheatsheet keys off), waits for `qs -c archdots`,
-  prints any errors from its log, lists its `archdots-*` layers, checks that it
+  `desc`, which is what the cheatsheet keys off), waits for `qs -c simplychit`,
+  prints any errors from its log, lists its `simplychit-*` layers, checks that it
   owns `org.freedesktop.Notifications`, and screenshots the result to
   `artifacts/hyprland.png`. A re-theme through `ipc call wallpaper set` then
   checks the palette changes in place.
@@ -971,7 +971,7 @@ stays up and can be clicked through.
 The keybinds are the catch. A nested compositor only receives what the host
 does not claim first, and every real bind here is `SUPER`-based — so none of
 them ever arrive. Every nested run writes a container-only
-`~/.config/archdots/hypr/input.lua` (from `ui-input.lua`) that maps **Caps Lock
+`~/.config/simplychit/hypr/input.lua` (from `ui-input.lua`) that maps **Caps Lock
 to an extra Super** inside the container, so the real binds work when pressed
 with Caps instead.
 
@@ -1001,7 +1001,7 @@ Two traps found building this:
   `$XDG_RUNTIME_DIR/hypr/`.
 - **`hl.exec_cmd` swallows its children's stderr.** A shell that dies on
   startup leaves nothing in Hyprland's log, so `checks.sh` reads the shell's own
-  log with `qs log -c archdots`.
+  log with `qs log -c simplychit`.
 - **The notification bus name is acquired asynchronously**, so a single query
   right after the shell appears can report the bus as unowned on a perfectly
   healthy session. The check retries for 15s.
@@ -1010,7 +1010,7 @@ Bugs this harness caught that reading the script did not:
 
 - `$USER` is unset in a bare container and when piped from curl. Under `set -u`
   that aborted on the banner line, before anything ran.
-- The `archdots_docker` symlink points outside the repo, and stow refuses to
+- The `simplychit_docker` symlink points outside the repo, and stow refuses to
   follow an absolute symlink — it aborted the **entire** stow with a message
   the conflict parser did not recognise, so the script sailed past it into a
   hard failure. Both the ignore entry and a catch-all for unrecognised conflicts
@@ -1021,13 +1021,13 @@ Bugs this harness caught that reading the script did not:
   `redhat-fonts` dependency. On a machine that already has it installed — every
   machine this was written on — the failure is invisible.
 - `config/autorun.lua` ran `fix_dolphin.sh` through a hardcoded
-  `/home/chit/archdots/...` path, so it silently did nothing for anyone whose
+  `/home/chit/simplychit/...` path, so it silently did nothing for anyone whose
   clone is elsewhere. It goes through `$HOME/.config/hypr/Scripts/` now, which
   resolves through the stow symlink wherever the repo lives.
 
 ### Still not handled
 
-- `hl.device` blocks in `~/.config/archdots/hypr/input.lua` — they key off exact device
+- `hl.device` blocks in `~/.config/simplychit/hypr/input.lua` — they key off exact device
   names and there is no sensible default to generate.
 - Monitor *positions* and refresh rates. The script writes `mode = "preferred"`
   and a left-to-right guess; anything else is a decision only the owner can make.

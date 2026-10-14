@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# archdots installer — https://github.com/LandChit/archdots
+# SimplyChit installer — https://github.com/LandChit/archdots
 #
 # Two ways to run it:
 #
@@ -28,13 +28,13 @@ set -euo pipefail
 # ── settings ────────────────────────────────────────────────────────────────
 
 REPO_URL_DEFAULT="https://github.com/LandChit/archdots"
-REPO_DIR_DEFAULT="$HOME/archdots"
+REPO_DIR_DEFAULT="$HOME/simplychit"
 WALLPAPER_DIR="$HOME/Pictures/wallpapers"
 
 # The wallpaper this machine is using, as a symlink. hyprlock.conf points at it
 # instead of at a picture, which keeps that file identical on every machine and
 # out of `git status`; the shell's wallpaper picker re-points it.
-WALLPAPER_POINTER="$HOME/.local/state/archdots/wallpaper"
+WALLPAPER_POINTER="$HOME/.local/state/simplychit/wallpaper"
 
 # The SDDM theme is pinned. Its config schema changes between releases, and
 # .themes_sddm/ holds a default.conf written against this one.
@@ -49,7 +49,7 @@ PKG_CORE=(
     # hyprlock is the lock screen unless the shell's own is switched on, and
     # its fallback either way; hyprpolkitagent is the polkit fallback.
     hyprland hyprlock hypridle hyprpolkitagent
-    # The desktop shell (~/.config/quickshell/archdots): bar, wallpaper, every
+    # The desktop shell (~/.config/quickshell/simplychit): bar, wallpaper, every
     # panel, notifications, polkit. Its battery meter reads UPower, which is
     # D-Bus activated: nothing to enable.
     quickshell upower
@@ -145,7 +145,7 @@ DO_MACHINE=1
 
 usage() {
     cat <<'EOF'
-archdots installer
+SimplyChit installer
 
 Usage: install.sh [install|update] [options]
 
@@ -155,7 +155,7 @@ Usage: install.sh [install|update] [options]
 
 With whiptail installed this runs as dialogs: you pick what to install once, and
 the rest is unattended behind a progress bar, with the full output kept in
-~/.local/state/archdots/. Use --no-gui to be asked about each step instead, in
+~/.local/state/simplychit/. Use --no-gui to be asked about each step instead, in
 plain text, with every command's output on screen.
 
   -y, --yes           Take the default for every prompt (non-interactive).
@@ -163,7 +163,7 @@ plain text, with every command's output on screen.
       --no-gui        Plain-text prompts instead of whiptail dialogs, and one
                       question per step. (--gui forces the dialogs back on.)
       --repo URL      Clone from URL instead of the default remote.
-      --dir PATH      Clone into PATH (default: ~/archdots).
+      --dir PATH      Clone into PATH (default: ~/simplychit).
       --no-flatpak    Skip the flatpak applications.
       --no-utils      Skip the utility packages.
       --no-aur        Skip paru and every AUR package.
@@ -226,13 +226,13 @@ fi
 # to the log while the progress bar is up — a gauge with pacman scrolling
 # through it is unreadable, and the output is worth keeping either way.
 LOG_FILE=""
-LOG_DIR="$HOME/.local/state/archdots"
+LOG_DIR="$HOME/.local/state/simplychit"
 
 log_open() {
     mkdir -p "$LOG_DIR" 2>/dev/null || return 0
     LOG_FILE="$LOG_DIR/${1:-install}-$(date +%Y%m%d-%H%M%S).log"
     {
-        printf 'archdots %s\n' "${1:-install}"
+        printf 'SimplyChit %s\n' "${1:-install}"
         printf 'started  %s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
         printf 'user     %s\n' "$(id -un)"
         printf 'command  %s\n\n' "$0 ${ARGS_ORIGINAL[*]:-}"
@@ -302,7 +302,7 @@ gauge_open() {
     # $! is the whiptail itself, which the askpass helper needs so it can stop
     # the bar while it asks and start it again afterwards.
     GAUGE_PID=$!
-    export ARCHDOTS_GAUGE_PID="$GAUGE_PID"
+    export SIMPLYCHIT_GAUGE_PID="$GAUGE_PID"
 
     # While the bar is up, everything this script prints goes to the log and
     # nothing reaches the terminal.
@@ -362,7 +362,7 @@ gauge_close() {
     gauge_up || return 0
     GAUGE_OPEN=0
     GAUGE_PID=""
-    export ARCHDOTS_GAUGE_PID=""
+    export SIMPLYCHIT_GAUGE_PID=""
     # Give the script its terminal back before the bar goes away, so whatever
     # prints next — the summary, an error, a prompt — has somewhere to appear.
     exec 1>&4 2>&5
@@ -532,24 +532,24 @@ sudo_askpass_setup() {
 
     cat > "$ASKPASS_DIR/askpass" <<'HELPER'
 #!/usr/bin/env bash
-# Written by archdots install.sh, and run by sudo instead of prompting on the
+# Written by SimplyChit install.sh, and run by sudo instead of prompting on the
 # terminal.
 #
-# $ARCHDOTS_TTY, not /dev/tty: whoever called sudo may have no controlling
+# $SIMPLYCHIT_TTY, not /dev/tty: whoever called sudo may have no controlling
 # terminal, and /dev/tty is exactly that terminal — it cannot be opened from a
 # detached process. If even the named device is unusable, exit rather than hand
 # sudo an empty password: three silent retries and a "Sorry, try again" tell
 # nobody anything.
-T="${ARCHDOTS_TTY:-/dev/tty}"
+T="${SIMPLYCHIT_TTY:-/dev/tty}"
 if [[ ! -r "$T" || ! -w "$T" ]]; then
-    printf 'archdots: no terminal to ask for a password on (%s)\n' "$T" >&2
+    printf 'SimplyChit: no terminal to ask for a password on (%s)\n' "$T" >&2
     exit 1
 fi
 # SIGSTOP rather than a kill: the gauge has to survive to be resumed, and a
 # stopped process cannot repaint over the box while it is up.
-[[ -n "${ARCHDOTS_GAUGE_PID:-}" ]] && kill -STOP "$ARCHDOTS_GAUGE_PID" 2>/dev/null
-[[ -n "${ARCHDOTS_ASKPASS_FLAG:-}" ]] && : > "$ARCHDOTS_ASKPASS_FLAG"
-pw="$(whiptail --backtitle "${ARCHDOTS_BACKTITLE:-archdots}" \
+[[ -n "${SIMPLYCHIT_GAUGE_PID:-}" ]] && kill -STOP "$SIMPLYCHIT_GAUGE_PID" 2>/dev/null
+[[ -n "${SIMPLYCHIT_ASKPASS_FLAG:-}" ]] && : > "$SIMPLYCHIT_ASKPASS_FLAG"
+pw="$(whiptail --backtitle "${SIMPLYCHIT_BACKTITLE:-simplychit}" \
     --title "Administrator password" \
     --passwordbox "${1:-Password:}
 
@@ -557,7 +557,7 @@ Installing packages needs root. Your password is not
 stored, and nothing is echoed as you type.
 
 Enter confirms · Esc cancels" 13 62 2>&1 1>"$T" <"$T")"
-[[ -n "${ARCHDOTS_GAUGE_PID:-}" ]] && kill -CONT "$ARCHDOTS_GAUGE_PID" 2>/dev/null
+[[ -n "${SIMPLYCHIT_GAUGE_PID:-}" ]] && kill -CONT "$SIMPLYCHIT_GAUGE_PID" 2>/dev/null
 printf '%s\n' "$pw"
 HELPER
     chmod 700 "$ASKPASS_DIR/askpass"
@@ -576,7 +576,7 @@ HELPER
     mkdir -p "$ASKPASS_DIR/bin"
     cat > "$ASKPASS_DIR/bin/sudo" <<HELPER
 #!/usr/bin/env bash
-# Written by archdots install.sh. See sudo_askpass_setup.
+# Written by SimplyChit install.sh. See sudo_askpass_setup.
 real=$(command -v sudo)
 opts=(); saw_a=0
 while [[ \$# -gt 0 ]]; do
@@ -594,9 +594,9 @@ HELPER
     export PATH="$ASKPASS_DIR/bin:$PATH"
 
     export SUDO_ASKPASS="$ASKPASS_DIR/askpass"
-    export ARCHDOTS_ASKPASS_FLAG="$ASKPASS_FLAG"
-    export ARCHDOTS_BACKTITLE="$BACKTITLE"
-    export ARCHDOTS_TTY="$term"
+    export SIMPLYCHIT_ASKPASS_FLAG="$ASKPASS_FLAG"
+    export SIMPLYCHIT_BACKTITLE="$BACKTITLE"
+    export SIMPLYCHIT_TTY="$term"
     # The shim adds -A itself, and our own calls go through it too.
     SUDO=(sudo)
 }
@@ -654,7 +654,7 @@ trap cleanup EXIT
 # up there, and all of them have to work.
 
 UI="plain"
-BACKTITLE="archdots — Arch + Hyprland desktop"
+BACKTITLE="SimplyChit — Arch + Hyprland desktop"
 
 # Newt has a help line for exactly this and whiptail does not expose it, so the
 # key hints go inside the box, on the last line, where somebody who has never
@@ -751,7 +751,7 @@ confirm() {
         text="$(wt_clip "$prompt")
 
 $KEYS_YESNO"
-        wt_status --title "archdots" "${defaultno[@]}" \
+        wt_status --title "SimplyChit" "${defaultno[@]}" \
             --yesno "$text" "$(wt_height "$text")" "$(wt_width "$text")"
         return
     fi
@@ -773,7 +773,7 @@ ask() {
         local text="$prompt
 
 $KEYS_INPUT"
-        reply="$(wt --title "archdots" --inputbox "$text" \
+        reply="$(wt --title "SimplyChit" --inputbox "$text" \
             "$(wt_height "$text" 8)" "$(wt_width "$text")" "$default")" || reply=""
         printf '%s' "${reply:-$default}"
         return
@@ -800,7 +800,7 @@ choose() {
 $KEYS_MENU"
         height=$(( $(wt_lines "$text" 76) + rows + 8 ))
         (( height > 20 )) && height=20
-        reply="$(wt --title "archdots" --default-item "$default" \
+        reply="$(wt --title "SimplyChit" --default-item "$default" \
             --menu "$text" "$height" 76 "$rows" "$@")" || reply=""
         printf '%s' "${reply:-$default}"
         return
@@ -838,7 +838,7 @@ choose_radio() {
 $KEYS_RADIO"
     height=$(( $(wt_lines "$text" 76) + rows + 8 ))
     (( height > 20 )) && height=20
-    reply="$(wt --title "archdots" --radiolist "$text" "$height" 76 "$rows" "${items[@]}")" \
+    reply="$(wt --title "SimplyChit" --radiolist "$text" "$height" 76 "$rows" "${items[@]}")" \
         || reply=""
     # whiptail quotes what it returns, and returns nothing if you untick
     # everything and press Enter.
@@ -881,7 +881,7 @@ command -v sudo   >/dev/null || die "sudo not found. Install it and add your use
 
 ui_init
 
-printf '\n%sarchdots%s — Arch + Hyprland desktop\n' "$B" "$R"
+printf '\n%sSimplyChit%s — Arch + Hyprland desktop\n' "$B" "$R"
 # $USER is not exported by every shell — it is absent in a bare container and
 # when piped from curl, which under `set -u` would abort on the banner.
 say "user: $(id -un)    home: $HOME"
@@ -899,7 +899,7 @@ find_repo_root() {
     [[ -f "${BASH_SOURCE[0]}" ]] || return 1
     dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || return 1
     # A clone is identifiable by these two, which exist nowhere else.
-    [[ -f "$dir/install.sh" && -d "$dir/home/.config/quickshell/archdots" ]] || return 1
+    [[ -f "$dir/install.sh" && -d "$dir/home/.config/quickshell/simplychit" ]] || return 1
     printf '%s' "$dir"
 }
 
@@ -918,7 +918,7 @@ locate_repo() {
             if [[ -d "$REPO_DIR/home" || -f "$REPO_DIR/.stow-local-ignore" ]]; then
                 ok "existing clone at $REPO_DIR"
             else
-                die "$REPO_DIR exists and is not an archdots clone. Move it, or pass --dir."
+                die "$REPO_DIR exists and is not a SimplyChit clone. Move it, or pass --dir."
             fi
         else
             say "cloning $REPO_URL into $REPO_DIR"
@@ -929,9 +929,9 @@ locate_repo() {
 
         # Hand over to the freshly cloned copy so the rest of the run uses the
         # version that is actually on disk.
-        if [[ "${ARCHDOTS_REEXEC:-}" != 1 ]]; then
+        if [[ "${SIMPLYCHIT_REEXEC:-}" != 1 ]]; then
             say "handing over to $REPO_ROOT/install.sh"
-            export ARCHDOTS_REEXEC=1
+            export SIMPLYCHIT_REEXEC=1
             exec bash "$REPO_ROOT/install.sh" ${ARGS_ORIGINAL+"${ARGS_ORIGINAL[@]}"}
         fi
     fi
@@ -1285,8 +1285,8 @@ install_sddm_theme() {
     # ── the greeter config ──────────────────────────────────────────────────
     # QML2_IMPORT_PATH is not optional: without it the greeter loads with no
     # components and SDDM falls back to a blank screen.
-    local sddm_conf="/etc/sddm.conf.d/10-archdots.conf"
-    local sddm_body="# Written by archdots install.sh.
+    local sddm_conf="/etc/sddm.conf.d/10-simplychit.conf"
+    local sddm_body="# Written by SimplyChit install.sh.
 [General]
 InputMethod=qtvirtualkeyboard
 GreeterEnvironment=QML2_IMPORT_PATH=$theme_dir/components/,QT_IM_MODULE=qtvirtualkeyboard
@@ -1413,10 +1413,10 @@ stage_stow() {
     # into a hard failure.
     local simulate line rel src backup
     local conflicts=() unhandled=()
-    # A real ~/.config (and ~/.local/bin, for the archdots command), so stow
+    # A real ~/.config (and ~/.local/bin, for the simplychit command), so stow
     # links the folders inside rather than folding the whole directory into
     # one symlink to the repo. Folded, everything any app
-    # later creates there, ~/.config/archdots/ included, lands in the clone.
+    # later creates there, ~/.config/simplychit/ included, lands in the clone.
     mkdir -p "$HOME/.config" "$HOME/.local/bin"
     simulate="$(stow --simulate --verbose=1 --dir="$REPO_ROOT" --target="$HOME" home 2>&1 || true)"
     while IFS= read -r line; do
@@ -1441,7 +1441,7 @@ stage_stow() {
     if (( ${#conflicts[@]} )); then
         warn "${#conflicts[@]} existing file(s) are in the way:"
         printf '        %s\n' "${conflicts[@]}"
-        backup="$HOME/.archdots-backup-$(date +%Y%m%d-%H%M%S)"
+        backup="$HOME/.simplychit-backup-$(date +%Y%m%d-%H%M%S)"
         # Asked even in a dialog run: these are the user's own files.
         if interactive confirm "${#conflicts[@]} existing file(s) sit where the dotfiles need to go:
 
@@ -1506,11 +1506,11 @@ stage_zsh() {
 
 # ── the user's own files ────────────────────────────────────────────────────
 #
-# ~/.config/archdots/ holds everything the user edits by hand. Nothing in it is
+# ~/.config/simplychit/ holds everything the user edits by hand. Nothing in it is
 # tracked, and this stage only ever creates a file that is missing: a stub that
 # is already there is the user's, edited or not, and is never touched again.
 
-USER_DIR="$HOME/.config/archdots"
+USER_DIR="$HOME/.config/simplychit"
 
 # write_stub <path> <text> — create <path> with <text> unless it exists.
 write_stub() {
@@ -1557,13 +1557,13 @@ stage_user_dir() {
 '/* Your GTK 4 rules. Imported last by gtk.css, so anything here wins.
  * This file is not tracked and updates never touch it. */'
     # GTK 3 reads this file itself, over the theme, so it needs no import and
-    # nothing tracked uses the path. The theme is in ~/.themes/archdots/gtk-3.0/.
+    # nothing tracked uses the path. The theme is in ~/.themes/simplychit/gtk-3.0/.
     write_stub "$HOME/.config/gtk-3.0/gtk.css" \
-'/* Your GTK 3 rules. GTK loads this over the archdots theme, so anything here
+'/* Your GTK 3 rules. GTK loads this over the SimplyChit theme, so anything here
  * wins. This file is not tracked and updates never touch it. */'
 
     if [[ -e "$HOME/.custom.zsh" ]]; then
-        note "~/.custom.zsh is still sourced; ~/.config/archdots/local/zshrc is the new place for it"
+        note "~/.custom.zsh is still sourced; ~/.config/simplychit/local/zshrc is the new place for it"
     fi
 }
 
@@ -1593,6 +1593,88 @@ retire_fabric() {
     fi
     if [[ -L "$HOME/.config/fabric_shell" && ! -e "$HOME/.config/fabric_shell" ]]; then
         rm -- "$HOME/.config/fabric_shell"
+    fi
+    return 0
+}
+
+# ── retiring the old name ───────────────────────────────────────────────────
+#
+# These dotfiles were called archdots before they were SimplyChit. Everything
+# named after it moved: the user folder ~/.config/archdots/ (settings.json,
+# hypr/, local/), ~/.local/state/archdots/ (the wallpaper pointer, logs), the
+# shell (qs -c archdots), the GTK theme, the `archdots` command and the SDDM
+# config file. Run after stow, so the new names already exist.
+#
+# Moves never overwrite: an entry that exists under both names stays in the
+# old folder, with a warning.
+
+# merge_dir OLD NEW: move OLD's entries into NEW, then remove OLD if empty
+merge_dir() {
+    local old="$1" new="$2" entry name left=0
+    [[ -d "$old" && ! -L "$old" ]] || return 0
+    mkdir -p -- "$new"
+    for entry in "$old"/* "$old"/.[!.]*; do
+        [[ -e "$entry" || -L "$entry" ]] || continue
+        name="$(basename -- "$entry")"
+        if [[ -e "$new/$name" || -L "$new/$name" ]]; then
+            left=$(( left + 1 ))
+        else
+            mv -- "$entry" "$new/$name"
+        fi
+    done
+    if (( left )); then
+        warn "$left entries in ${old/#$HOME/\~} also exist in ${new/#$HOME/\~}; left in place"
+        note "compare ${old/#$HOME/\~} with ${new/#$HOME/\~} by hand, then delete the old one"
+    else
+        rmdir -- "$old" 2>/dev/null
+        ok "moved ${old/#$HOME/\~} to ${new/#$HOME/\~}"
+    fi
+}
+
+OLD_SHELL_RUNNING=0
+
+retire_old_name() {
+    local real link target pruned=0 old_conf=/etc/sddm.conf.d/10-archdots.conf
+    real="$(cd -- "$REPO_ROOT" && pwd -P)"
+
+    merge_dir "$HOME/.config/archdots" "$HOME/.config/simplychit"
+    merge_dir "$HOME/.local/state/archdots" "$HOME/.local/state/simplychit"
+    # generated (Hyprland rewrites keybinds.json at every load)
+    if [[ -d "$HOME/.cache/archdots" && ! -L "$HOME/.cache/archdots" ]]; then
+        rm -rf -- "$HOME/.cache/archdots"
+    fi
+
+    # stow leaves links to renamed files behind, dangling: ~/.local/bin/archdots,
+    # ~/.config/quickshell/archdots, ~/.themes/archdots, ... Only links into
+    # this repo's home/ that point at nothing are removed.
+    while IFS= read -r -d '' link; do
+        target="$(readlink -m -- "$link")"
+        if [[ "$target" == "$real/home/"* ]]; then
+            rm -- "$link"
+            pruned=$(( pruned + 1 ))
+        fi
+    done < <(find "$HOME/.config" "$HOME/.local/bin" "$HOME/.themes" -maxdepth 3 -xtype l -print0 2>/dev/null)
+    (( pruned )) && ok "removed $pruned link(s) to files the repo renamed"
+
+    if command -v gsettings >/dev/null &&
+        [[ "$(gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null)" == "'archdots'" ]]; then
+        gsettings set org.gnome.desktop.interface gtk-theme simplychit 2>/dev/null \
+            && ok "GTK theme renamed to simplychit"
+    fi
+
+    # ours (the first line says so); renamed, so SDDM keeps its theme
+    if [[ -f "$old_conf" ]] && head -1 "$old_conf" 2>/dev/null | grep -q '^# Written by archdots install.sh'; then
+        if [[ -e /etc/sddm.conf.d/10-simplychit.conf ]]; then
+            "${SUDO[@]}" rm -f -- "$old_conf" && ok "removed the old $old_conf"
+        else
+            "${SUDO[@]}" mv -- "$old_conf" /etc/sddm.conf.d/10-simplychit.conf \
+                && ok "renamed $old_conf to 10-simplychit.conf"
+        fi
+    fi
+
+    # the running shell under the old name: restart_shell replaces it
+    if qs list -c archdots 2>/dev/null | grep -q '^Instance'; then
+        OLD_SHELL_RUNNING=1
     fi
     return 0
 }
@@ -1658,9 +1740,9 @@ stage_wallpapers() {
 # Everything below differs per machine, and none of it is written into a tracked
 # file. Each program is given its own escape hatch instead:
 #
-#   Hyprland   ~/.config/archdots/hypr/*.lua, loaded after the defaults
+#   Hyprland   ~/.config/simplychit/hypr/*.lua, loaded after the defaults
 #   uwsm       env-hyprland.d/, sourced after env-hyprland  (gitignored)
-#   wallpaper  ~/.local/state/archdots/wallpaper, a symlink hyprlock's tracked
+#   wallpaper  ~/.local/state/simplychit/wallpaper, a symlink hyprlock's tracked
 #              config points at and the shell starts from
 #
 # The repo therefore stays clean after an install, and nothing here can push one
@@ -1770,7 +1852,7 @@ export AQ_DRM_DEVICES=\"$drm_list\""
     fi
 
     if (( ! ${#monitors[@]} )); then
-        warn "no monitors detected — write ~/.config/archdots/hypr/monitor.lua after first login"
+        warn "no monitors detected — write ~/.config/simplychit/hypr/monitor.lua after first login"
         note "monitor layout not generated; see DEVELOPMENT.md#per-machine-config"
         return 0
     fi
@@ -1870,7 +1952,7 @@ hl.workspace_rule({ workspace = \"1\", monitor = \"$primary\", default = true, p
             luac -p "$mon_file" && ok "syntax checks out" \
                 || warn "generated Lua does not parse — check it before logging in"
         fi
-        note "review ~/.config/archdots/hypr/monitor.lua — positions are a guess"
+        note "review ~/.config/simplychit/hypr/monitor.lua — positions are a guess"
     else
         skip "monitor.lua"
     fi
@@ -1884,7 +1966,7 @@ hl.workspace_rule({ workspace = \"1\", monitor = \"$primary\", default = true, p
 #
 # --cols16 dual is what makes colors 8-15 real colours instead of copies of 0-7,
 # which the templates and every sheet downstream rely on. It has to match the
-# flag the wallpaper picker uses (quickshell/archdots/services/Theme.qml) — a run without it
+# flag the wallpaper picker uses (quickshell/simplychit/services/Theme.qml) — a run without it
 # would quietly rewrite the palette with a duplicated bright half.
 #
 # Note that on a near-monochrome wallpaper the distinct bright half is a much
@@ -1921,8 +2003,8 @@ stage_theming() {
         # palette there — not next to itself in .themes/.
         local pair src dst copied=0
         for pair in \
-            "colors-gtk.css:$HOME/.themes/archdots/gtk-3.0/colors.css" \
-            "colors-gtk.css:$HOME/.themes/archdots/gtk-4.0/colors.css" \
+            "colors-gtk.css:$HOME/.themes/simplychit/gtk-3.0/colors.css" \
+            "colors-gtk.css:$HOME/.themes/simplychit/gtk-4.0/colors.css" \
             "colors-gtk.css:$HOME/.config/gtk-4.0/colors.css"
         do
             src="$HOME/.cache/wal/${pair%%:*}"
@@ -1945,7 +2027,7 @@ stage_theming() {
 
 # ── the vendored libadwaita stylesheet ──────────────────────────────────────
 #
-# GTK 4 loads exactly one theme stylesheet, so .themes/archdots/gtk-4.0/ cannot
+# GTK 4 loads exactly one theme stylesheet, so .themes/simplychit/gtk-4.0/ cannot
 # be a partial sheet the way the GTK 3 one is: loading it *replaces*
 # libadwaita's rather than adding to it, and every metric libadwaita defines
 # goes with it — AdwActionRow collapses from 50px, boxed lists lose their card
@@ -1960,7 +2042,7 @@ stage_theming() {
 stage_gtk4_base() {
     step "GTK 4 base stylesheet"
 
-    local dir="$HOME/.themes/archdots/gtk-4.0"
+    local dir="$HOME/.themes/simplychit/gtk-4.0"
     local lib="/usr/lib/libadwaita-1.so.0"
     local res="/org/gnome/Adwaita/styles"
 
@@ -1995,7 +2077,7 @@ stage_gtk4_base() {
                 > "$dir/assets/$asset-symbolic.svg" 2>/dev/null || true
         done
         ok "refreshed from $(pacman -Q libadwaita 2>/dev/null || echo libadwaita)"
-        note "edited tracked file .themes/archdots/gtk-4.0/adw-base.css (libadwaita)"
+        note "edited tracked file .themes/simplychit/gtk-4.0/adw-base.css (libadwaita)"
     else
         rm -f "$tmp"
         warn "could not read $res/gtk.css — keeping the vendored copy"
@@ -2154,11 +2236,24 @@ TLP is installed. tlp-pd lets the control centre switch power profiles (saver, b
 # detached.
 
 shell_is_running() {
-    qs list -c archdots 2>/dev/null | grep -q '^Instance'
+    qs list -c simplychit 2>/dev/null | grep -q '^Instance'
 }
 
 restart_shell() {
     step "Restarting the shell"
+    if (( OLD_SHELL_RUNNING )); then
+        # renamed: the old instance goes, the new one starts, no question
+        qs kill -c archdots >/dev/null 2>&1 || true
+        qs -c simplychit -n -d >/dev/null 2>&1 || true
+        sleep 3
+        if shell_is_running; then
+            ok "the shell restarted under its new name (qs -c simplychit)"
+        else
+            warn "the shell did not come back"
+            note "restart it with SUPER + SHIFT + CTRL + ALT + R, or log out and back in"
+        fi
+        return 0
+    fi
     if ! shell_is_running; then
         skip "not running — it starts itself at your next login"
         return 0
@@ -2170,9 +2265,9 @@ The bar and the panels disappear for a second while it comes back. Skip this if 
         note "restart the shell with SUPER + SHIFT + CTRL + ALT + R, or log out and back in"
         return 0
     fi
-    qs kill -c archdots >/dev/null 2>&1 || true
+    qs kill -c simplychit >/dev/null 2>&1 || true
     # -d detaches it, so it does not die with this script
-    qs -c archdots -n -d >/dev/null 2>&1 || true
+    qs -c simplychit -n -d >/dev/null 2>&1 || true
     sleep 3
     if shell_is_running; then
         ok "restarted"
@@ -2217,7 +2312,7 @@ $dirty
 
 Stash them, pull, and put them back?" y; then
             git -C "$REPO_ROOT" stash push -u \
-                -m "archdots update $(date '+%Y-%m-%d %H:%M')" >/dev/null
+                -m "SimplyChit update $(date '+%Y-%m-%d %H:%M')" >/dev/null
             stashed=1
             ok "stashed"
         else
@@ -2319,27 +2414,28 @@ run_update() {
     sudo_askpass_setup
     sudo_authenticate
 
-    gauge_open "Updating archdots"
+    gauge_open "Updating SimplyChit"
 
     local self_before
     self_before="$(sha256sum "$REPO_ROOT/install.sh" 2>/dev/null)"
     update_repo
     # The pull may have changed this script. bash is still running the old copy,
     # whose stages can be wrong for the new tree (the move to home/ is exactly
-    # that case), so start again on the new one. ARCHDOTS_UPDATE_REEXEC stops a
-    # loop (ARCHDOTS_REEXEC is the curl handover's, a different hop).
-    if [[ -z "${ARCHDOTS_UPDATE_REEXEC:-}" ]] &&
+    # that case), so start again on the new one. SIMPLYCHIT_UPDATE_REEXEC stops a
+    # loop (SIMPLYCHIT_REEXEC is the curl handover's, a different hop).
+    if [[ -z "${SIMPLYCHIT_UPDATE_REEXEC:-}" ]] &&
         [[ "$(sha256sum "$REPO_ROOT/install.sh" 2>/dev/null)" != "$self_before" ]]; then
         say "install.sh changed in the pull — continuing with the new version"
         cleanup
         # --update too, in case this run's mode came from the menu, not the args
-        ARCHDOTS_UPDATE_REEXEC=1 exec bash "$REPO_ROOT/install.sh" \
+        SIMPLYCHIT_UPDATE_REEXEC=1 exec bash "$REPO_ROOT/install.sh" \
             ${ARGS_ORIGINAL+"${ARGS_ORIGINAL[@]}"} --update
     fi
     update_packages
     stage_stow          # picks up whatever the update added, moved or renamed
     stage_user_dir      # creates any user stub a newer version added
     retire_fabric       # leftovers of the shell before Quickshell, once
+    retire_old_name     # archdots -> SimplyChit, once
     stage_wallpapers    # copies any new wallpapers into ~/Pictures/wallpapers
     stage_gtk4_base     # update_packages may have moved libadwaita under us
     phase 97 100 "Finishing up"
@@ -2369,7 +2465,7 @@ run_install() {
     sudo_askpass_setup
     sudo_authenticate
 
-    gauge_open "Installing archdots"
+    gauge_open "Installing SimplyChit"
 
     stage_packages
     (( DO_PACKAGES )) && install_sddm_theme
@@ -2377,6 +2473,7 @@ run_install() {
     stage_user_dir
     stage_zsh
     retire_fabric
+    retire_old_name
     phase 96 97 "Wallpapers"
     stage_wallpapers
     phase 97 98 "This machine's hardware"
@@ -2403,10 +2500,10 @@ run_install() {
     ${B}What this machine got, and where it lives${R}
     None of it is in a tracked file, so \`git status\` stays clean and none of
     it can follow you onto another machine.
-      monitors, input, autorun   ~/.config/archdots/hypr/*.lua
+      monitors, input, autorun   ~/.config/simplychit/hypr/*.lua
       GPU order                  ~/.config/uwsm/env-hyprland.d/10-gpu.sh
       wallpaper                  $WALLPAPER_POINTER
-    Anything else you want different goes in ~/.config/archdots/ too — it is
+    Anything else you want different goes in ~/.config/simplychit/ too — it is
     loaded after the defaults, so whatever it sets wins, and updates never
     touch it. See CUSTOMIZING.md.
 
@@ -2477,7 +2574,7 @@ choose_mode() {
     # Straight to whiptail rather than through choose(): cancelling the *main*
     # menu means "I did not want to run this", which is not the same as taking
     # the default.
-    MODE="$(wt --title "archdots" --default-item "$default" --menu \
+    MODE="$(wt --title "SimplyChit" --default-item "$default" --menu \
         "Arch + Hyprland desktop.
 
 Whatever you pick runs on its own from here. The output goes to

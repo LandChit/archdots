@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=SimplyChit
+Comment=Wallpaper-driven dark theme that follows pywal16, matched to the SimplyChit shell
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+GtkTheme=simplychit
+IconTheme=breeze-dark
+CursorTheme=default
+ButtonLayout=:minimize,maximize,close

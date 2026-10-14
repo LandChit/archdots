@@ -1,5 +1,5 @@
 -- A small JSON decoder, so the Hyprland config can read the same
--- ~/.config/archdots/settings.json the shell and its settings app write.
+-- ~/.config/simplychit/settings.json the shell and its settings app write.
 -- Hyprland's Lua has no JSON of its own.
 --
 -- decode(text) returns the value, or raises an error naming the position.

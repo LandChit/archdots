@@ -3,7 +3,7 @@ local settings = require("config.helpers.settings")
 -- Displays.
 --
 -- The settings app's Displays page saves a layout per set of connected
--- monitors in ~/.config/archdots/settings.json ("displays.profiles"), keyed by
+-- monitors in ~/.config/simplychit/settings.json ("displays.profiles"), keyed by
 -- each monitor's description (make, model, serial) rather than its port name,
 -- which changes between docks and cables. "displays.active" names the one in
 -- use; the shell picks it when monitors are plugged in or out and applies it

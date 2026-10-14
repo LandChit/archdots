@@ -23,7 +23,7 @@ hl.device({
 })
 
 
--- From ~/.config/archdots/settings.json ("input"), set by the settings app's
+-- From ~/.config/simplychit/settings.json ("input"), set by the settings app's
 -- Input page. Only these keys, and only with the right type: a typo there must
 -- never stop the config loading.
 local settings = require("config.helpers.settings")

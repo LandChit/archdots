@@ -5,7 +5,7 @@
  *
  * pywal16 renders this into ~/.cache/wal/colors-gtk.css on every wallpaper
  * change; the wallpaper picker then copies it into both gtk-3.0/ and gtk-4.0/
- * of the archdots theme, next to the gtk.css that imports it.
+ * of the SimplyChit theme, next to the gtk.css that imports it.
  *
  * The same palette and semantic names the shell reads from colors.json, so GTK
  * apps and the shell are talking about the same colours. GTK CSS has no var();

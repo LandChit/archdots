@@ -3,14 +3,14 @@ local settings = require("config.helpers.settings")
 
 -- Every default bind is an entry in the table below, with a stable id, so the
 -- settings app (and you) can change or drop it as data in
--- ~/.config/archdots/settings.json, without code:
+-- ~/.config/simplychit/settings.json, without code:
 --
 --   "keybinds": {
 --     "remap":    { "browser": "SUPER + Z" },   -- id -> new keys
 --     "disabled": [ "process-manager" ]         -- ids
 --   }
 --
--- New binds of your own still go in ~/.config/archdots/hypr/keybind.lua.
+-- New binds of your own still go in ~/.config/simplychit/hypr/keybind.lua.
 --
 -- `desc` is what the cheatsheet shows (SUPER+SLASH). It is the ONLY way to
 -- label a bind: the Lua config provider registers every bind as a `__lua`
@@ -128,7 +128,7 @@ local function quote(s)
         return c == '"' and '\\"' or c == "\\" and "\\\\" or ("\\u%04x"):format(c:byte())
     end) .. '"'
 end
-local dir = os.getenv("HOME") .. "/.cache/archdots"
+local dir = os.getenv("HOME") .. "/.cache/simplychit"
 os.execute("mkdir -p '" .. dir .. "'")
 local out = io.open(dir .. "/keybinds.json", "w")
 if out then

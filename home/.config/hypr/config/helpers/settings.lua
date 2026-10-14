@@ -1,4 +1,4 @@
--- ~/.config/archdots/settings.json, for the Hyprland config: the same file
+-- ~/.config/simplychit/settings.json, for the Hyprland config: the same file
 -- the shell and its settings app read and write. Displays, input, keybinds and
 -- the default apps are kept there, as data, and applied by the config modules.
 --
@@ -11,7 +11,7 @@ local json = require("config.helpers.json")
 
 local M = {}
 
-local path = os.getenv("HOME") .. "/.config/archdots/settings.json"
+local path = os.getenv("HOME") .. "/.config/simplychit/settings.json"
 local cache = nil
 
 local function report(message)

@@ -40,7 +40,7 @@ home/.config/hypr/config/custom/*.lua
 home/.config/uwsm/env-hyprland.d/
 
 # Dont include generated files in testing
-archdots_docker/artifacts
+simplychit_docker/artifacts
 
 # pywal16 output. These are rendered from home/.config/wal/templates/ on every
 # wallpaper change, so tracking them meant four files turned up in `git status`
@@ -49,11 +49,11 @@ archdots_docker/artifacts
 # fresh clone still has a palette before anything starts.
 #
 # The templates themselves stay tracked; only the rendered copies are ignored.
-home/.themes/archdots/gtk-3.0/colors.css
-home/.themes/archdots/gtk-4.0/colors.css
+home/.themes/simplychit/gtk-3.0/colors.css
+home/.themes/simplychit/gtk-4.0/colors.css
 home/.config/gtk-4.0/colors.css
 
-# Copied in from .themes/archdots/gtk-4.0/ by install.sh, for the same reason
+# Copied in from .themes/simplychit/gtk-4.0/ by install.sh, for the same reason
 # the palette is: a flatpak mounts .config/gtk-4.0 inside its per-app home, so
 # gtk.css cannot import it across from ~/.themes with a relative path. The
 # theme's copy is the tracked original.
@@ -66,6 +66,6 @@ home/.config/gtk-3.0/gtk.css
 
 # The user's own config folder. It belongs in $HOME, but on a home where stow
 # folded ~/.config into a single symlink it ends up in the clone instead.
-home/.config/archdots/
+home/.config/simplychit/
 
 .custom.zsh

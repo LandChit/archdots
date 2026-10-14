@@ -1606,6 +1606,27 @@ migrate_layout() {
         fi
     done < <(find "$real/home" -mindepth 1 \( -name .venv -o -name .git \) -prune -o -print0)
 
+    # ~/.custom.zsh was a link to the clone's own .custom.zsh (gitignored, the
+    # user's file). The loop below removes that link, which would leave the
+    # file unread at the repo root: move it to the new place first, or back to
+    # ~/.custom.zsh (still sourced) if the new place is already taken.
+    if [[ -f "$real/.custom.zsh" && ! -L "$real/.custom.zsh" ]]; then
+        link="$HOME/.custom.zsh"
+        if [[ -L "$link" && "$(readlink -m -- "$link")" == "$real/.custom.zsh" ]]; then
+            rm -- "$link"
+        fi
+        if [[ ! -e "$USER_DIR/local/zshrc" ]]; then
+            mkdir -p "$USER_DIR/local"
+            mv -- "$real/.custom.zsh" "$USER_DIR/local/zshrc"
+            ok "moved .custom.zsh to ~/.config/simplychit/local/zshrc"
+        elif [[ ! -e "$link" ]]; then
+            mv -- "$real/.custom.zsh" "$link"
+            ok "moved .custom.zsh out of the clone to ~/.custom.zsh"
+        else
+            warn "left .custom.zsh in the clone: ~/.custom.zsh and local/zshrc both exist"
+        fi
+    fi
+
     # Repo-only entries that `stow .` linked into $HOME before the move.
     for top in "$real"/* "$real"/.[!.]*; do
         top="$(basename -- "$top")"

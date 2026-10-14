@@ -22,6 +22,9 @@ ShellRoot {
     property string message: preview ? "Preview: nothing logs in here. Esc closes it." : ""
     property bool busy: false
     property string pending: ""
+    property bool authFailed: false
+    // what PAM said during this attempt ("The account is locked ...")
+    property string info: ""
     property string lastUser: ""
     property string lastSession: ""
     // [{ name, exec }] from /usr/share/wayland-sessions
@@ -38,6 +41,8 @@ ShellRoot {
         }
         message = "";
         busy = true;
+        authFailed = false;
+        info = "";
         pending = password;
         Greetd.createSession(user);
     }
@@ -55,19 +60,32 @@ ShellRoot {
     Connections {
         target: Greetd
 
+        // PAM's info lines (faillock's "The account is locked due to 3
+        // failed logins.") want a reply too: an empty one. Only a prompt,
+        // "Password: ", gets the password (found in a VM: answering the info
+        // line with it left the real prompt an empty answer).
         function onAuthMessage(message: string, error: bool, responseRequired: bool, echoResponse: bool): void {
-            if (error)
-                root.message = message;
-            if (responseRequired) {
+            const prompt = /:\s*$/.test(message);
+            if (!prompt && message.trim() !== "") {
+                root.info = root.info === "" ? message.trim() : root.info + " " + message.trim();
+                root.message = root.info;
+            }
+            if (!responseRequired)
+                return;
+            if (prompt && !echoResponse) {
                 Greetd.respond(root.pending);
                 root.pending = "";
+            } else {
+                Greetd.respond("");
             }
         }
-        // greetd ends the session itself after a failed login; a
-        // cancelSession() here fails ("Connection refused", found in a VM)
+        // After an auth error Quickshell sends cancel_session itself, and
+        // greetd, which has already ended that session, answers with
+        // "Connection refused" (seen in a VM): onError below drops that one.
         function onAuthFailure(message: string): void {
             root.busy = false;
-            root.message = "Wrong password";
+            root.authFailed = true;
+            root.message = root.info !== "" ? root.info : "Wrong password";
         }
         function onReadyToLaunch(): void {
             root.remember(Greetd.user);
@@ -75,6 +93,8 @@ ShellRoot {
         }
         function onError(error: string): void {
             root.busy = false;
+            if (root.authFailed)
+                return;
             root.message = error;
         }
     }

@@ -157,8 +157,9 @@ cage -s -d -- qs -p /usr/share/simplychit/shell/greeter.qml` (no title bar) as t
 home is `/` on Arch). cage has **no layer-shell**, so it is one `FloatingWindow`, which cage
 shows fullscreen. It reuses `modules/lock/LockContent.qml` (`askUser`,
 `actions`) and drives `Quickshell.Services.Greetd`: `createSession(user)`, a
-`respond()` to each prompt, nothing after a failure (greetd ends that
-session itself; a `cancelSession()` then fails with "Connection refused"),
+`respond()` to each prompt; after a failure Quickshell sends `cancel_session`
+itself and greetd answers "Connection refused" (that session is gone), so
+`onError` drops the one error that follows an auth failure;
 `launch()` with the session's
 `Exec` from `/usr/share/wayland-sessions/` on `readyToLaunch`. Last user and
 session: `/var/lib/simplychit/greeter/.local/state/simplychit/greeter.json`.

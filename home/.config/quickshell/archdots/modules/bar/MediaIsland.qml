@@ -11,7 +11,10 @@ Island {
     id: root
 
     padding: 10
-    visible: settings.showMedia && Media.playing
+    // read by the bar's Loader: an item's own `visible` is false whenever its
+    // parent is hidden, so it cannot drive the parent's visibility
+    readonly property bool wanted: settings.showMedia && Media.playing
+    visible: wanted
 
     component MediaButton: BarText {
         id: button

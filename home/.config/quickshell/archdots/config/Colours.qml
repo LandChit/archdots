@@ -21,10 +21,12 @@ Singleton {
 
     // The island surface:
     // alpha(mix(background, color4, 0.22), 0.88)
-    readonly property color island: alpha(mix(background, accent, 0.22), 0.88)
+    // appearance.opacity from settings.json scales the surfaces below
+    readonly property real opacity: Math.max(0.5, Math.min(1, Config.appearance.opacity))
+    readonly property color island: alpha(mix(background, accent, 0.22), 0.88 * opacity)
     readonly property color islandBorder: alpha(accent, 0.28)
     // Panels and cards: the island surface, more opaque.
-    readonly property color panel: alpha(mix(background, accent, 0.22), 0.92)
+    readonly property color panel: alpha(mix(background, accent, 0.22), 0.92 * opacity)
     readonly property color panelBorder: alpha(accent, 0.28)
     // Behind full-screen menus.
     readonly property color scrim: Qt.rgba(8 / 255, 10 / 255, 14 / 255, 0.62)

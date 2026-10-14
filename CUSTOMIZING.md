@@ -80,7 +80,12 @@ Every key, with its default:
     "titleChars": 20,
     "mediaChars": 28,
     "monitors": {},
-    "excluded": []
+    "excluded": [],
+    "left": ["workspaces", "special", "title"],
+    "right": ["media", "resources", "clock"]
+  },
+  "appearance": {
+    "opacity": 1
   },
   "launcher": {
     "favourites": [],
@@ -156,6 +161,8 @@ Every key, with its default:
 | `bar.clockFormat` | [Qt's date format](https://doc.qt.io/qt-6/qml-qtqml-qt.html#formatDateTime-method): `HH:mm` for 24-hour, add `:ss` for seconds |
 | `bar.monitors` | any `bar` key per screen: `{"HDMI-A-1": {"showCpu": false}}` |
 | `bar.excluded` | screens with no bar: `["DP-2"]` |
+| `bar.left` / `bar.right` | the islands on each side, in order: `workspaces`, `special`, `title`, `media`, `resources`, `clock`; leave one out to hide it |
+| `appearance.opacity` | scales how opaque the bar's islands and the panels are, 0.5 to 1 |
 | `launcher.favourites` / `hidden` | desktop entry ids; easier with Ctrl+P / Ctrl+H in the launcher |
 | `apps.*` | what the launch keybinds start; `terminal` is also the launcher's for terminal apps |
 | `idle.ac` / `idle.battery` | minutes idle before dimming, locking, turning the screens off and suspending; 0 is never |

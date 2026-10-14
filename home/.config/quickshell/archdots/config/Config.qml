@@ -19,6 +19,7 @@ Singleton {
     readonly property string path: Quickshell.env("HOME") + "/.config/archdots/settings.json"
 
     property alias bar: adapter.bar
+    property alias appearance: adapter.appearance
     property alias audio: adapter.audio
     property alias launcher: adapter.launcher
     property alias battery: adapter.battery
@@ -88,6 +89,15 @@ Singleton {
                 property var monitors: ({})
                 // Screens with no bar at all.
                 property list<string> excluded: []
+                // Which islands, in order, on each side.
+                property list<string> left: ["workspaces", "special", "title"]
+                property list<string> right: ["media", "resources", "clock"]
+            }
+
+            property JsonObject appearance: JsonObject {
+                // Multiplies the opacity of the bar's islands and the panels:
+                // 1 as designed, lower is more see-through (0.5 at least).
+                property real opacity: 1
             }
 
             property JsonObject launcher: JsonObject {

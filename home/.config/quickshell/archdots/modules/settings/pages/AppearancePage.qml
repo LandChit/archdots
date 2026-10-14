@@ -92,5 +92,17 @@ ColumnLayout {
                 onChosen: v => Theme.setBackend(v)
             }
         }
+        Setting {
+            label: "Opacity"
+            help: "of the bar's islands and the panels; lower lets more of the wallpaper through"
+
+            NumberField {
+                value: Config.appearance.opacity
+                from: 0.5
+                to: 1
+                step: 0.05
+                onEdited: v => Config.set("appearance.opacity", v)
+            }
+        }
     }
 }

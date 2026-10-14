@@ -24,7 +24,8 @@ Island {
         Quickshell.execDetached(["hyprctl", "dispatch", Hyprland.usingLua ? "hl.dsp.workspace.toggle_special(\"" + short + "\")" : "togglespecialworkspace " + short]);
     }
 
-    visible: specials.length > 0
+    readonly property bool wanted: specials.length > 0 // see MediaIsland
+    visible: wanted
     padding: 6
     spacing: 4
 

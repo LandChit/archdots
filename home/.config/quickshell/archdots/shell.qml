@@ -7,6 +7,8 @@ import qs.config
 import qs.modules.bar
 import qs.modules.battery
 import qs.modules.calendar
+import qs.modules.clipboard
+import qs.modules.emoji
 import qs.modules.launcher
 import qs.modules.osd
 import qs.modules.powermenu
@@ -33,6 +35,8 @@ ShellRoot {
     Launcher {}
     PowerMenu {}
     Calendar {}
+    Clipboard {}
+    Emoji {}
     BatteryCard {}
 
     Osd {

@@ -51,6 +51,10 @@ hl.bind(mainMod .. "+ SLASH", shell.toggle("keybinds"), { desc = "Shell: This ch
 hl.bind(mainMod .. "+ PRINT", shell.toggle("screenshot"), { desc = "Shell: Screenshot menu" })
 
 
+-- Pauses hypridle's dim/lock/suspend until pressed again (see ../hypridle.conf)
+hl.bind(mainMod .. "+ SHIFT + I", hl.dsp.exec_cmd("$HOME/.config/hypr/Scripts/idle-inhibit.sh toggle"),
+    { desc = "System: Toggle stay awake" })
+
 -- Other
 hl.bind(mainMod .. "+ SHIFT + Q", hl.dsp.window.close(), { desc = "Window: Close" })
 

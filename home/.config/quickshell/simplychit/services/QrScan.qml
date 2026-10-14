@@ -16,11 +16,12 @@ Singleton {
             sleep 0.3
             G=$(slurp) || exit 0
             T=$(grim -g "$G" - | zbarimg -q --raw -Sbinary -) || {
-                notify-send -a SimplyChit -t 3000 "No QR code found" "Drag a box round the whole code."
+                notify-send -a SimplyChit -t 3000 -- "No QR code found" "Drag a box round the whole code."
                 exit 0
             }
             printf '%s' "$T" | wl-copy
-            notify-send -a SimplyChit -t 4000 "QR code copied" "$T"
+            # -- : scanned text may start with "-"
+            notify-send -a SimplyChit -t 4000 -- "QR code copied" "$T"
         `]);
     }
 }

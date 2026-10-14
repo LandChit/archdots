@@ -19,7 +19,9 @@ Panel {
     implicitWidth: 380
     implicitHeight: column.implicitHeight + 32
 
-    readonly property string image: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/simplychit-qr.png"
+    // the clipboard as a picture: kept in the user's own runtime (or cache)
+    // folder, never a shared /tmp path
+    readonly property string image: (Quickshell.env("XDG_RUNTIME_DIR") || Quickshell.env("HOME") + "/.cache") + "/simplychit-qr.png"
     property string text: ""
     // why there is no code to show, if there is none
     property string problem: ""
@@ -32,7 +34,11 @@ Panel {
             problem = "The clipboard has no text";
             return;
         }
-        encoder.command = ["qrencode", "-s", "8", "-m", "2", "-o", image, value];
+        // the text goes in on stdin: as an argument, text starting with "-"
+        // would be read as an option, and it would show in the process list
+        encoder.running = false;
+        encoder.input = value;
+        encoder.stdinEnabled = true;
         encoder.running = true;
     }
 
@@ -53,6 +59,15 @@ Panel {
 
     Process {
         id: encoder
+
+        property string input: ""
+
+        command: ["qrencode", "-s", "8", "-m", "2", "-o", root.image]
+        onStarted: {
+            write(input);
+            // closes stdin, which is qrencode's end of input
+            stdinEnabled = false;
+        }
 
         stderr: StdioCollector {
             id: encodeErrors
@@ -145,7 +160,9 @@ Panel {
 
                 Button {
                     text: "Copy image"
-                    enabled: root.problem === ""
+                    // not while a new code is still being made: the file
+                    // would still hold the previous one
+                    enabled: root.problem === "" && !encoder.running && qrImage.status === Image.Ready
                     onClicked: {
                         Quickshell.execDetached(["sh", "-c", "wl-copy --type image/png < \"$1\"", "sh", root.image]);
                         root.close();

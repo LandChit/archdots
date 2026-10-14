@@ -25,6 +25,7 @@ Singleton {
     property alias wallpaper: adapter.wallpaper
     property alias theme: adapter.theme
     property alias toasts: adapter.toasts
+    property alias lock: adapter.lock
 
     // Sets one key, given as a dotted path, in settings.json. Returns false and
     // leaves the file alone if it is not valid JSON: a hand edit in progress is
@@ -119,6 +120,15 @@ Singleton {
                 property string mode: "dark"
                 // a backend from `wal --backend`; some need extra Python packages
                 property string backend: "wal"
+            }
+
+            property JsonObject lock: JsonObject {
+                // Off by default: hyprlock locks. On, the shell's own lock
+                // screen does (hypr/Scripts/lock.sh asks it first and falls
+                // back to hyprlock). Try `ipc call lock preview` first.
+                property bool enabled: false
+                // the PAM service the password is checked against
+                property string pamConfig: "login"
             }
 
             // Which events show a toast (TODO C9).

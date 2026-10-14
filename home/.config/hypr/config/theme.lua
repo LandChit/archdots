@@ -85,5 +85,9 @@ hl.config({
     misc = {
         force_default_wallpaper = 0,
         disable_hyprland_logo = true,
+        -- If a lock screen dies while locked, let another one take over
+        -- instead of leaving the session stuck on the "lock died" screen
+        -- (see the shell's modules/lock/Lock.qml for the recovery steps).
+        allow_session_lock_restore = true,
     }
 })

@@ -12,6 +12,7 @@ import qs.modules.control
 import qs.modules.emoji
 import qs.modules.keybinds
 import qs.modules.launcher
+import qs.modules.lock
 import qs.modules.notifications
 import qs.modules.osd
 import qs.modules.polkit
@@ -54,6 +55,7 @@ ShellRoot {
     Centre {}
     Popups {}
     PolkitDialog {}
+    Lock {}
 
     // started for its side effects: the event toasts
     readonly property var events: Events

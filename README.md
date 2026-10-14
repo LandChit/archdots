@@ -284,7 +284,7 @@ without; everything below it is optional and can be declined.
 hyprland hyprlock hypridle hyprpolkitagent quickshell upower
 xdg-desktop-portal-hyprland xdg-desktop-portal-gtk uwsm sddm alacritty dolphin
 cliphist wl-clipboard grim slurp brightnessctl playerctl libnotify
-pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol
+sound-theme-freedesktop pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol
 networkmanager bluez bluez-utils blueman
 qt6ct kvantum qt5-wayland qt6-wayland breeze-icons adwaita-fonts
 zsh zsh-autosuggestions zsh-syntax-highlighting stow git

@@ -191,6 +191,7 @@ Every key, with its default:
 | `toasts.*` | which events pop up a small message |
 | `lock.enabled` | use the shell's lock screen instead of hyprlock (hyprlock stays the fallback). Try `qs -c simplychit ipc call lock preview` first |
 | `audio.maxVolume` | 1.0 is 100%; the default allows boosting to 200% |
+| `sounds.volume` / `sounds.notifications` | a tick when the volume changes, a chime when a notification pops up (the Notifications page) |
 | `recording.directory` | where screen recordings go (`~/Videos/recordings`) |
 | `recording.audio` | sound in a recording: `none`, `desktop` (what you hear) or `mic` |
 

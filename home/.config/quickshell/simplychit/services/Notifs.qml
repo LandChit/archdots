@@ -125,8 +125,10 @@ Singleton {
             };
             if (!n.transient)
                 root.history = [entry].concat(root.history).slice(0, root.maxHistory);
-            if (!root.dnd || critical)
+            if (!root.dnd || critical) {
                 root.popups = [entry].concat(root.popups.filter(p => !(p.notification && p.notification.id === n.id))).slice(0, 6);
+                Sounds.notification(critical, n.hints);
+            }
             // a notification closed by its app takes its card with it
             n.closed.connect(() => {
                 root.popups = root.popups.filter(p => p.notification !== n);

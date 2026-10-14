@@ -75,10 +75,11 @@ ShellRoot {
     }
     Lock {}
 
-    // started for their side effects: event toasts, idle timeouts
+    // started for their side effects: event toasts, idle timeouts, sounds
     readonly property var events: Events
     readonly property var idleTimers: IdleTimers
     readonly property var settingsCheck: SettingsCheck
+    readonly property var sounds: Sounds
     BatteryCard {}
 
     Osd {

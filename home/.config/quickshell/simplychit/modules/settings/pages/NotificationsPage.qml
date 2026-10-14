@@ -67,6 +67,28 @@ ColumnLayout {
     }
 
     Section {
+        title: "Sounds"
+        description: "From the freedesktop sound theme."
+
+        Setting {
+            label: "Notification sound"
+            help: "when a popup shows; not under do not disturb, and not for apps that ask for silence"
+            Switch {
+                checked: Config.sounds.notifications
+                onToggled: v => Config.set("sounds.notifications", v)
+            }
+        }
+        Setting {
+            label: "Volume change sound"
+            help: "once the level settles, from the keys, the bar or any app"
+            Switch {
+                checked: Config.sounds.volume
+                onToggled: v => Config.set("sounds.volume", v)
+            }
+        }
+    }
+
+    Section {
         title: "Event toasts"
         description: "Small messages from the shell itself."
 

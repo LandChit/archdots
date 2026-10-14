@@ -34,6 +34,7 @@ Singleton {
     property alias keybinds: adapter.keybinds
     property alias displays: adapter.displays
     property alias recording: adapter.recording
+    property alias sounds: adapter.sounds
 
     // Sets one key, given as a dotted path, in settings.json. Returns false and
     // leaves the file alone if it is not valid JSON: a hand edit in progress is
@@ -220,6 +221,14 @@ Singleton {
                 property bool vpn: true
                 property bool nowPlaying: false
                 property bool dnd: true
+            }
+
+            // Event sounds (freedesktop sound theme, played with pw-play).
+            property JsonObject sounds: JsonObject {
+                // a tick when the output volume changes
+                property bool volume: true
+                // a chime when a notification pops up (not under do not disturb)
+                property bool notifications: true
             }
 
             // Screen recording (the screenshot menu, SUPER+SHIFT+R).

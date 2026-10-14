@@ -502,6 +502,23 @@
       "additionalProperties": false,
       "description": "Which events show a toast (TODO C9)."
     },
+    "sounds": {
+      "type": "object",
+      "properties": {
+        "volume": {
+          "type": "boolean",
+          "default": true,
+          "description": "a tick when the output volume changes"
+        },
+        "notifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "a chime when a notification pops up (not under do not disturb)"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Event sounds (freedesktop sound theme, played with pw-play)."
+    },
     "recording": {
       "type": "object",
       "properties": {

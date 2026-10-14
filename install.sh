@@ -56,6 +56,8 @@ PKG_CORE=(
     xdg-desktop-portal-hyprland xdg-desktop-portal-gtk uwsm sddm
     alacritty dolphin
     cliphist wl-clipboard grim slurp brightnessctl playerctl libnotify
+    # the shell's volume and notification sounds (services/Sounds.qml)
+    sound-theme-freedesktop
     pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol
     networkmanager bluez bluez-utils blueman
     qt6ct kvantum qt5-wayland qt6-wayland

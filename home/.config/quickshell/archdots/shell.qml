@@ -14,6 +14,7 @@ import qs.modules.launcher
 import qs.modules.osd
 import qs.modules.powermenu
 import qs.modules.screenshot
+import qs.modules.wallpaper
 import qs.services
 
 // archdots shell. Run with `qs -c archdots`; control it with
@@ -22,6 +23,12 @@ ShellRoot {
     id: root
 
     property bool barVisible: true
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Background {}
+    }
 
     Variants {
         model: Quickshell.screens
@@ -41,10 +48,29 @@ ShellRoot {
     Emoji {}
     Keybinds {}
     Screenshot {}
+    Picker {}
     BatteryCard {}
 
     Osd {
         id: osd
+    }
+
+    // qs -c archdots ipc call wallpaper set ~/Pictures/wallpapers/x.jpg
+    IpcHandler {
+        target: "wallpaper"
+
+        function set(path: string): void {
+            Theme.apply(path);
+        }
+        function next(): void {
+            Theme.next(false);
+        }
+        function random(): void {
+            Theme.next(true);
+        }
+        function mode(mode: string): void {
+            Theme.setMode(mode);
+        }
     }
 
     IpcHandler {

@@ -129,6 +129,11 @@ ListPanel {
         const panels = [["wallpaper", "Wallpaper", "󰸉"], ["control", "Control centre", "󰒓"], ["clipboard", "Clipboard history", "󰅌"], ["emoji", "Emoji", "󰞅"], ["screenshot", "Screenshot", "󰄀"], ["keybinds", "Keybinds", "󰌌"], ["notifications", "Notifications", "󰂚"]];
         for (const [panel, label, glyph] of panels)
             rows.push({ title: label, subtitle: "Open", glyph: glyph, hint: "open ↵", run: () => Qt.callLater(() => Panels.open(panel)) });
+        rows.push({ title: Config.theme.mode === "light" ? "Dark mode" : "Light mode", subtitle: "Theme · re-runs pywal16 on the wallpaper", glyph: "\u{f0594}", hint: "switch ↵", run: () => Theme.setMode(Config.theme.mode === "light" ? "dark" : "light") });
+        rows.push({ title: "Random wallpaper", subtitle: "Theme", glyph: "\u{f0e09}", hint: "run ↵", run: () => Theme.next(true) });
+        for (const backend of Theme.backends)
+            if (backend !== Config.theme.backend)
+                rows.push({ title: "Scheme: " + backend, subtitle: "Theme · pywal16 colour backend", glyph: "\u{f03d8}", hint: "use ↵", run: () => Theme.setBackend(backend) });
         for (const id of Config.launcher.hidden) {
             const entry = DesktopEntries.byId(id);
             rows.push({ title: "Unhide " + (entry ? entry.name : id), subtitle: "Hidden app", glyph: "󰈈", hint: "unhide ↵", run: () => Config.set("launcher.hidden", Config.launcher.hidden.filter(h => h !== id)) });

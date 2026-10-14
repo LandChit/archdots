@@ -22,6 +22,8 @@ Singleton {
     property alias audio: adapter.audio
     property alias launcher: adapter.launcher
     property alias battery: adapter.battery
+    property alias wallpaper: adapter.wallpaper
+    property alias theme: adapter.theme
 
     // Sets one key, given as a dotted path, in settings.json. Returns false and
     // leaves the file alone if it is not valid JSON: a hand edit in progress is
@@ -95,6 +97,22 @@ Singleton {
                 // "suspend", "hibernate", "poweroff" or "none" (TODO C13).
                 property int actionPercent: 5
                 property string criticalAction: "suspend"
+            }
+
+            property JsonObject wallpaper: JsonObject {
+                property string directory: "~/Pictures/wallpapers"
+                // Change to another wallpaper from the folder every N minutes;
+                // 0 is off (TODO 16).
+                property int cycleMinutes: 0
+                // Crossfade length when the wallpaper changes, in ms; 0 is a cut.
+                property int transitionMs: 700
+            }
+
+            property JsonObject theme: JsonObject {
+                // pywal16's palette from the wallpaper: "dark" or "light" (wal -l)
+                property string mode: "dark"
+                // a backend from `wal --backend`; some need extra Python packages
+                property string backend: "wal"
             }
 
             property JsonObject audio: JsonObject {

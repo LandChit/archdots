@@ -98,6 +98,9 @@ PKG_FONTS=(
 
 PKG_UTILS=(
     tlp fd htop nvtop fastfetch tmux unzip wget curl smartmontools ark
+    # External monitor brightness over DDC/CI (the shell's brightness keys on
+    # a non-laptop screen). Needs the i2c-dev module and access to /dev/i2c-*.
+    ddcutil
 )
 
 # AUR packages the desktop genuinely needs. Kept apart from PKG_AUR because

@@ -6,6 +6,7 @@ import Quickshell.Io
 import qs.config
 import qs.modules.bar
 import qs.modules.launcher
+import qs.modules.osd
 import qs.modules.powermenu
 import qs.services
 
@@ -29,6 +30,38 @@ ShellRoot {
 
     Launcher {}
     PowerMenu {}
+
+    Osd {
+        id: osd
+    }
+
+    IpcHandler {
+        target: "osd"
+
+        function volume(): void {
+            osd.show("volume");
+        }
+        function mic(): void {
+            osd.show("mic");
+        }
+        function brightness(): void {
+            osd.show("brightness");
+        }
+    }
+
+    IpcHandler {
+        target: "brightness"
+
+        function up(): void {
+            Brightness.step(5);
+        }
+        function down(): void {
+            Brightness.step(-5);
+        }
+        function set(percent: int): void {
+            Brightness.set(percent);
+        }
+    }
 
     // One panel at a time, as with fabric's ctl.py:
     // qs -c archdots ipc call panel toggle launcher

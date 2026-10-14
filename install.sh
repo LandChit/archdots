@@ -1158,6 +1158,14 @@ ensure_aur_helper() {
     AUR_HELPER=paru
 }
 
+# A scratch dir for package builds, on disk. Not mktemp's /tmp: that is RAM
+# on Arch (tmpfs), and paru's LTO link alone needs a few GB, so a build tree
+# there gets a 4 GB machine's rustc killed by the OOM killer (found in a VM).
+build_dir() {
+    local base="${XDG_CACHE_HOME:-$HOME/.cache}/simplychit"
+    mkdir -p "$base" && mktemp -d "$base/build.XXXXXX"
+}
+
 # Build paru from source, unless a working one is already here.
 ensure_paru() {
     if command -v paru >/dev/null && paru --version &>/dev/null; then
@@ -1175,7 +1183,7 @@ ensure_paru() {
     # 'error while loading shared libraries: libalpm.so.N'. Compiling here links
     # against the pacman actually installed.
     local tmp
-    tmp="$(mktemp -d)"
+    tmp="$(build_dir)"
     run_logged "Fetching paru" git clone --depth 1 https://aur.archlinux.org/paru.git "$tmp/paru"
 
     # Install the build dependencies here rather than letting makepkg do it.
@@ -1398,7 +1406,7 @@ install_sddm_theme() {
         # The AUR has no version tags, so walk PKGBUILD history for the newest
         # commit that declares the pkgver we want and build from there.
         local tmp commit=""
-        tmp="$(mktemp -d)"
+        tmp="$(build_dir)"
         run_logged "Fetching the SDDM theme" \
             git clone --quiet https://aur.archlinux.org/sddm-silent-theme.git "$tmp/theme" || {
             rm -rf "$tmp"

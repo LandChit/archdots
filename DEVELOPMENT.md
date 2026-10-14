@@ -152,18 +152,19 @@ when a headset auto-connects before the shell is up. See
 ### The greeter
 
 `greeter.qml` (shell root) is the login screen for greetd: greetd runs
-`cage -s -- qs -p /usr/share/simplychit/shell/greeter.qml` as the `greeter`
-user. cage has **no layer-shell**, so it is one `FloatingWindow`, which cage
+`env HOME=/var/lib/simplychit/greeter cage -s -- qs -p
+/usr/share/simplychit/shell/greeter.qml` as the `greeter` user (whose own
+home is `/` on Arch). cage has **no layer-shell**, so it is one `FloatingWindow`, which cage
 shows fullscreen. It reuses `modules/lock/LockContent.qml` (`askUser`,
 `actions`) and drives `Quickshell.Services.Greetd`: `createSession(user)`, a
 `respond()` to each prompt, `cancelSession()` after a failure (greetd wants
 it; Quickshell logs the reply as unexpected), `launch()` with the session's
 `Exec` from `/usr/share/wayland-sessions/` on `readyToLaunch`. Last user and
-session: `~greeter/.local/state/simplychit/greeter.json`.
+session: `/var/lib/simplychit/greeter/.local/state/simplychit/greeter.json`.
 
 It cannot read the user's home, so `install.sh` (`greeter_copy_files`)
 copies the shell to `/usr/share/simplychit/shell/` and the palette and the
-wallpaper into the greeter's home; `update` refreshes them.
+wallpaper into `/var/lib/simplychit/greeter/`; `update` refreshes them.
 
 Testing without greetd or a VM: without `GREETD_SOCK` it is a preview.
 For the login flow, run it in a nested cage (extract `cage` and

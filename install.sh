@@ -1912,8 +1912,9 @@ retire_old_name() {
 # writes, all root-owned and outside $HOME:
 #   /usr/share/simplychit/shell/      a copy of the shell (the greeter user
 #                                     cannot read your home)
-#   ~greeter/.cache/wal/colors.json   a copy of your palette
-#   ~greeter/.local/state/simplychit/ a copy of your wallpaper
+#   /var/lib/simplychit/greeter/      the greeter's own HOME (greetd's user
+#                                     has / as its home): copies of your
+#                                     palette and wallpaper, its last login
 #   /etc/greetd/config.toml           the original kept as config.toml.simplychit-orig
 # An update refreshes the copies. The login screen itself is switched only on
 # a yes (default no, also under --yes); the old one stays installed and is
@@ -1921,12 +1922,12 @@ retire_old_name() {
 
 GREETER_DIR="/usr/share/simplychit/shell"
 GREETD_CONF="/etc/greetd/config.toml"
+GREETER_HOME="/var/lib/simplychit/greeter"
 
 greeter_copy_files() {
-    local src="$REPO_ROOT/home/.config/quickshell/simplychit" gh wall ext
-    gh="$(getent passwd greeter | cut -d: -f6)"
-    if [[ -z "$gh" || "$gh" == / ]]; then
-        warn "no greeter user with a home (is greetd installed?)"
+    local src="$REPO_ROOT/home/.config/quickshell/simplychit" gh="$GREETER_HOME" wall ext
+    if ! getent passwd greeter >/dev/null; then
+        warn "no greeter user (is greetd installed?)"
         return 1
     fi
     "${SUDO[@]}" mkdir -p "$(dirname "$GREETER_DIR")" || return 1
@@ -1945,7 +1946,8 @@ greeter_copy_files() {
         "${SUDO[@]}" cp -- "$wall" "$gh/.local/state/simplychit/wallpaper-image.$ext"
         "${SUDO[@]}" ln -sfn "wallpaper-image.$ext" "$gh/.local/state/simplychit/wallpaper"
     fi
-    "${SUDO[@]}" chown -R greeter:greeter "$gh/.cache" "$gh/.local"
+    "${SUDO[@]}" chown -R greeter:greeter "$gh"
+    "${SUDO[@]}" chmod 700 "$gh"
 }
 
 stage_greeter() {
@@ -1970,7 +1972,7 @@ stage_greeter() {
 vt = 1
 
 [default_session]
-command = \"cage -s -- qs -p $GREETER_DIR/greeter.qml\"
+command = \"env HOME=$GREETER_HOME cage -s -- qs -p $GREETER_DIR/greeter.qml\"
 user = \"greeter\""
     if [[ -f "$GREETD_CONF" ]] && [[ "$("${SUDO[@]}" cat "$GREETD_CONF")" == "$body" ]]; then
         skip "$GREETD_CONF already correct"

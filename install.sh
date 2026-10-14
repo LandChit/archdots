@@ -166,7 +166,7 @@ plain text, with every command's output on screen.
       --dir PATH      Clone into PATH (default: ~/simplychit).
       --no-flatpak    Skip the flatpak applications.
       --no-utils      Skip the utility packages.
-      --no-aur        Skip paru and every AUR package.
+      --no-aur        Skip the AUR helper and every AUR package.
       --skip-packages Install nothing; only link, build and configure.
       --skip-stow     Do not run stow.
       --skip-machine  Do not touch machine-specific config (GPU, monitors,
@@ -946,6 +946,214 @@ pac_install() {
     run_logged "$label" "${SUDO[@]}" pacman -S --needed --noconfirm "$@"
 }
 
+# ── this system ─────────────────────────────────────────────────────────────
+#
+# Plain Arch and its derivatives (EndeavourOS, CachyOS, Garuda, Manjaro, ...)
+# differ in what they set up already: an AUR helper, a login screen, the audio
+# server, the network manager. All of it is read once, here, so the stages
+# fit in with it instead of fighting it, and every question that changes how
+# the machine boots or gets online is asked before anything runs. Those
+# questions default to no: --yes never switches a login screen or a network
+# manager.
+
+# Tested with these; older ones may not read the Lua config or the QML.
+MIN_HYPRLAND="0.56"
+MIN_QUICKSHELL="0.3"
+
+DISTRO_ID=""
+DISTRO_NAME=""
+AUR_HELPER=""       # paru or yay when a working one is here; else paru is built
+DM_CURRENT=""       # the enabled login screen's unit, without .service
+DM_LABEL=""
+WANT_SDDM=1         # 0: another login screen stays; SDDM is neither themed nor enabled
+IS_LAPTOP=0
+GPU_VENDORS=()
+PULSE_PKGS=()       # PulseAudio packages to swap for pipewire-pulse
+REPLACE_PULSE=0
+NET_OTHER=()        # other enabled network managers
+WANT_NM=1           # 0: leave networking as it is; NetworkManager is not enabled
+
+aur_works() { command -v "$1" >/dev/null && "$1" --version &>/dev/null; }
+
+# repo_version PKG: the version pacman would install, or the installed one
+repo_version() {
+    { pacman -Si "$1" 2>/dev/null || pacman -Qi "$1" 2>/dev/null; } | awk '/^Version/{print $3; exit}'
+}
+
+# drop_pkg ARRAY PKG: remove PKG from the named package list
+drop_pkg() {
+    local -n list="$1"
+    local kept=() p
+    for p in "${list[@]}"; do [[ "$p" == "$2" ]] || kept+=("$p"); done
+    list=(${kept+"${kept[@]}"})
+}
+
+detect_system() {
+    step "Looking at this system"
+    local like="" v unit dm chassis bats=() card vendor pkg have_driver=0
+    command -v pacman >/dev/null \
+        || die "pacman not found: SimplyChit installs on Arch Linux and Arch-based systems only."
+    if [[ -r /etc/os-release ]]; then
+        DISTRO_ID="$(. /etc/os-release && printf '%s' "${ID:-}")"
+        DISTRO_NAME="$(. /etc/os-release && printf '%s' "${PRETTY_NAME:-${NAME:-$ID}}")"
+        like="$(. /etc/os-release && printf '%s' "${ID_LIKE:-}")"
+    fi
+    case " $DISTRO_ID $like " in
+        *" arch "*) ok "${DISTRO_NAME:-Arch-based}" ;;
+        *) warn "${DISTRO_NAME:-this system} does not say it is Arch-based; carrying on, since pacman is here" ;;
+    esac
+    if [[ "$DISTRO_ID" == manjaro* ]]; then
+        warn "Manjaro's repositories run a few weeks behind Arch's"
+        note "on Manjaro, Hyprland and Quickshell can be older than these dots need"
+    fi
+
+    # ── versions the repositories offer ────────────────────────────────────
+    v="$(repo_version hyprland)"
+    if [[ -n "$v" ]] && (( $(vercmp "${v%%-*}" "$MIN_HYPRLAND") < 0 )); then
+        warn "Hyprland $v is older than $MIN_HYPRLAND, which these dots are made for"
+        note "Hyprland $v may not load the Lua config; update the system or wait for $MIN_HYPRLAND"
+    fi
+    v="$(repo_version quickshell)"
+    if [[ -n "$v" ]] && (( $(vercmp "${v%%-*}" "$MIN_QUICKSHELL") < 0 )); then
+        warn "Quickshell $v is older than $MIN_QUICKSHELL, which the shell is written for"
+        note "Quickshell $v may not load the shell"
+    fi
+
+    # ── AUR helper ──────────────────────────────────────────────────────────
+    # EndeavourOS ships yay, CachyOS and Garuda paru. Either is used as it is.
+    if aur_works paru; then
+        AUR_HELPER=paru
+    elif aur_works yay; then
+        AUR_HELPER=yay
+    fi
+    say "AUR helper: ${AUR_HELPER:-none yet (paru gets built)}"
+
+    # ── hardware ────────────────────────────────────────────────────────────
+    shopt -s nullglob
+    bats=(/sys/class/power_supply/BAT*)
+    for card in /sys/class/drm/card[0-9]; do
+        vendor="$(cat "$card/device/vendor" 2>/dev/null || true)"
+        case "$vendor" in
+            0x10de) GPU_VENDORS+=(NVIDIA) ;;
+            0x1002) GPU_VENDORS+=(AMD) ;;
+            0x8086) GPU_VENDORS+=(Intel) ;;
+            "") ;;
+            *) GPU_VENDORS+=("$vendor") ;;
+        esac
+    done
+    shopt -u nullglob
+    chassis="$(cat /sys/class/dmi/id/chassis_type 2>/dev/null || true)"
+    # 8-10, 14, 30-32: portable, laptop, notebook, sub-notebook, tablet, convertible, detachable
+    if (( ${#bats[@]} )) || [[ "$chassis" =~ ^(8|9|10|14|30|31|32)$ ]]; then
+        IS_LAPTOP=1
+    fi
+    say "GPU: ${GPU_VENDORS[*]:-none found}; $( (( IS_LAPTOP )) && echo laptop || echo desktop)"
+    if [[ " ${GPU_VENDORS[*]} " == *" NVIDIA "* ]]; then
+        for pkg in nvidia nvidia-open nvidia-dkms nvidia-open-dkms nvidia-lts nvidia-open-lts \
+            linux-cachyos-nvidia linux-cachyos-nvidia-open; do
+            pacman -Qq "$pkg" &>/dev/null && { have_driver=1; break; }
+        done
+        if (( ! have_driver )); then
+            warn "an NVIDIA GPU without the NVIDIA driver"
+            note "Hyprland on NVIDIA needs the proprietary driver: nvidia-open on Arch (Turing and newer), or your distribution's driver tool"
+        fi
+    fi
+    # Only laptops get TLP. A desktop gets power-profiles-daemon instead, for
+    # the control centre's power profiles, unless TLP is there already (the two
+    # conflict).
+    if (( ! IS_LAPTOP )); then
+        drop_pkg PKG_UTILS tlp
+        pacman -Qq tlp &>/dev/null || PKG_UTILS+=(power-profiles-daemon)
+    fi
+
+    # ── audio ───────────────────────────────────────────────────────────────
+    # pipewire-pulse conflicts with PulseAudio, and pacman --noconfirm answers
+    # "no" to removing it, which fails the whole core install.
+    mapfile -t PULSE_PKGS < <(pacman -Qq 2>/dev/null | grep -E '^pulseaudio(-.*)?$' || true)
+    if (( ${#PULSE_PKGS[@]} )); then
+        if interactive confirm "PulseAudio is installed (${PULSE_PKGS[*]}).
+
+SimplyChit uses PipeWire: the shell's volume controls and device switching talk to it. pipewire-pulse replaces PulseAudio and keeps every PulseAudio app working.
+
+Replace PulseAudio with PipeWire?" y; then
+            REPLACE_PULSE=1
+        else
+            drop_pkg PKG_CORE pipewire-pulse
+            warn "PulseAudio stays; the shell's audio controls will not see your devices"
+            note "PulseAudio kept: the volume OSD and the audio tab need PipeWire (pipewire-pulse)"
+        fi
+    fi
+
+    # ── what this machine boots into (asked in install mode only) ───────────
+    [[ "$MODE" == update ]] && return 0
+
+    dm="$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null || true)"
+    if [[ -n "$dm" && -e "$dm" ]]; then
+        DM_CURRENT="$(basename -- "$dm" .service)"
+    fi
+    if [[ -n "$DM_CURRENT" && "$DM_CURRENT" != sddm ]]; then
+        say "login screen: $DM_CURRENT"
+        if interactive confirm "$DM_CURRENT is this system's login screen.
+
+SimplyChit comes with a themed SDDM. Switch to it? $DM_CURRENT stays installed and is only disabled; the switch happens at the next boot. To go back, from a TTY (Ctrl+Alt+F2):
+
+  sudo systemctl disable sddm && sudo systemctl enable $DM_CURRENT
+
+No keeps $DM_CURRENT: pick Hyprland in its session menu." n; then
+            WANT_SDDM=1
+        else
+            WANT_SDDM=0
+            DM_LABEL="$DM_CURRENT"
+            note "kept $DM_CURRENT as the login screen; pick the Hyprland session there"
+        fi
+    fi
+
+    for unit in systemd-networkd iwd connman dhcpcd netctl; do
+        systemctl is-enabled "$unit.service" &>/dev/null && NET_OTHER+=("$unit")
+    done
+    if (( ${#NET_OTHER[@]} )) && ! systemctl is-enabled NetworkManager.service &>/dev/null; then
+        say "networking: ${NET_OTHER[*]}"
+        if interactive confirm "This system gets online with ${NET_OTHER[*]}.
+
+The control centre's Wi-Fi and network settings need NetworkManager. Switch to it? ${NET_OTHER[*]} stays installed and is only disabled, at the next boot. Have your Wi-Fi password ready. To go back, from a TTY:
+
+  sudo systemctl disable NetworkManager && sudo systemctl enable ${NET_OTHER[*]}
+
+No leaves networking as it is (the network tab will be empty)." n; then
+            WANT_NM=1
+        else
+            WANT_NM=0
+            note "networking left on ${NET_OTHER[*]}; the control centre's network tab needs NetworkManager"
+        fi
+    else
+        NET_OTHER=()
+    fi
+    return 0
+}
+
+# Swap PulseAudio for pipewire-pulse before the core install (see detect_system).
+replace_pulse() {
+    (( REPLACE_PULSE && ${#PULSE_PKGS[@]} )) || return 0
+    # -dd: what depends on PulseAudio is satisfied again by pipewire-pulse,
+    # installed right after this.
+    run_logged "Removing PulseAudio (${PULSE_PKGS[*]})" "${SUDO[@]}" pacman -Rdd --noconfirm "${PULSE_PKGS[@]}" \
+        || die "could not remove PulseAudio — see the log."
+    ok "PulseAudio removed; pipewire-pulse takes its place"
+    note "replaced PulseAudio with PipeWire (log out and in for apps to reconnect)"
+    REPLACE_PULSE=0
+}
+
+# A working AUR helper in $AUR_HELPER: the one detect_system found, or paru,
+# built from source.
+ensure_aur_helper() {
+    if [[ -n "$AUR_HELPER" ]]; then
+        skip "$AUR_HELPER already installed"
+        return 0
+    fi
+    ensure_paru
+    AUR_HELPER=paru
+}
+
 # Build paru from source, unless a working one is already here.
 ensure_paru() {
     if command -v paru >/dev/null && paru --version &>/dev/null; then
@@ -1082,6 +1290,8 @@ Remove them?" y; then
         skip "none installed"
     fi
 
+    replace_pulse
+
     phase 6 42 "Core packages and fonts"
     step "Core packages and fonts"
     say "${#PKG_CORE[@]} core + ${#PKG_FONTS[@]} font packages"
@@ -1104,15 +1314,15 @@ ${PKG_UTILS[*]}" y; then
     # Not optional, and not part of the AUR question below. The palette is core
     # to the desktop, and its only source is an AUR package now, so paru has to
     # be built even for someone who declines the optional AUR list.
-    phase 46 47 "paru"
-    step "paru"
-    ensure_paru
+    phase 46 47 "AUR helper"
+    step "AUR helper"
+    ensure_aur_helper
 
     phase 47 48 "Theming engine"
     step "Theming engine"
-    run_logged "Theming engine" paru -S --needed --noconfirm "${PKG_AUR_CORE[@]}" || {
+    run_logged "Theming engine" "$AUR_HELPER" -S --needed --noconfirm "${PKG_AUR_CORE[@]}" || {
         warn "python-pywal16 could not be built — the desktop starts unthemed"
-        note "retry: paru -S ${PKG_AUR_CORE[*]}"
+        note "retry: $AUR_HELPER -S ${PKG_AUR_CORE[*]}"
     }
     ok "done"
 
@@ -1124,9 +1334,9 @@ These are built from source, which takes a few minutes." y; then
         phase 48 64 "AUR packages"
         step "AUR packages"
         # One failed build should not lose the rest of the install.
-        run_logged "AUR packages" paru -S --needed --noconfirm "${PKG_AUR[@]}" || {
+        run_logged "AUR packages" "$AUR_HELPER" -S --needed --noconfirm "${PKG_AUR[@]}" || {
             warn "one or more AUR builds failed — continuing"
-            note "some AUR packages failed to build; retry: paru -S ${PKG_AUR[*]}"
+            note "some AUR packages failed to build; retry: $AUR_HELPER -S ${PKG_AUR[*]}"
         }
         ok "done"
     else
@@ -1162,6 +1372,10 @@ ${PKG_FLATPAK[*]}" y; then
 install_sddm_theme() {
     phase 72 80 "SDDM login theme"
     step "SDDM theme (silent $SDDM_THEME_VERSION)"
+    if (( ! WANT_SDDM )); then
+        skip "$DM_CURRENT stays the login screen"
+        return 0
+    fi
 
     local theme_dir="/usr/share/sddm/themes/silent"
     local custom_conf="$REPO_ROOT/.themes_sddm/silent_sddmTheme_custom_default/default.conf"
@@ -1172,8 +1386,8 @@ install_sddm_theme() {
 
     if [[ "${have%%-*}" == "$SDDM_THEME_VERSION" ]]; then
         skip "sddm-silent-theme $have already installed"
-    elif ! command -v paru >/dev/null; then
-        warn "paru not available — skipping the theme"
+    elif [[ -z "$AUR_HELPER" ]]; then
+        warn "no AUR helper — skipping the theme"
         note "install by hand: paru -S sddm-silent-theme (then pin it)"
         return 0
     else
@@ -1213,10 +1427,10 @@ install_sddm_theme() {
         mapfile -t deps < <(pkgbuild_deps "$tmp/theme")
         if (( ${#deps[@]} )); then
             say "theme dependencies: ${deps[*]}"
-            run_logged "Theme dependencies" paru -S --needed --noconfirm "${deps[@]}" || {
+            run_logged "Theme dependencies" "$AUR_HELPER" -S --needed --noconfirm "${deps[@]}" || {
                 rm -rf "$tmp"
                 warn "could not install the theme's dependencies"
-                note "SDDM theme skipped; retry: paru -S sddm-silent-theme"
+                note "SDDM theme skipped; retry: $AUR_HELPER -S sddm-silent-theme"
                 return 0
             }
         fi
@@ -1227,7 +1441,7 @@ install_sddm_theme() {
             bash -c "cd '$tmp/theme' && makepkg -s --noconfirm" || {
             rm -rf "$tmp"
             warn "theme build failed — the desktop still works, the login screen is plain"
-            note "SDDM theme failed to build; retry: paru -S sddm-silent-theme"
+            note "SDDM theme failed to build; retry: $AUR_HELPER -S sddm-silent-theme"
             return 0
         }
 
@@ -1237,7 +1451,7 @@ install_sddm_theme() {
             "${SUDO[@]}" pacman -U --noconfirm "${built[@]}"; then
             rm -rf "$tmp"
             warn "could not install the built theme package"
-            note "SDDM theme not installed; retry: paru -S sddm-silent-theme"
+            note "SDDM theme not installed; retry: $AUR_HELPER -S sddm-silent-theme"
             return 0
         fi
         rm -rf "$tmp"
@@ -2179,7 +2393,29 @@ What should it do?" "1" \
 stage_services() {
     step "Services"
     local svc
-    for svc in NetworkManager bluetooth sddm; do
+    local other
+    # Another login screen or network manager is only switched off when the
+    # user said yes in detect_system; both changes take effect at the next boot.
+    if (( WANT_SDDM )) && [[ -n "$DM_CURRENT" && "$DM_CURRENT" != sddm ]]; then
+        if run_logged "Disabling $DM_CURRENT" "${SUDO[@]}" systemctl disable "$DM_CURRENT.service"; then
+            ok "$DM_CURRENT disabled (still installed)"
+            note "login screen: SDDM from the next boot. Back to $DM_CURRENT: sudo systemctl disable sddm && sudo systemctl enable $DM_CURRENT"
+        else
+            warn "could not disable $DM_CURRENT; SDDM stays off"
+            WANT_SDDM=0
+        fi
+    fi
+    if (( WANT_NM )) && (( ${#NET_OTHER[@]} )); then
+        for other in "${NET_OTHER[@]}"; do
+            run_logged "Disabling $other" "${SUDO[@]}" systemctl disable "$other.service" \
+                && ok "$other disabled (still installed)"
+        done
+        note "networking: NetworkManager from the next boot. Back: sudo systemctl disable NetworkManager && sudo systemctl enable ${NET_OTHER[*]}"
+    fi
+
+    for svc in NetworkManager bluetooth sddm power-profiles-daemon; do
+        [[ "$svc" == sddm ]] && (( ! WANT_SDDM )) && continue
+        [[ "$svc" == NetworkManager ]] && (( ! WANT_NM )) && continue
         if ! systemctl list-unit-files "$svc.service" &>/dev/null; then
             skip "$svc not installed"
             continue
@@ -2368,6 +2604,7 @@ This is 'pacman -S --needed' over the package lists: already-installed packages 
 
     phase 15 45 "Packages the repo has added"
     step "Package lists"
+    replace_pulse
     pac_install "Core packages and fonts" "${PKG_CORE[@]}" "${PKG_FONTS[@]}"
     ok "core and fonts up to date"
 
@@ -2377,24 +2614,24 @@ This is 'pacman -S --needed' over the package lists: already-installed packages 
 
     # PKG_AUR_CORE carries the theming engine, so it is refreshed whether or not
     # the optional AUR list is wanted — the same reason it is mandatory above.
-    if command -v paru >/dev/null; then
-        run_logged "Theming engine" paru -S --needed --noconfirm "${PKG_AUR_CORE[@]}" \
+    if [[ -n "$AUR_HELPER" ]]; then
+        run_logged "Theming engine" "$AUR_HELPER" -S --needed --noconfirm "${PKG_AUR_CORE[@]}" \
             && ok "theming engine up to date" \
             || warn "python-pywal16 could not be updated — continuing"
     else
-        skip "paru not installed — python-pywal16 left alone"
+        skip "no AUR helper — python-pywal16 left alone"
     fi
 
-    if (( WANT_AUR )) && command -v paru >/dev/null; then
+    if (( WANT_AUR )) && [[ -n "$AUR_HELPER" ]]; then
         phase 45 60 "AUR packages"
         step "AUR packages"
-        run_logged "AUR packages" paru -S --needed --noconfirm "${PKG_AUR[@]}" || {
+        run_logged "AUR packages" "$AUR_HELPER" -S --needed --noconfirm "${PKG_AUR[@]}" || {
             warn "one or more AUR builds failed — continuing"
-            note "some AUR packages failed to build; retry: paru -S ${PKG_AUR[*]}"
+            note "some AUR packages failed to build; retry: $AUR_HELPER -S ${PKG_AUR[*]}"
         }
         ok "done"
     elif (( WANT_AUR )); then
-        skip "paru not installed — AUR packages left alone"
+        skip "no AUR helper — AUR packages left alone"
     fi
 
     # Not asked in dialog mode: there the run is unattended, and a full system
@@ -2487,7 +2724,7 @@ run_install() {
     gauge_close
 
     step "Done"
-    say "Log out and pick Hyprland at the SDDM login screen. The desktop starts itself."
+    say "Log out and pick Hyprland at the ${DM_LABEL:-SDDM} login screen. The desktop starts itself."
     say "Press SUPER + / once you are in for the keybind cheatsheet."
 
     if (( ${#SUMMARY[@]} )); then
@@ -2603,6 +2840,7 @@ $KEYS_MENU" 20 76 4 \
 choose_mode
 log_open "$MODE"
 locate_repo
+detect_system
 
 case "$MODE" in
     update) run_update ;;

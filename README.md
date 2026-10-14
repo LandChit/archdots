@@ -125,8 +125,17 @@ Media, volume and brightness keys work as expected, and show a little popup.
 > the login theme — but nobody has run it on a fresh machine and logged in yet.
 > Expect to fix something. Read it before you run it, and use a spare machine, or VM.
 
-You need Arch Linux with **NetworkManager** and **Pipewire** (both are options
-in `archinstall`). Then, as your normal user — not as root:
+You need Arch Linux or an Arch-based system (EndeavourOS, CachyOS, Garuda,
+Manjaro). The installer looks first and fits in with what is there: it uses
+your `paru` or `yay` (or builds `paru`), and asks before switching anything
+that changes how the machine boots or gets online. It replaces PulseAudio with
+PipeWire only if you agree, and it switches another login screen (GDM,
+LightDM, …) to SDDM or another network manager (iwd, systemd-networkd, …) to
+NetworkManager only if you agree. Those switches are off by default and take
+effect at the next boot; the installer prints how to undo them. On a desktop
+it installs power-profiles-daemon rather than TLP, and it warns about an
+NVIDIA card without its driver or a Hyprland older than these dots need.
+Then, as your normal user — not as root:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/LandChit/archdots/main/install.sh | bash
@@ -156,8 +165,7 @@ duplicates.
 ```
 
 That pulls the repo, re-links anything new, installs packages the repo has
-gained since your last run, refreshes the shell's virtualenv, and offers to
-restart the running shell. Your machine-specific values — graphics card, monitor
+gained since your last run, and offers to restart the running shell. Your machine-specific values — graphics card, monitor
 layout, wallpaper — are not in the repo at all, so an update cannot overwrite
 them.
 
@@ -305,8 +313,11 @@ empty boxes.
 ### Utilities — optional
 
 ```
-tlp fd htop nvtop fastfetch tmux unzip wget curl smartmontools ark
+tlp fd htop nvtop fastfetch tmux unzip wget curl smartmontools ark ddcutil
 ```
+
+`tlp` on laptops only; a desktop gets `power-profiles-daemon` instead (the
+control centre's power profiles need one of the two).
 
 ### AUR — optional
 
@@ -315,7 +326,8 @@ paru zen-browser-bin visual-studio-code-bin hyprls-git xwaylandvideobridge
 sddm-silent-theme
 ```
 
-`paru` is built from source rather than `paru-bin`: the prebuilt binary is
+An existing `paru` or `yay` is used as it is. Otherwise `paru` is built from
+source rather than `paru-bin`: the prebuilt binary is
 linked against one libalpm version and stops working the moment pacman bumps
 it. `sddm-silent-theme` is pinned to a specific version and added to `IgnorePkg`,
 because a theme upgrade replaces the login screen's config.

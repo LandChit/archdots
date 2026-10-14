@@ -2561,6 +2561,12 @@ stage_services() {
         fi
     done
 
+    stage_shell_services
+}
+
+# What the shell needs from systemd. Install and update both run it: an
+# install from before the Quickshell shell still has hyprpolkitagent enabled.
+stage_shell_services() {
     # The shell is the polkit agent now. Only one agent can register per
     # session, and an enabled hyprpolkitagent unit starts first and wins, so it
     # is switched off here; autorun.lua starts it only if the shell's agent has
@@ -2802,6 +2808,7 @@ run_update() {
     retire_old_name     # archdots -> SimplyChit, once
     stage_wallpapers    # copies any new wallpapers into ~/Pictures/wallpapers
     stage_gtk4_base     # update_packages may have moved libadwaita under us
+    stage_shell_services  # hyprpolkitagent off (the shell is the agent), tlp-pd
     if [[ -d "$GREETER_DIR" ]]; then
         step "The greeter"
         greeter_copy_files && ok "greeter refreshed (shell, palette, wallpaper)"

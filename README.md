@@ -169,12 +169,13 @@ gained since your last run, and offers to restart the running shell. Your machin
 layout, wallpaper — are not in the repo at all, so an update cannot overwrite
 them.
 
-> **Updating an install from before the dotfiles moved into `home/`:** the
+> **Updating an install from before the dotfiles moved into `home/`** (or
+> from when they were called archdots, cloned at `~/archdots`): the
 > installer you have cannot know about the move. Pull first, then run the new
 > one, which moves your untracked files across and relinks everything:
 >
 > ```bash
-> git -C ~/simplychit pull && ~/simplychit/install.sh update
+> git -C ~/archdots pull && ~/archdots/install.sh update
 > ```
 >
 > Until that second command runs, the links in `~/.config` point at paths

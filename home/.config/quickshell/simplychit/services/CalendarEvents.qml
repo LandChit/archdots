@@ -38,18 +38,21 @@ Singleton {
 
         stdout: StdioCollector {
             onStreamFinished: {
-                root.loading = false;
+                let r;
                 try {
-                    const r = JSON.parse(text);
-                    root.available = r.available;
-                    root.reason = r.error ?? "";
-                    // all-day ones first, then by start time
-                    root.events = r.events.sort((a, b) => a.allDay !== b.allDay ? (a.allDay ? -1 : 1) : a.start.localeCompare(b.start));
+                    r = JSON.parse(text);
                 } catch (e) {
-                    root.available = false;
-                    root.reason = "simplychit events gave no answer";
-                    root.events = [];
+                    // a run stopped by a newer load() ends with no output
+                    return;
                 }
+                // an answer for a day clicked before the current one
+                if (r.day !== root.day)
+                    return;
+                root.loading = false;
+                root.available = r.available;
+                root.reason = r.error ?? "";
+                // khal's order: all-day first, then by start
+                root.events = r.events;
             }
         }
     }

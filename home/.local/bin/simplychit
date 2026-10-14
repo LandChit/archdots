@@ -243,20 +243,34 @@ def doctor(as_json):
 def khal_dateformat():
     """khal parses a date only in the user's own [locale] dateformat, not ISO,
     so read that format with khal's own code (khal is Python, and the pacman
-    package lives in the system site-packages). ISO if that cannot be done."""
+    package lives in the system site-packages). If this python3 cannot import
+    it (a venv first on PATH), ask the interpreter khal itself runs on, from
+    its shebang. ISO if neither works."""
     try:
         from khal.settings import get_config
         return get_config()["locale"]["dateformat"]
     except Exception:
-        return "%Y-%m-%d"
+        pass
+    try:
+        with open(shutil.which("khal"), encoding="utf-8") as f:
+            interpreter = f.readline()[2:].split()
+        code = 'from khal.settings import get_config; print(get_config()["locale"]["dateformat"])'
+        out = subprocess.run(interpreter + ["-c", code], capture_output=True, text=True, timeout=10)
+        if out.returncode == 0 and out.stdout.strip():
+            return out.stdout.strip()
+    except (OSError, TypeError, subprocess.TimeoutExpired):
+        pass
+    return "%Y-%m-%d"
 
 
 def events(args):
-    """{"available", "events", "error"}: available is false when khal is not
-    installed or not set up, which the calendar shows as a hint, not an error."""
-    result = {"available": False, "events": [], "error": None}
+    """{"day", "available", "events", "error"}: available is false when khal is
+    not installed or not set up, which the calendar shows as a hint, not an
+    error. Events come in khal's order: all-day first, then by start."""
+    result = {"day": None, "available": False, "events": [], "error": None}
     try:
         day = datetime.date.fromisoformat(args[0]) if args else datetime.date.today()
+        result["day"] = day.isoformat()
     except ValueError:
         result["error"] = f"not a date: {args[0]!r} (YYYY-MM-DD)"
         print(json.dumps(result))
@@ -266,6 +280,14 @@ def events(args):
         print(json.dumps(result))
         return 0
     fields = ["title", "start-time", "end-time", "all-day", "location", "calendar", "calendar-color"]
+    # khal reads the date in the user's locale (it calls setlocale), and the
+    # default dateformat is %x, so format it in the same locale; in the C
+    # locale %x is MM/DD/YY, which khal on en_GB takes for another day
+    try:
+        import locale
+        locale.setlocale(locale.LC_ALL, "")
+    except Exception:
+        pass
     cmd = ["khal", "list", "--once", day.strftime(khal_dateformat()), "1d"]
     for f in fields:
         cmd += ["--json", f]

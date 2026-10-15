@@ -37,9 +37,42 @@ Singleton {
         }
     }
 
+    // The laptop panel through brightnessctl, external monitors over DDC/CI
+    // (Brightness.ddcDisplays). Each external level is saved to a runtime
+    // file before dimming and put back from it; the lock keeps a slow dim
+    // (ddcutil takes a moment per monitor) and a quick wake from crossing.
+    function dim(on: bool): void {
+        const displays = Object.keys(Brightness.ddcDisplays)
+            .filter(name => !/^(eDP|LVDS|DSI)-/.test(name))
+            .map(name => String(Brightness.ddcDisplays[name]));
+        Quickshell.execDetached(["flock", Quickshell.env("XDG_RUNTIME_DIR") + "/simplychit-dim.lock", "sh", "-c", `
+            saved="$XDG_RUNTIME_DIR/simplychit-dim"
+            if [ "$1" = on ]; then
+                # already dim: saving again would keep the dimmed levels
+                [ -e "$saved" ] && exit 0
+                : > "$saved"
+                brightnessctl -s set 10
+                shift
+                for d in "$@"; do
+                    level=$(ddcutil --display "$d" getvcp 10 --terse | awk '{print $4}')
+                    [ -n "$level" ] || continue
+                    echo "$d $level" >> "$saved"
+                    ddcutil --noverify --display "$d" setvcp 10 10
+                done
+            else
+                [ -e "$saved" ] || exit 0
+                brightnessctl -r
+                while read -r d level; do
+                    ddcutil --noverify --display "$d" setvcp 10 "$level"
+                done < "$saved"
+                rm -f "$saved"
+            fi
+        `, "sh", on ? "on" : "off"].concat(displays));
+    }
+
     Step {
         minutes: root.times.dim
-        onIsIdleChanged: Quickshell.execDetached(isIdle ? ["brightnessctl", "-s", "set", "10"] : ["brightnessctl", "-r"])
+        onIsIdleChanged: root.dim(isIdle)
     }
 
     Step {

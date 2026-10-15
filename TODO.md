@@ -167,6 +167,8 @@ belong to it. Done, apart from checking it all on a real session (last item).
   (or blueman's PIN) can take the keyboard; the Wi-Fi page asks for a
   missing password itself when there is no agent (NoSecrets).
 - [x] Stay awake on/off is a toast, not a notification (Events.qml).
+- [x] Idle dim dims external monitors too (DDC/CI via ddcutil), saving
+  each level in `$XDG_RUNTIME_DIR/simplychit-dim` and restoring it.
 - [x] **C1. Launcher actions** (done): `>` prefix for scheme, wallpaper, light/dark,
   power actions; favourite and hidden apps
   - `>` power actions, panels, light/dark (`theme.mode`), random wallpaper,

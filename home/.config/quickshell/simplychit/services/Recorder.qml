@@ -84,7 +84,10 @@ Singleton {
     Process {
         id: slurp
 
-        command: ["slurp"]
+        // slurp reads preset boxes from stdin when it is not a terminal, and
+        // a Process keeps stdin open: without </dev/null it waits forever
+        // and never shows the selection.
+        command: ["sh", "-c", "slurp </dev/null"]
         stdout: StdioCollector {
             onStreamFinished: {
                 root.picking = false;

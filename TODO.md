@@ -491,7 +491,15 @@ then rewrite a file safely, and hand edits still work.
   remap/disabled work. Tested live with a throwaway special workspace
   (launch, hide, show without relaunch, send out and back) and the loader
   offline with a fake settings.json
-- [ ] **Shell watchdog**: restart the shell when it crashes, and say so
+- [x] **Shell watchdog** (done): `hypr/Scripts/shell-watchdog.sh` runs
+  `qs -c simplychit` and starts it again after a crash (exit 255 from
+  Quickshell's crash handler); `qs kill` (0) and the end of the session
+  (SIGTERM, 143) stop it. The new shell toasts "The shell restarted"
+  (`services/Events.qml`); three crashes in a minute and it gives up with a
+  Hyprland notification. `shell.restart()` and install.sh's update restart
+  go through it; `simplychit doctor` checks its lock. Tested with a scratch
+  config and shimmed qs/hyprctl: crash, kill, give-up, restart handover,
+  SIGTERM; the toast in a scratch shell copy. Not yet run as the live shell
 - [ ] **Welcome screen on first run**: wallpaper, light/dark, keyboard layout,
   default apps, the main keybinds
 

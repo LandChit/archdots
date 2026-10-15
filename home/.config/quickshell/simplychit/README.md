@@ -3,7 +3,9 @@
 The desktop shell: the bar, the wallpaper, every panel, the notification
 daemon, the OSD, the polkit agent and (opt-in) the lock screen. Started at
 login by `hypr/config/autorun.lua` (`shell.restart()` in
-`hypr/config/helpers/shell.lua`).
+`hypr/config/helpers/shell.lua`), under `hypr/Scripts/shell-watchdog.sh`,
+which starts it again after a crash (the new shell says so in a toast) and
+gives up after three crashes in a minute. `qs kill` stops it for good.
 
 ```
 shell.qml        entry point: what is on screen, and the IPC targets

@@ -75,6 +75,11 @@ def checks():
     shell = run("qs", "list", "-c", "simplychit") or ""
     add("Running", "shell", "ok" if "Instance" in shell else "fail",
         "qs -c simplychit" if "Instance" in shell else "not running: SUPER+SHIFT+CTRL+ALT+R, or log in again")
+    # the watchdog holds this lock while it runs (hypr/Scripts/shell-watchdog.sh)
+    lock = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/tmp"), "simplychit-shell.lock")
+    watched = os.path.exists(lock) and run("flock", "-n", lock, "true") is None
+    add("Running", "shell watchdog", "ok" if watched else "warn",
+        "restarts the shell if it crashes" if watched else "not running: a crashed shell stays down until SUPER+SHIFT+CTRL+ALT+R")
     add("Running", "hypridle", "ok" if running("^hypridle") else "warn",
         "locks before sleep" if running("^hypridle") else "not running: the screen is not locked before suspend")
     add("Running", "clipboard watcher", "ok" if running("wl-paste --watch cliphist") else "warn",

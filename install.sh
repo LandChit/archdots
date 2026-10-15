@@ -2733,7 +2733,12 @@ TLP is installed. tlp-pd lets the control centre switch power profiles (saver, b
 #
 # Only meaningful during an update, and only when a session is up. Same as
 # hypr/config/helpers/shell.lua's restart: stop the instance, start a new one
-# detached.
+# under the watchdog (hypr/Scripts/shell-watchdog.sh), detached with setsid so
+# it does not die with this script.
+
+start_shell() {
+    setsid -f sh "$HOME/.config/hypr/Scripts/shell-watchdog.sh" >/dev/null 2>&1 </dev/null || true
+}
 
 shell_is_running() {
     qs list -c simplychit 2>/dev/null | grep -q '^Instance'
@@ -2744,7 +2749,7 @@ restart_shell() {
     if (( OLD_SHELL_RUNNING )); then
         # renamed: the old instance goes, the new one starts, no question
         qs kill -c archdots >/dev/null 2>&1 || true
-        qs -c simplychit -n -d >/dev/null 2>&1 || true
+        start_shell
         sleep 3
         if shell_is_running; then
             ok "the shell restarted under its new name (qs -c simplychit)"
@@ -2766,8 +2771,7 @@ The bar and the panels disappear for a second while it comes back. Skip this if 
         return 0
     fi
     qs kill -c simplychit >/dev/null 2>&1 || true
-    # -d detaches it, so it does not die with this script
-    qs -c simplychit -n -d >/dev/null 2>&1 || true
+    start_shell
     sleep 3
     if shell_is_running; then
         ok "restarted"

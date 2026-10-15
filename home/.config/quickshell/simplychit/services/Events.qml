@@ -31,6 +31,27 @@ Singleton {
         onTriggered: root.armed = true
     }
 
+    // ── the shell itself ─────────────────────────────────────────────────
+    // hypr/Scripts/shell-watchdog.sh started this shell again after a crash
+    // and left a note with the exit status. Said once, even in DND.
+    FileView {
+        id: crashNote
+
+        path: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/simplychit/shell-crashed"
+        printErrors: false
+        onLoaded: crashToast.start()
+    }
+
+    Timer {
+        id: crashToast
+
+        interval: 2500
+        onTriggered: {
+            Notifs.toast("The shell restarted", "It crashed (exit " + crashNote.text().trim() + ") and came back", "\u{f0026}", true);
+            Quickshell.execDetached(["rm", "-f", crashNote.path]);
+        }
+    }
+
     // ── charger ──────────────────────────────────────────────────────────
     Connections {
         target: Battery

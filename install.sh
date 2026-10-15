@@ -73,7 +73,8 @@ PKG_CORE=(
     # `alias cd="z"`, `alias ls="eza …"`, `alias cat="bat"`, `eval "$(fzf --zsh)"`.
     # Leaving any of them out breaks the login shell, `cd` included.
     zoxide fzf eza bat
-    # hypr/config/autorun.lua starts kwalletmanager5 and pam_kwallet_init.
+    # hypr/config/autorun.lua starts pam_kwallet_init; kwalletmanager5 is
+    # the wallet's settings app.
     kwallet-pam kwalletmanager
     # whiptail, for this script's own dialogs. Cheap, and it means the *next*
     # run — an update, or a re-run after a change — gets the boxes even if this
@@ -1686,7 +1687,8 @@ stage_stow() {
     # links the folders inside rather than folding the whole directory into
     # one symlink to the repo. Folded, everything any app
     # later creates there, ~/.config/simplychit/ included, lands in the clone.
-    mkdir -p "$HOME/.config" "$HOME/.local/bin"
+    # Same for the D-Bus services folder, which other installs write into.
+    mkdir -p "$HOME/.config" "$HOME/.local/bin" "$HOME/.local/share/dbus-1/services"
     simulate="$(stow --simulate --verbose=1 --dir="$REPO_ROOT" --target="$HOME" home 2>&1 || true)"
     while IFS= read -r line; do
         [[ "$line" == *"  * "* ]] || continue

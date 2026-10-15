@@ -1,0 +1,8 @@
+# kwallet 6 ships an activation file for org.kde.kwalletd6 only. kwalletd6
+# also takes the kwalletd5 name once it runs, but nothing starts it for an
+# app that asks for kwalletd5 first (Electron's --password-store=kwallet5:
+# VS Code, Chromium). That app then falls back to its plain-text store and
+# finds no saved logins.
+[D-BUS Service]
+Name=org.kde.kwalletd5
+Exec=/usr/bin/kwalletd6

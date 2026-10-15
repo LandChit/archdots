@@ -4,8 +4,9 @@ import qs.widgets
 // A SearchPanel whose body is a keyboard-driven list. `items` is a plain JS
 // array; the delegate gets each one as modelData.
 //
-// Nothing is highlighted until an arrow key is pressed,
-// but Enter still opens `defaultIndex`, the obvious pick for the query.
+// Nothing is highlighted until an arrow key is pressed, but Enter still
+// opens `defaultIndex`, the obvious pick for the query. With
+// `selectOnSearch`, that pick is highlighted as soon as there is a query.
 SearchPanel {
     id: root
 
@@ -14,6 +15,7 @@ SearchPanel {
     property alias list: list
     property int listHeight: 460
     property int defaultIndex: 0
+    property bool selectOnSearch: false
 
     signal activated(var item, int modifiers)
 
@@ -24,11 +26,13 @@ SearchPanel {
         list.currentIndex = Math.max(0, Math.min(items.length - 1, list.currentIndex + delta));
     }
 
-    onItemsChanged: {
-        list.showSelection = false;
+    // Deferred: the ListView takes the new model after this handler and puts
+    // currentIndex back to 0, which would drop defaultIndex.
+    onItemsChanged: Qt.callLater(() => {
+        list.showSelection = selectOnSearch && query !== "" && items.length > 0;
         list.currentIndex = Math.min(defaultIndex, items.length - 1);
         list.positionViewAtBeginning();
-    }
+    })
     onMoveUp: step(-1)
     onMoveDown: step(1)
     onAccepted: modifiers => {

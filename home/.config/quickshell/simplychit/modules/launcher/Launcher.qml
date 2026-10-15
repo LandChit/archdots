@@ -18,6 +18,8 @@ ListPanel {
     id: root
 
     name: "launcher"
+    // typing highlights the app Enter would open
+    selectOnSearch: true
     glyph: "󰍉"
     placeholder: "Search apps   ? web  = calc  / files  @ windows  ! run  > actions"
     hints: ["↕ navigate", "↵ open", "^P pin", "^H hide", "esc close"]

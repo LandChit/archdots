@@ -153,6 +153,10 @@ belong to it. Done, apart from checking it all on a real session (last item).
 - [x] **6. Launcher modes** (done): calculator, file search, open windows, run command
   - `=` calc (also plain arithmetic), `/` files (fd), `@` windows, `!` run,
     `?` web. `qs -c simplychit ipc call launcher open "@"` opens straight into one.
+- [x] Launcher highlights the result Enter opens as soon as you type
+  (SOMETING_OFF.md): `selectOnSearch` on ListPanel. Fixed on the way:
+  the ListView reset `currentIndex` to 0 after each rebuild, so with the
+  web row on top Enter searched the web instead of opening the best app.
 - [x] **C1. Launcher actions** (done): `>` prefix for scheme, wallpaper, light/dark,
   power actions; favourite and hidden apps
   - `>` power actions, panels, light/dark (`theme.mode`), random wallpaper,

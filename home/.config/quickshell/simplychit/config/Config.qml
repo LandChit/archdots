@@ -183,6 +183,10 @@ Singleton {
             property JsonObject displays: JsonObject {
                 property string active: ""
                 property var profiles: ({})
+                // The main screen, by description (or port name): the login
+                // screen shows there (services/Screens.qml). Empty: the built-in panel, else
+                // the first screen.
+                property string primary: ""
             }
 
             // Minutes idle before each step, on AC and on battery; 0 is never.

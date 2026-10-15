@@ -387,6 +387,11 @@
         "profiles": {
           "type": "object",
           "default": {}
+        },
+        "primary": {
+          "type": "string",
+          "default": "",
+          "description": "The main screen, by description (or port name): the login screen shows there (services/Screens.qml). Empty: the built-in panel, else the first screen."
         }
       },
       "additionalProperties": false,

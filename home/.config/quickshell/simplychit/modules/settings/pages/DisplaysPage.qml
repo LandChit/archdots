@@ -246,6 +246,22 @@ ColumnLayout {
         onTriggered: Displays.identifying = false
     }
 
+    Section {
+        title: "Primary screen"
+        description: "Where the login screen shows when more than one monitor is connected. The login screen takes a new choice at the next ./install.sh --update."
+
+        Setting {
+            label: "Primary screen"
+            help: Config.displays.primary === "" && Screens.primary ? "now " + Screens.primary.name : ""
+            Dropdown {
+                fieldWidth: 260
+                options: [["", "Automatic (the built-in screen)"]].concat(Displays.monitors.map(m => [m.description, m.name + " · " + m.description]))
+                value: Config.displays.primary
+                onChosen: v => Config.set("displays.primary", v)
+            }
+        }
+    }
+
     // ── the selected screen ──────────────────────────────────────────────
     Section {
         visible: page.current !== null

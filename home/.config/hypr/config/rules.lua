@@ -60,6 +60,18 @@ hl.window_rule({
     center = true,
 })
 
+-- The first-run welcome, the same way.
+hl.window_rule({
+    name = "simplychit-welcome",
+    match = {
+        class = "^(org.quickshell)$",
+        title = "^(SimplyChit welcome)$",
+    },
+    float = true,
+    size = "760 560",
+    center = true,
+})
+
 -- QOL window rules end
 
 -- My window rules

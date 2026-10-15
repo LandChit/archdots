@@ -32,7 +32,7 @@ Panel {
     property int total: 0
 
     readonly property var mods: [[64, "SUPER"], [4, "CTRL"], [8, "ALT"], [1, "SHIFT"]]
-    readonly property var keyNames: ({ RETURN: "Enter", KP_ENTER: "Enter", ESCAPE: "Esc", PRINT: "PrtSc", SLASH: "/", PERIOD: ".", COMMA: ",", SPACE: "Space", TAB: "Tab", BACKSPACE: "Backspace", DELETE: "Del", left: "←", right: "→", up: "↑", down: "↓", "mouse:272": "Left click", "mouse:273": "Right click", mouse_up: "Scroll up", mouse_down: "Scroll down" })
+    readonly property var keyNames: ({ RETURN: "Enter", KP_ENTER: "Enter", ESCAPE: "Esc", PRINT: "PrtSc", SLASH: "/", PERIOD: ".", COMMA: ",", SPACE: "Space", GRAVE: "`", MINUS: "-", TAB: "Tab", BACKSPACE: "Backspace", DELETE: "Del", left: "←", right: "→", up: "↑", down: "↓", "mouse:272": "Left click", "mouse:273": "Right click", mouse_up: "Scroll up", mouse_down: "Scroll down" })
     readonly property var xf86Names: ({ AudioRaiseVolume: "Vol +", AudioLowerVolume: "Vol −", AudioMute: "Mute", AudioMicMute: "Mic mute", MonBrightnessUp: "Bright +", MonBrightnessDown: "Bright −", AudioNext: "Next", AudioPrev: "Prev", AudioPlay: "Play", AudioPause: "Pause" })
 
     function prettyKey(key: string): string {

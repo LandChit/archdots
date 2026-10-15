@@ -129,6 +129,7 @@ ListPanel {
             run: () => Power.run(a.id)
         }));
         rows.push({ title: "Settings", subtitle: "Open", glyph: "\u{f0493}", hint: "open ↵", run: () => SettingsState.show("") });
+        rows.push({ title: "Welcome", subtitle: "Open · the first-run setup and the keys worth knowing", glyph: "\u{f1821}", hint: "open ↵", run: () => FirstRun.show() });
         const panels = [["wallpaper", "Wallpaper", "󰸉"], ["control", "Control centre", "󰒓"], ["clipboard", "Clipboard history", "󰅌"], ["emoji", "Emoji", "󰞅"], ["screenshot", "Screenshot", "󰄀"], ["keybinds", "Keybinds", "󰌌"], ["notifications", "Notifications", "󰂚"], ["notepad", "Notepad", "\u{f082e}"], ["qr", "QR code of the clipboard", "\u{f0432}"]];
         for (const [panel, label, glyph] of panels)
             rows.push({ title: label, subtitle: "Open", glyph: glyph, hint: "open ↵", run: () => Qt.callLater(() => Panels.open(panel)) });

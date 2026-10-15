@@ -500,6 +500,14 @@ then rewrite a file safely, and hand edits still work.
   go through it; `simplychit doctor` checks its lock. Tested with a scratch
   config and shimmed qs/hyprctl: crash, kill, give-up, restart handover,
   SIGTERM; the toast in a scratch shell copy. Not yet run as the live shell
-- [ ] **Welcome screen on first run**: wallpaper, light/dark, keyboard layout,
-  default apps, the main keybinds
+- [x] **Welcome screen on first run** (done): `modules/welcome/WelcomeWindow.qml`
+  and `services/FirstRun.qml`. Five steps: welcome, wallpaper and
+  light/dark, keyboard layout and touchpad, default apps, the keys worth
+  knowing (read from keybinds.json, so remaps show). Finish reloads
+  Hyprland if a keyboard or app setting changed. Shown when
+  `~/.local/state/simplychit/welcomed` is missing; any close writes it, and
+  install.sh's update writes it for existing installs. Again with the
+  launcher's `> Welcome` or `ipc call welcome open`. Tested in a scratch
+  shell copy: every step on screen, done writes the marker, no second show,
+  IPC reopens. Not tested: typing into its fields (wtype is unsafe here)
 

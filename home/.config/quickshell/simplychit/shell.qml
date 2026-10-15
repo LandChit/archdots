@@ -22,6 +22,7 @@ import qs.modules.qr
 import qs.modules.screenshot
 import qs.modules.settings
 import qs.modules.wallpaper
+import qs.modules.welcome
 import qs.services
 
 // simplychit shell. Run with `qs -c simplychit`; control it with
@@ -73,6 +74,13 @@ ShellRoot {
         active: SettingsState.open
 
         SettingsWindow {}
+    }
+
+    // the first-run welcome; also `ipc call welcome open`
+    LazyLoader {
+        active: FirstRun.open
+
+        WelcomeWindow {}
     }
     Lock {}
 
@@ -259,6 +267,15 @@ ShellRoot {
                 parsed = JSON.parse(value);
             } catch (e) {}
             return Config.set(key, parsed) ? "ok" : "settings.json is not valid JSON, left alone";
+        }
+    }
+
+    // qs -c simplychit ipc call welcome open   (shown by itself on a first run)
+    IpcHandler {
+        target: "welcome"
+
+        function open(): void {
+            FirstRun.show();
         }
     }
 

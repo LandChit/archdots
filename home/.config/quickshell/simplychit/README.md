@@ -12,14 +12,14 @@ shell.qml        entry point: what is on screen, and the IPC targets
 config/          Config (settings.json over defaults), Colours (pywal16)
 services/        state, no UI: Audio, Battery, Brightness, CalendarEvents, CpuTemp, Displays,
                  Events, Hypr, Idle, IdleTimers, Media, Notifs, Panels, Power,
-                 PowerProfile, QrScan, Recorder, SettingsCheck, SettingsState,
+                 FirstRun, PowerProfile, QrScan, Recorder, SettingsCheck, SettingsState,
                  Sounds, Theme, UsageCounts
 widgets/         shared pieces: Panel, SearchPanel, ListPanel, ListRow,
                  CardMenu, Island, BarText, Hot, Toggle, Slider, InfoRow, …
 modules/         one folder per surface: bar, launcher, clipboard, emoji,
                  calendar, battery, control, notifications, osd, powermenu,
                  screenshot, keybinds, notepad, qr, wallpaper, polkit, lock,
-                 settings
+                 settings, welcome
 settings.qml     the settings app on its own (qs -p …/settings.qml)
 greeter.qml      the login screen for greetd (install.sh --greeter); a preview
                  when run by hand
@@ -54,6 +54,7 @@ qs -c simplychit ipc call settings set bar.showCpu false
 qs -c simplychit ipc call settings open displays    # the settings app ('' = last page)
 qs -c simplychit ipc call displays revert           # also keep, refresh
 qs -c simplychit ipc call lock preview              # the lock screen, without locking
+qs -c simplychit ipc call welcome open              # the first-run welcome, again
 qs -c simplychit ipc call shell reload
 ```
 

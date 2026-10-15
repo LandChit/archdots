@@ -2951,6 +2951,10 @@ run_update() {
         pac_install "wlr-randr" wlr-randr || warn "no wlr-randr: the login screen will span every monitor"
         greeter_copy_files && ok "greeter refreshed (shell, palette, wallpaper)"
     fi
+    # an existing install: no first-run welcome after this update (the
+    # launcher's > Welcome still opens it)
+    mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}/simplychit" &&
+        touch "${XDG_STATE_HOME:-$HOME/.local/state}/simplychit/welcomed"
     phase 97 100 "Finishing up"
     gauge_close
     restart_shell

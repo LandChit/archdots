@@ -8,7 +8,8 @@ import qs.config
 // The notification daemon (org.freedesktop.Notifications), its history, the
 // do-not-disturb flag, and the shell's own toasts.
 //
-//   popups   what is on screen now: D-Bus notifications and toasts alike
+//   popups   the D-Bus notifications on screen now (top right)
+//   toasts   the shell's own short messages on screen now (bottom middle)
 //   history  the last 50 D-Bus notifications, newest first (toasts are not kept)
 //
 // DND hides popups but still records history; critical notifications show
@@ -19,6 +20,7 @@ Singleton {
 
     property bool dnd: false
     property var popups: []
+    property var toasts: []
     property var history: []
     property int nextToast: 1
 
@@ -37,13 +39,18 @@ Singleton {
         return Quickshell.iconPath(entry ? entry.icon : "dialog-information", "dialog-information");
     }
 
-    // A message from the shell itself (TODO C9): same card as a notification,
-    // never in the history, shown even under DND only if `important`.
+    // A message from the shell itself (TODO C9): a pill at the bottom of the
+    // screen, never in the history, shown even under DND only if `important`.
+    // A toast with the same title replaces the old one (Caps Lock on, off).
     function toast(title: string, body: string, glyph: string, important: bool): void {
         if (dnd && !important)
             return;
         const id = "toast-" + nextToast++;
-        popups = [{ key: id, toast: true, summary: title, body: body, glyph: glyph, appName: "SimplyChit", urgency: important ? 2 : 1, timeout: 3500 }].concat(popups).slice(0, 6);
+        toasts = toasts.filter(t => t.summary !== title).concat([{ key: id, summary: title, body: body, glyph: glyph, timeout: 3500 }]).slice(-3);
+    }
+
+    function dismissToast(key: string): void {
+        toasts = toasts.filter(t => t.key !== key);
     }
 
     function dismissPopup(key: string): void {
@@ -110,7 +117,6 @@ Singleton {
             const critical = n.urgency === NotificationUrgency.Critical;
             const entry = {
                 key: "n-" + n.id + "-" + Date.now(),
-                toast: false,
                 notification: n,
                 appName: n.appName,
                 summary: root.plain(n.summary),

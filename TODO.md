@@ -183,6 +183,9 @@ belong to it. Done, apart from checking it all on a real session (last item).
 - [x] **C7. Per-monitor bar config** (done): different widgets per screen, excluded
   screens (`bar.monitors`, `bar.excluded` in settings.json)
 - [x] Toasts: general mechanism, shared with C9 below (done: `Notifs.toast()`, `ipc call notifications toast`)
+  - [x] A pill at the bottom middle, under the OSD, not a notification card
+    (SOMETING_OFF.md): `modules/notifications/Toasts.qml`, `Notifs.toasts`.
+    A toast with the same title replaces the old one; three at most.
 - [x] **C9. Event toasts** (done): charging, Caps/Num Lock, keyboard layout,
   audio device change, VPN, now playing, DND
   - `services/Events.qml`; each one switchable under `toasts` in settings.json
@@ -272,8 +275,9 @@ then rewrite a file safely, and hand edits still work.
     Changes apply live with `hyprctl eval 'hl.monitor{…}'` (checked: works
     under the Lua config, by `desc:`). Profiles are saved on Keep under
     `displays.profiles`, keyed by the connected descriptions; monitor.lua
-    applies the matching one at startup, the shell on hotplug. No
-    "primary": Hyprland has no such thing.
+    applies the matching one at startup, the shell on hotplug. Hyprland
+    has no "primary"; the shell's own `displays.primary` (a picker on the
+    page, `services/Screens.qml`) places the login screen.
   - Canvas of monitor rectangles at their logical size (resolution ÷
     scale, swapped when rotated), drawn from `hyprctl monitors all -j`
   - Drag to arrange, snapping to the other monitors' edges and preventing
@@ -362,6 +366,15 @@ then rewrite a file safely, and hand edits still work.
   - greetd + a Quickshell greeter (`Quickshell.Services.Greetd`), so the
     login screen is the same QML and colours as the lock screen.
   - Fallback if that's too much at first: greetd + `tuigreet` or ReGreet.
+  - [x] Several monitors (SOMETING_OFF.md): cage stretches the window
+    across all of them, so the login box sat on the seam. It now goes on
+    the primary screen (`displays.primary`, settings.json copied into the
+    greeter's HOME by `greeter_copy_files`), the rest stay dark. Tested in
+    a nested cage with two outputs; not on real hardware.
+  - [x] Keypad digits with Num Lock off on the lock and login screens
+    (`lock.numlock`, default on, switch on the Idle page). Done in the
+    fields, since neither cage nor a Hyprland client can set Num Lock.
+    Tested with wtype in a nested cage.
   - ⚠️ **Test the greeter in a virtual machine only.** A broken greeter can
     leave the machine unable to log in. Do not test on a live/daily system
     unless it is known safe: it already works in the VM, and the recovery

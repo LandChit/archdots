@@ -6,7 +6,7 @@ import Quickshell.Hyprland
 import qs.config
 import qs.services
 
-// The stack of live notifications and toasts, top right under the bar, on
+// The stack of live notifications, top right under the bar, on
 // the focused screen. Each card leaves after its timeout (5 s unless the app
 // asks otherwise; critical ones stay until closed); hovering a card holds it.
 PanelWindow {

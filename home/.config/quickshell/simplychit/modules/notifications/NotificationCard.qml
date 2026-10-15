@@ -5,7 +5,7 @@ import qs.config
 import qs.services
 import qs.widgets
 
-// One notification or toast: icon, app, summary, body, actions, a close
+// One notification: icon, app, summary, body, actions, a close
 // button. `entry` is an item from Notifs.popups or Notifs.history.
 Rectangle {
     id: root
@@ -49,18 +49,11 @@ Rectangle {
                     anchors.centerIn: parent
                     width: 26
                     height: 26
-                    visible: !root.entry.toast && (root.entry.icon ?? "") !== ""
+                    visible: (root.entry.icon ?? "") !== ""
                     source: root.entry.icon ?? ""
                     sourceSize: Qt.size(52, 52)
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
-                }
-                BarText {
-                    anchors.centerIn: parent
-                    visible: root.entry.toast === true
-                    text: root.entry.glyph ?? ""
-                    px: 17
-                    color: Colours.highlight
                 }
             }
 

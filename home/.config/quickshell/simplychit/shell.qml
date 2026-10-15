@@ -61,6 +61,7 @@ ShellRoot {
     ControlCentre {}
     Centre {}
     Popups {}
+    Toasts {}
     PolkitDialog {}
 
     // after a display change, and Identify; also run by the Displays service

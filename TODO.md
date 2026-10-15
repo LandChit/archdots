@@ -172,6 +172,9 @@ belong to it. Done, apart from checking it all on a real session (last item).
 - [x] `simplychit` is found on a fresh install: `~/.local/bin` is on PATH
   from uwsm's `env-hyprland` (the session) and `.zshrc` (TTY, ssh). It had
   only been in the owner's own local/zshrc, carried over from an old .zshrc.
+- [x] The launcher (and the clipboard, emoji and wallpaper panels, all
+  `SearchPanel`) hangs level with the control centre, 46 px from the top,
+  instead of 18 px.
 - [x] **C1. Launcher actions** (done): `>` prefix for scheme, wallpaper, light/dark,
   power actions; favourite and hidden apps
   - `>` power actions, panels, light/dark (`theme.mode`), random wallpaper,

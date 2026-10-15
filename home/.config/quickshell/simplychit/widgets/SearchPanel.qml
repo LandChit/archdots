@@ -28,7 +28,8 @@ Panel {
     signal otherKey(var event)
 
     anchors.top: true
-    margins.top: 18
+    // level with the control centre and the other panels under the bar
+    margins.top: 46
     implicitWidth: panelWidth
     implicitHeight: card.implicitHeight + 40
 

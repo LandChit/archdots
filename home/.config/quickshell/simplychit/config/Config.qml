@@ -214,6 +214,9 @@ Singleton {
                 property bool enabled: false
                 // the PAM service the password is checked against
                 property string pamConfig: "login"
+                // The keypad types digits on the lock and login screens, as
+                // if Num Lock were on, whatever its state.
+                property bool numlock: true
             }
 
             // Which events show a toast (TODO C9).

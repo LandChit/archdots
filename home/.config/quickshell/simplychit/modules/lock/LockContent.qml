@@ -32,6 +32,34 @@ Item {
             input.forceActiveFocus();
     }
 
+    // The keypad types digits even with Num Lock off (lock.numlock): a PIN
+    // or a password with digits should not depend on a light being on. Num
+    // Lock off, the keypad sends Home, End, ... with the keypad modifier.
+    readonly property var keypad: ({
+            [Qt.Key_Insert]: "0",
+            [Qt.Key_End]: "1",
+            [Qt.Key_Down]: "2",
+            [Qt.Key_PageDown]: "3",
+            [Qt.Key_Left]: "4",
+            [Qt.Key_Clear]: "5",
+            [Qt.Key_Right]: "6",
+            [Qt.Key_Home]: "7",
+            [Qt.Key_Up]: "8",
+            [Qt.Key_PageUp]: "9",
+            [Qt.Key_Delete]: "."
+        })
+
+    function typeKeypad(field: var, event: var): void {
+        if (!Config.lock.numlock || field.readOnly || !(event.modifiers & Qt.KeypadModifier) || event.text !== "")
+            return;
+        const digit = keypad[event.key];
+        if (digit === undefined)
+            return;
+        field.remove(field.selectionStart, field.selectionEnd);
+        field.insert(field.cursorPosition, digit);
+        event.accepted = true;
+    }
+
     component Field: Rectangle {
         property bool focused: false
         property bool failed: false
@@ -117,6 +145,7 @@ Item {
                 font.pointSize: 14 * 0.75
                 readOnly: root.busy
                 KeyNavigation.tab: input
+                Keys.onPressed: event => root.typeKeypad(userInput, event)
                 Keys.onReturnPressed: input.forceActiveFocus()
                 Keys.onEnterPressed: input.forceActiveFocus()
 
@@ -149,6 +178,7 @@ Item {
                 readOnly: root.busy
                 focus: true
                 KeyNavigation.backtab: root.askUser ? userInput : null
+                Keys.onPressed: event => root.typeKeypad(input, event)
                 Keys.onReturnPressed: root.submitted(text)
                 Keys.onEnterPressed: root.submitted(text)
                 Keys.onEscapePressed: {

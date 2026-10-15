@@ -125,5 +125,13 @@ ColumnLayout {
                 }
             }
         }
+        Setting {
+            label: "Keypad types digits"
+            help: "as if Num Lock were on, on the shell's lock screen and the login screen"
+            Switch {
+                checked: Config.lock.numlock
+                onToggled: v => Config.set("lock.numlock", v)
+            }
+        }
     }
 }

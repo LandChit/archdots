@@ -468,6 +468,11 @@
           "type": "string",
           "default": "login",
           "description": "the PAM service the password is checked against"
+        },
+        "numlock": {
+          "type": "boolean",
+          "default": true,
+          "description": "The keypad types digits on the lock and login screens, as if Num Lock were on, whatever its state."
         }
       },
       "additionalProperties": false

@@ -159,6 +159,8 @@ belong to it. Done, apart from checking it all on a real session (last item).
   web row on top Enter searched the web instead of opening the best app.
 - [x] The first arrow press in a list panel highlights the current pick
   instead of stepping past it (Down with no query went to row 2).
+- [x] Restart-shell bind works in one press: `shell.restart()` waits for the
+  old instance to exit; `qs kill` returns early and `-n` silently refused.
 - [x] **C1. Launcher actions** (done): `>` prefix for scheme, wallpaper, light/dark,
   power actions; favourite and hidden apps
   - `>` power actions, panels, light/dark (`theme.mode`), random wallpaper,

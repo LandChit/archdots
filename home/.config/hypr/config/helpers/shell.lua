@@ -12,8 +12,13 @@ end
 
 -- Stop the running shell, if any, and start a fresh one, detached. -n refuses
 -- a second instance, so a double press cannot leave two shells running.
+-- `qs kill` returns before the old shell has exited, and -n then refused the
+-- new one without an error (one press left no shell): wait up to 5 s for it.
 function M.restart()
-    hl.exec_cmd("qs kill -c simplychit >/dev/null 2>&1; " .. QS .. " -n -d")
+    hl.exec_cmd("qs kill -c simplychit >/dev/null 2>&1; i=0; "
+        .. "while [ $i -lt 50 ] && " .. QS .. " list 2>/dev/null | grep -q 'Process ID'; "
+        .. "do sleep 0.1; i=$((i + 1)); done; "
+        .. QS .. " -n -d")
 end
 
 -- Open or close one of the shell's panels. Names: services/Panels.qml.

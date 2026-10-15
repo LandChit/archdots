@@ -14,17 +14,22 @@ import qs.services
 // that HOME (.cache/wal/colors.json, .local/state/simplychit/wallpaper), since
 // it cannot read yours; greetd's own user has / as its home.
 //
-// cage stretches its one window across every monitor, so with more than one
-// the login box would sit on the seam: it goes on the primary screen
-// (displays.primary, from your settings.json copied in by install.sh) and the
-// others stay dark.
+// With more than one monitor, only the primary one (displays.primary, from
+// your settings.json copied in by install.sh) is used: the greeter switches
+// the others off with wlr-randr, and Hyprland turns them back on after login.
+// Without wlr-randr, cage stretches the window over all of them and the
+// login box is placed on the primary screen, the rest left dark.
 //
 // Not under greetd (no GREETD_SOCK) it is a preview: nothing logs in, and
 // Esc quits. qs -p ~/.config/quickshell/simplychit/greeter.qml
+// A preview leaves the monitors alone (wlr-randr would switch off the real
+// ones under Hyprland) unless SIMPLYCHIT_GREETER_OUTPUTS=1, for testing in a
+// nested cage.
 ShellRoot {
     id: root
 
     readonly property bool preview: !Greetd.available
+    readonly property bool ownsOutputs: !preview || Quickshell.env("SIMPLYCHIT_GREETER_OUTPUTS") === "1"
     readonly property string statePath: Quickshell.env("HOME") + "/.local/state/simplychit/greeter.json"
     property string message: preview ? "Preview: nothing logs in here. Esc closes it." : ""
     property bool busy: false
@@ -138,6 +143,46 @@ ShellRoot {
                 if (i < 0)
                     i = found.findIndex(s => s.exec.includes("uwsm"));
                 root.sessionIndex = Math.max(0, i);
+            }
+        }
+    }
+
+    // Every screen but the primary one off; again on a hotplug, so a monitor
+    // plugged in at the login screen does not stretch the window over it.
+    function primaryOnly(): void {
+        const others = Quickshell.screens.filter(s => s !== Screens.primary);
+        if (!ownsOutputs || !Config.ready || !Screens.primary || others.length === 0 || outputs.running)
+            return;
+        outputs.command = ["wlr-randr"].concat(...others.map(s => ["--output", s.name, "--off"]));
+        outputs.running = true;
+    }
+
+    Component.onCompleted: primaryOnly()
+
+    Connections {
+        target: Quickshell
+
+        function onScreensChanged(): void {
+            Qt.callLater(root.primaryOnly);
+        }
+    }
+
+    // the primary screen is a setting: not before settings.json is read
+    Connections {
+        target: Config
+
+        function onReadyChanged(): void {
+            root.primaryOnly();
+        }
+    }
+
+    Process {
+        id: outputs
+
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text.trim() !== "")
+                    console.warn("wlr-randr: " + text.trim());
             }
         }
     }

@@ -367,10 +367,13 @@ then rewrite a file safely, and hand edits still work.
     login screen is the same QML and colours as the lock screen.
   - Fallback if that's too much at first: greetd + `tuigreet` or ReGreet.
   - [x] Several monitors (SOMETING_OFF.md): cage stretches the window
-    across all of them, so the login box sat on the seam. It now goes on
-    the primary screen (`displays.primary`, settings.json copied into the
-    greeter's HOME by `greeter_copy_files`), the rest stay dark. Tested in
-    a nested cage with two outputs; not on real hardware.
+    across all of them, so the login box sat on the seam. The greeter now
+    switches every monitor but the primary one off with wlr-randr (again
+    on hotplug); Hyprland turns them back on after login. The primary is
+    `displays.primary`, settings.json copied into the greeter's HOME by
+    `greeter_copy_files`. Without wlr-randr the box is placed on the
+    primary screen and the rest stay dark. Tested in a nested cage with
+    two outputs (primary first, second, unset); not on real hardware.
   - [x] Keypad digits with Num Lock off on the lock and login screens
     (`lock.numlock`, default on, switch on the Idle page). Done in the
     fields, since neither cage nor a Hyprland client can set Num Lock.

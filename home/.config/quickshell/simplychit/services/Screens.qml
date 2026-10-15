@@ -7,8 +7,9 @@ import qs.config
 // The primary screen (displays.primary in settings.json): where the login
 // screen shows, and toasts before any screen has had focus. It is saved by
 // Hyprland's description ("BOE 0x0BCA ..."), which survives a change of
-// port; a port name ("eDP-1") written by hand works too. Nothing chosen, or the chosen one not connected: the
-// built-in panel, else the first screen.
+// port; a port name ("eDP-1") written by hand works too. Nothing chosen,
+// or the chosen one not connected: the built-in panel, else the first
+// screen.
 Singleton {
     id: root
 

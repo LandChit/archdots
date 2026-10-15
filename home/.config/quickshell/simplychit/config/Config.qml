@@ -17,6 +17,9 @@ Singleton {
     id: root
 
     readonly property string path: Quickshell.env("HOME") + "/.config/simplychit/settings.json"
+    // false until settings.json has been read (or found missing): before
+    // that every setting is its default
+    property bool ready: false
 
     property alias bar: adapter.bar
     property alias appearance: adapter.appearance
@@ -73,6 +76,8 @@ Singleton {
         // A missing file is normal (nothing changed yet): the defaults apply.
         printErrors: false
         onFileChanged: reload()
+        onLoaded: root.ready = true
+        onLoadFailed: root.ready = true
 
         JsonAdapter {
             id: adapter

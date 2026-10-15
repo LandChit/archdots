@@ -2002,7 +2002,8 @@ stage_greeter() {
     (( WANT_GREETER )) || return 0
     step "Login screen: the SimplyChit greeter (experimental)"
 
-    pac_install "greetd and cage" greetd cage || {
+    # wlr-randr: the greeter switches off every monitor but the primary one
+    pac_install "greetd and cage" greetd cage wlr-randr || {
         warn "could not install greetd and cage — greeter skipped"
         return 0
     }
@@ -2893,6 +2894,8 @@ run_update() {
     stage_shell_services  # hyprpolkitagent off (the shell is the agent), tlp-pd
     if [[ -d "$GREETER_DIR" ]]; then
         step "The greeter"
+        # wlr-randr arrived with the primary-screen-only login; older greeters lack it
+        pac_install "wlr-randr" wlr-randr || warn "no wlr-randr: the login screen will span every monitor"
         greeter_copy_files && ok "greeter refreshed (shell, palette, wallpaper)"
     fi
     phase 97 100 "Finishing up"

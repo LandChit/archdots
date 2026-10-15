@@ -183,6 +183,12 @@ belong to it. Done, apart from checking it all on a real session (last item).
   way: an "Invalid display" in `ddcutil detect` took the previous display's
   number, and a read during the idle dim's restore took the dimmed level
   (reads now wait on the dim's lock). The idle dim itself is unchanged.
+- [x] Picking a wallpaper always changes the picture, not only the colours:
+  Background.qml's back slot could still hold the picked picture (A, B,
+  then A again), and setting the same source loads nothing, so it never
+  came to the front. A faded-out picture now lets go of its image, and one
+  still held is brought forward directly. `qt6-imageformats` is a core
+  package, for .webp wallpapers (Qt cannot read them without it).
 - [x] **C1. Launcher actions** (done): `>` prefix for scheme, wallpaper, light/dark,
   power actions; favourite and hidden apps
   - `>` power actions, panels, light/dark (`theme.mode`), random wallpaper,

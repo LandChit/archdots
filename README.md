@@ -288,7 +288,7 @@ xdg-desktop-portal-hyprland xdg-desktop-portal-gtk uwsm sddm alacritty dolphin
 cliphist wl-clipboard grim slurp brightnessctl playerctl libnotify
 sound-theme-freedesktop pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol
 networkmanager bluez bluez-utils blueman
-qt6ct kvantum qt5-wayland qt6-wayland breeze-icons adwaita-fonts
+qt6ct kvantum qt5-wayland qt6-wayland qt6-imageformats breeze-icons adwaita-fonts
 zsh zsh-autosuggestions zsh-syntax-highlighting stow git
 zoxide fzf eza bat kwallet-pam kwalletmanager base-devel
 ```

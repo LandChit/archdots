@@ -61,6 +61,9 @@ PKG_CORE=(
     pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol
     networkmanager bluez bluez-utils blueman
     qt6ct kvantum qt5-wayland qt6-wayland
+    # .webp wallpapers: the picker lists them, and Qt cannot read them without
+    # it (the palette would change and the picture would not)
+    qt6-imageformats
     # GTK side of the theming. .config/gtk-3.0/settings.ini names both of these
     # by name; without them GTK silently falls back to Adwaita *light* and the
     # shell renders white panels with unreadable text.

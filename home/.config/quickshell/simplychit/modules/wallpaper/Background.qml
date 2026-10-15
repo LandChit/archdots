@@ -6,7 +6,7 @@ import qs.services
 
 // One screen's wallpaper, on the background layer. A change crossfades: the
 // new picture loads (asynchronously) under the old one, then the old one
-// fades out (Config.wallpaper.transitionMs).
+// fades out (Config.wallpaper.transitionMs) and lets go of its image.
 PanelWindow {
     id: root
 
@@ -28,8 +28,33 @@ PanelWindow {
     property Image front: one
 
     function show(): void {
+        const target = path === "" ? "" : "file://" + path;
         const back = front === one ? two : one;
-        back.source = path === "" ? "" : "file://" + path;
+        if (String(front.source) === target) {
+            // back to what is showing before the other one loaded: drop that
+            if (!fade.running)
+                back.source = "";
+            return;
+        }
+        // The back one may hold the picture already (picked again while it
+        // was still fading out). Setting the same source loads nothing, so no
+        // status change would ever bring it to the front.
+        if (String(back.source) === target && back.status === Image.Ready)
+            reveal(back);
+        else
+            back.source = target;
+    }
+
+    // `picture` (loaded) to the front; the old one fades out above it.
+    function reveal(picture: Image): void {
+        const old = front;
+        fade.stop();
+        front = picture;
+        picture.z = 0;
+        old.z = 1;
+        picture.opacity = 1;
+        fade.target = old;
+        fade.start();
     }
 
     onPathChanged: show()
@@ -46,15 +71,10 @@ PanelWindow {
         opacity: 0
 
         onStatusChanged: {
-            if (status !== Image.Ready || picture === root.front)
-                return;
-            const old = root.front;
-            root.front = picture;
-            z = 0;
-            old.z = 1;
-            opacity = 1;
-            fade.target = old;
-            fade.start();
+            if (status === Image.Ready && picture !== root.front)
+                root.reveal(picture);
+            else if (status === Image.Error)
+                console.warn("wallpaper: cannot load " + source + " (for .webp, install qt6-imageformats)");
         }
     }
 
@@ -72,5 +92,10 @@ PanelWindow {
         to: 0
         duration: Config.wallpaper.transitionMs
         easing.type: Easing.InOutQuad
+        // a full-size picture per screen is a lot to keep hidden
+        onFinished: {
+            if (target && target !== root.front)
+                target.source = "";
+        }
     }
 }

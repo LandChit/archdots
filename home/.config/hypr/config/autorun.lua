@@ -1,15 +1,15 @@
 local shell = require("config.helpers.shell")
 
 hl.on("hyprland.start", function()
-    hl.exec_cmd("kwalletmanager5", { workspace = "99", no_initial_focus = true, })
-    hl.exec_cmd("sleep 1; /usr/lib/pam_kwallet_init --no-startup-id")
+    hl.exec_cmd("/usr/lib/pam_kwallet_init --no-startup-id")
+    hl.exec_cmd("sleep 5; kwalletmanager5", { workspace = "99", no_initial_focus = true, })
     hl.exec_cmd("sleep 5; killall kwalletmanager5")
 
     -- The shell draws the wallpaper, the bar and every panel, and is the
     -- notification daemon and the polkit agent.
     shell.restart()
 
-    hl.exec_cmd("hypridle &")   -- locks before sleep; the idle timeouts are the shell's
+    hl.exec_cmd("hypridle &") -- locks before sleep; the idle timeouts are the shell's
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     -- One polkit agent per session, first to register wins. The shell's is the
     -- one meant to; if it has not registered a few seconds in (shell not

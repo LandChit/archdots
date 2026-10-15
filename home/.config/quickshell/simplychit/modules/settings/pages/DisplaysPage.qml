@@ -262,6 +262,20 @@ ColumnLayout {
         }
     }
 
+    Section {
+        title: "Brightness"
+        description: "The brightness keys and the control centre: the laptop panel, and external monitors that take DDC/CI (ddcutil)."
+
+        Setting {
+            label: "All screens together"
+            help: Config.brightness.linked ? "one slider; the keys set every screen to the same level" : "a slider per screen; the keys change the focused screen"
+            Switch {
+                checked: Config.brightness.linked
+                onToggled: v => Config.set("brightness.linked", v)
+            }
+        }
+    }
+
     // ── the selected screen ──────────────────────────────────────────────
     Section {
         visible: page.current !== null

@@ -53,6 +53,8 @@ Panel {
         id: level
 
         property string glyph: ""
+        // which screen, when there is a slider for each
+        property string label: ""
         property real value: 0
         property string text: ""
         signal glyphClicked
@@ -71,6 +73,14 @@ Panel {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: level.glyphClicked()
             }
+        }
+        BarText {
+            visible: level.label !== ""
+            Layout.preferredWidth: 72
+            text: level.label
+            elide: Text.ElideRight
+            px: 11
+            color: Colours.subtext
         }
         Slider {
             Layout.fillWidth: true
@@ -177,12 +187,29 @@ Panel {
                 onMoved: v => Audio.setVolume(v)
             }
 
+            // brightness: one slider for every screen together (linked, or
+            // only one screen), else one per screen
             Level {
-                visible: Brightness.percent >= 0
+                visible: Brightness.percent >= 0 && (Brightness.linked || Brightness.screens.length < 2)
                 glyph: "\u{f00e0}"
                 value: Brightness.percent / 100
                 text: Brightness.percent + "%"
                 onMoved: v => Brightness.set(Math.round(v * 100))
+            }
+            Repeater {
+                model: Brightness.linked || Brightness.screens.length < 2 ? [] : Brightness.screens
+
+                Level {
+                    required property var modelData
+                    readonly property int percent: Brightness.levels[modelData.name] ?? -1
+
+                    visible: percent >= 0
+                    glyph: "\u{f00e0}"
+                    label: modelData.label
+                    value: percent / 100
+                    text: percent + "%"
+                    onMoved: v => Brightness.setScreen(modelData.name, Math.round(v * 100))
+                }
             }
 
             // what is playing

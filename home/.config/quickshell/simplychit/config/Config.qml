@@ -36,6 +36,7 @@ Singleton {
     property alias input: adapter.input
     property alias keybinds: adapter.keybinds
     property alias displays: adapter.displays
+    property alias brightness: adapter.brightness
     property alias recording: adapter.recording
     property alias sounds: adapter.sounds
 
@@ -192,6 +193,15 @@ Singleton {
                 // screen shows there (services/Screens.qml). Empty: the built-in panel, else
                 // the first screen.
                 property string primary: ""
+            }
+
+            // Screen brightness: the laptop panel (brightnessctl) and external
+            // monitors over DDC/CI (ddcutil).
+            property JsonObject brightness: JsonObject {
+                // true: the brightness keys and the control centre's slider
+                // set every screen to the same level. false: the keys set the
+                // focused screen, and each screen has its own slider.
+                property bool linked: false
             }
 
             // Minutes idle before each step, on AC and on battery; 0 is never.

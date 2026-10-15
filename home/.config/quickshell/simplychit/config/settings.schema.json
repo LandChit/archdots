@@ -397,6 +397,18 @@
       "additionalProperties": false,
       "description": "Written by the Displays page; read by hypr/config/monitor.lua."
     },
+    "brightness": {
+      "type": "object",
+      "properties": {
+        "linked": {
+          "type": "boolean",
+          "default": false,
+          "description": "true: the brightness keys and the control centre's slider set every screen to the same level. false: the keys set the focused screen, and each screen has its own slider."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Screen brightness: the laptop panel (brightnessctl) and external monitors over DDC/CI (ddcutil)."
+    },
     "idle": {
       "type": "object",
       "properties": {

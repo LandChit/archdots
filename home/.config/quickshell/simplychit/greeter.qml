@@ -2,7 +2,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Greetd
+import qs.config
 import qs.modules.lock
+import qs.services
 
 // The login screen: greetd runs it inside cage (install.sh --greeter):
 //   [default_session]
@@ -11,6 +13,11 @@ import qs.modules.lock
 // It looks like the lock screen. The palette and the wallpaper are copies in
 // that HOME (.cache/wal/colors.json, .local/state/simplychit/wallpaper), since
 // it cannot read yours; greetd's own user has / as its home.
+//
+// cage stretches its one window across every monitor, so with more than one
+// the login box would sit on the seam: it goes on the primary screen
+// (displays.primary, from your settings.json copied in by install.sh) and the
+// others stay dark.
 //
 // Not under greetd (no GREETD_SOCK) it is a preview: nothing logs in, and
 // Esc quits. qs -p ~/.config/quickshell/simplychit/greeter.qml
@@ -145,11 +152,28 @@ ShellRoot {
         implicitWidth: 1280
         implicitHeight: 800
 
+        // the layout cage spans, from the top-left screen
+        readonly property var screens: Quickshell.screens
+        readonly property real minX: screens.length ? Math.min(...screens.map(s => s.x)) : 0
+        readonly property real minY: screens.length ? Math.min(...screens.map(s => s.y)) : 0
+        readonly property real spanW: screens.length ? Math.max(...screens.map(s => s.x + s.width)) - minX : 0
+        readonly property real spanH: screens.length ? Math.max(...screens.map(s => s.y + s.height)) - minY : 0
+        // only when the window really covers them all (not the preview)
+        readonly property var target: screens.length > 1 && Screens.primary && Math.abs(width - spanW) < 2 && Math.abs(height - spanH) < 2 ? Screens.primary : null
+
+        Rectangle {
+            anchors.fill: parent
+            color: Colours.background
+        }
+
         LockContent {
             id: content
 
-            anchors.fill: parent
-            screenName: win.screen ? win.screen.name : ""
+            x: win.target ? win.target.x - win.minX : 0
+            y: win.target ? win.target.y - win.minY : 0
+            width: win.target ? win.target.width : win.width
+            height: win.target ? win.target.height : win.height
+            screenName: win.target ? win.target.name : win.screen ? win.screen.name : ""
             askUser: true
             message: root.message
             busy: root.busy

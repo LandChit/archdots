@@ -1957,7 +1957,8 @@ retire_old_name() {
 #                                     cannot read your home)
 #   /var/lib/simplychit/greeter/      the greeter's own HOME (greetd's user
 #                                     has / as its home): copies of your
-#                                     palette and wallpaper, its last login
+#                                     palette, wallpaper and settings.json,
+#                                     its last login
 #   /etc/greetd/config.toml           the original kept as config.toml.simplychit-orig
 # An update refreshes the copies. The login screen itself is switched only on
 # a yes (default no, also under --yes); the old one stays installed and is
@@ -1979,7 +1980,11 @@ greeter_copy_files() {
     "${SUDO[@]}" rm -rf -- "$GREETER_DIR"
     "${SUDO[@]}" mv -- "$GREETER_DIR.new" "$GREETER_DIR" || return 1
 
-    "${SUDO[@]}" mkdir -p "$gh/.cache/wal" "$gh/.local/state/simplychit"
+    "${SUDO[@]}" mkdir -p "$gh/.cache/wal" "$gh/.local/state/simplychit" "$gh/.config/simplychit"
+    # your settings: the primary screen and the keypad choice (lock.numlock)
+    if [[ -r "$HOME/.config/simplychit/settings.json" ]]; then
+        "${SUDO[@]}" cp -- "$HOME/.config/simplychit/settings.json" "$gh/.config/simplychit/settings.json"
+    fi
     if [[ -r "$HOME/.cache/wal/colors.json" ]]; then
         "${SUDO[@]}" cp -- "$HOME/.cache/wal/colors.json" "$gh/.cache/wal/colors.json"
     fi

@@ -96,14 +96,15 @@ PKG_FONTS=(
 )
 
 PKG_UTILS=(
-    tlp fd htop nvtop fastfetch tmux unzip wget curl smartmontools ark
+    tlp fd nvtop fastfetch tmux unzip wget curl smartmontools ark
     # External monitor brightness over DDC/CI (the shell's brightness keys on
     # a non-laptop screen). Needs the i2c-dev module and access to /dev/i2c-*.
     ddcutil
     # Events under the calendar's month grid: khal reads the calendars,
     # vdirsyncer syncs them with Google or CalDAV (CUSTOMIZING.md, Calendar).
     khal vdirsyncer
-    # themed from the wallpaper (simplychit sync-palette, stage_app_theming)
+    # the system monitor, themed from the wallpaper (simplychit sync-palette,
+    # stage_app_theming)
     btop
     # screen recording from the screenshot menu and SUPER+SHIFT+R
     wf-recorder

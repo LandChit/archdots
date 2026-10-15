@@ -325,7 +325,7 @@ empty boxes.
 ### Utilities — optional
 
 ```
-tlp fd htop nvtop fastfetch tmux unzip wget curl smartmontools ark ddcutil
+tlp fd nvtop fastfetch tmux unzip wget curl smartmontools ark ddcutil
 khal vdirsyncer btop wf-recorder qrencode zbar
 ```
 

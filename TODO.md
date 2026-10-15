@@ -189,6 +189,8 @@ belong to it. Done, apart from checking it all on a real session (last item).
   came to the front. A faded-out picture now lets go of its image, and one
   still held is brought forward directly. `qt6-imageformats` is a core
   package, for .webp wallpapers (Qt cannot read them without it).
+- [x] htop dropped from the utilities: btop does the same job and follows
+  the wallpaper. Installs that have it keep it (nothing is uninstalled).
 - [x] **C1. Launcher actions** (done): `>` prefix for scheme, wallpaper, light/dark,
   power actions; favourite and hidden apps
   - `>` power actions, panels, light/dark (`theme.mode`), random wallpaper,

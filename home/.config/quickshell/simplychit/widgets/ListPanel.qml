@@ -22,7 +22,12 @@ SearchPanel {
     function step(delta: int): void {
         if (items.length === 0)
             return;
-        list.showSelection = true;
+        // The first arrow press shows the pick Enter would open (row 0 for
+        // an empty query) rather than stepping past it.
+        if (!list.showSelection) {
+            list.showSelection = true;
+            return;
+        }
         list.currentIndex = Math.max(0, Math.min(items.length - 1, list.currentIndex + delta));
     }
 

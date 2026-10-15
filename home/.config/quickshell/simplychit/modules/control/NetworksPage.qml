@@ -92,7 +92,13 @@ ColumnLayout {
             Connections {
                 target: row.modelData
 
-                function onConnectionFailed(): void {
+                function onConnectionFailed(reason: int): void {
+                    // a saved network with no password stored, and no
+                    // agent (nm-applet) to ask for it: ask here
+                    if (reason === ConnectionFailReason.NoSecrets && row.secured) {
+                        root.askingFor = row.modelData.name;
+                        return;
+                    }
                     root.status = "Could not join " + row.modelData.name;
                 }
             }

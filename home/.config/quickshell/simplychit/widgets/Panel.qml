@@ -44,6 +44,19 @@ PanelWindow {
         }
     }
 
+    // A window that opens while the panel is up wants the keyboard the panel
+    // holds exclusively (nm-applet's Wi-Fi password, blueman's pairing PIN,
+    // a file picker), and could never get it: step aside.
+    Connections {
+        target: Hyprland
+        enabled: root.shown
+
+        function onRawEvent(event: var): void {
+            if (event.name === "openwindow")
+                root.close();
+        }
+    }
+
     HyprlandFocusGrab {
         windows: [root]
         active: root.shown && root.closeOnOutsideClick

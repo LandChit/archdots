@@ -1,6 +1,8 @@
 # To do
 
 Feature numbers (1, C1, …) refer to the sections in [MISSING.md](MISSING.md).
+MISSING.md now holds only what is not built, all marked currently undesired;
+move an item here before starting it.
 
 Work through the phases in order. Each phase builds on the one before it.
 

@@ -69,3 +69,6 @@ home/.config/gtk-3.0/gtk.css
 home/.config/simplychit/
 
 .custom.zsh
+
+# Untrack local bugtracker
+SOMETHING_OFF.md

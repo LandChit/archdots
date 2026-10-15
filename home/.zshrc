@@ -1,5 +1,8 @@
 # Other
 export EDITOR=nano
+# The `simplychit` command and the scripts stowed beside it. The Hyprland
+# session already has this (uwsm/env-hyprland); a TTY or ssh login does not.
+[[ ":$PATH:" == *":$HOME/.local/bin:"* ]] || export PATH="$HOME/.local/bin:$PATH"
 alias py=python
 alias ssh="TERM=xterm-256color ssh"
 

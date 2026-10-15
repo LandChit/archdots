@@ -169,6 +169,9 @@ belong to it. Done, apart from checking it all on a real session (last item).
 - [x] Stay awake on/off is a toast, not a notification (Events.qml).
 - [x] Idle dim dims external monitors too (DDC/CI via ddcutil), saving
   each level in `$XDG_RUNTIME_DIR/simplychit-dim` and restoring it.
+- [x] `simplychit` is found on a fresh install: `~/.local/bin` is on PATH
+  from uwsm's `env-hyprland` (the session) and `.zshrc` (TTY, ssh). It had
+  only been in the owner's own local/zshrc, carried over from an old .zshrc.
 - [x] **C1. Launcher actions** (done): `>` prefix for scheme, wallpaper, light/dark,
   power actions; favourite and hidden apps
   - `>` power actions, panels, light/dark (`theme.mode`), random wallpaper,

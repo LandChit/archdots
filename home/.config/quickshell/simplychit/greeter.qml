@@ -101,7 +101,10 @@ ShellRoot {
         }
         function onReadyToLaunch(): void {
             root.remember(Greetd.user);
-            Greetd.launch(root.command());
+            // greetd puts this into PAM before the session opens;
+            // pam_kwallet5 skips any session that is not "wayland"/"x11",
+            // so without it the wallet never unlocks at login.
+            Greetd.launch(root.command(), ["XDG_SESSION_TYPE=wayland"]);
         }
         function onError(error: string): void {
             root.busy = false;

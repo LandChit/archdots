@@ -1,9 +1,9 @@
 local shell = require("config.helpers.shell")
 
 hl.on("hyprland.start", function()
-    hl.exec_cmd("/usr/lib/pam_kwallet_init --no-startup-id")
-    hl.exec_cmd("sleep 5; kwalletmanager5", { workspace = "99", no_initial_focus = true, })
-    hl.exec_cmd("sleep 5; killall kwalletmanager5")
+    -- Hands the password pam_kwallet5 kept at login to kwalletd, which
+    -- unlocks kdewallet. Plasma runs this from /etc/xdg/autostart.
+    hl.exec_cmd("/usr/lib/pam_kwallet_init")
 
     -- The shell draws the wallpaper, the bar and every panel, and is the
     -- notification daemon and the polkit agent.

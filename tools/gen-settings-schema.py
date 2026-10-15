@@ -42,6 +42,9 @@ EXTRA = {
     "notifications.schedule.to": {"pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"},
     "input.sensitivity": {"minimum": -1, "maximum": 1},
     "keybinds.remap": {"additionalProperties": {"type": "string"}},
+    "keybinds.scratchpads": {"additionalProperties": {
+        "type": "object", "additionalProperties": False,
+        "properties": {"keys": {"type": "string"}, "command": {"type": "string"}}}},
     "audio.scrollStep": {"minimum": 1, "maximum": 50},
     "audio.maxVolume": {"minimum": 1, "maximum": 3},
 }

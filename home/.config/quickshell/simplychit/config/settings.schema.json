@@ -372,6 +372,23 @@
             "type": "string"
           },
           "default": []
+        },
+        "scratchpads": {
+          "type": "object",
+          "default": {},
+          "description": "More scratchpads: name -> { \"keys\": \"SUPER + M\", \"command\": \"spotify\" }. The command starts when the scratchpad is empty.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "keys": {
+                "type": "string"
+              },
+              "command": {
+                "type": "string"
+              }
+            }
+          }
         }
       },
       "additionalProperties": false,

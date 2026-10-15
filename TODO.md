@@ -481,3 +481,17 @@ then rewrite a file safely, and hand edits still work.
   the Notifications page. Tested with pw-play shimmed: normal, critical,
   suppress-sound, DND, a burst of volume steps → one tick. Not heard on
   real speakers yet)
+
+### Picked from MISSING.md and the new ideas (2026-10-15)
+
+- [x] **C11. Scratchpad binds** (done): `hypr/config/helpers/scratchpad.lua`;
+  SUPER+` drop-down terminal (started the first time), SUPER+- the
+  scratchpad, SUPER+SHIFT+- sends the focused window there and back. More in
+  `keybinds.scratchpads` (name -> keys, command), ids `scratchpad-<name>` so
+  remap/disabled work. Tested live with a throwaway special workspace
+  (launch, hide, show without relaunch, send out and back) and the loader
+  offline with a fake settings.json
+- [ ] **Shell watchdog**: restart the shell when it crashes, and say so
+- [ ] **Welcome screen on first run**: wallpaper, light/dark, keyboard layout,
+  default apps, the main keybinds
+

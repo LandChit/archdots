@@ -25,6 +25,7 @@ GTK only reads its own folders, so those two files live there:
 | Which monitor a workspace opens on | `hypr/monitor.lua` | `hl.workspace_rule({ workspace = "3", monitor = "DP-1" })` |
 | Add a keybind | `hypr/keybind.lua` | `hl.bind("SUPER + G", hl.dsp.exec_cmd("gimp"), { desc = "Launch: GIMP" })` |
 | Change or remove a default keybind | the Keybinds page, or `keybinds.remap` / `keybinds.disabled` in `settings.json`; or in `hypr/keybind.lua` through the helper (below) | `"keybinds": {"remap": {"browser": "SUPER + Z"}}` |
+| Scratchpads (drop-down apps) | `keybinds.scratchpads` in `settings.json`; SUPER+` (terminal) and SUPER+- (scratch) are built in | `"keybinds": {"scratchpads": {"music": {"keys": "SUPER + M", "command": "spotify"}}}` |
 | Terminal, browser, file manager | Default apps page, or `apps.*` in `settings.json` | `"apps": {"browser": "firefox"}` |
 | Keyboard layout, touchpad | the Input page, or `input.*` in `settings.json`; device-specific blocks in `hypr/input.lua` | `"input": {"kb_layout": "us,de"}` |
 | A device's own settings | `hypr/input.lua`, an `hl.device` block keyed by the name in `hyprctl devices` | |
@@ -128,7 +129,8 @@ Every key, with its default:
   },
   "keybinds": {
     "remap": {},
-    "disabled": []
+    "disabled": [],
+    "scratchpads": {}
   },
   "displays": {
     "active": "",
@@ -183,6 +185,7 @@ Every key, with its default:
 | `input.*` | keyboard layouts (`kb_layout: "us,de"`), variants, xkb options, pointer speed (-1..1), touchpad |
 | `keybinds.remap` | default bind id → new keys: `{"browser": "SUPER + Z"}`; ids are in the Keybinds page and `~/.cache/simplychit/keybinds.json` |
 | `keybinds.disabled` | default bind ids to turn off |
+| `keybinds.scratchpads` | more scratchpads, name → `{"keys": …, "command": …}`: the keys show or hide special workspace `<name>`, and the command starts when it is empty. SUPER+` is a drop-down terminal, SUPER+- the scratchpad and SUPER+SHIFT+- sends a window there and back |
 | `displays` | written by the Displays page: one layout per set of connected monitors, by description |
 | `wallpaper.cycleMinutes` | switch to another wallpaper from the folder every N minutes; 0 is off |
 | `theme.mode` | `light` or `dark` palette from the wallpaper (the launcher's `>` has it too) |

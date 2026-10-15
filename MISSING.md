@@ -102,10 +102,6 @@ A slide-in panel that holds notifications and quick toggles together.
 One toggle that turns off animations, blur, shadows and gaps, and holds
 notification popups.
 
-### C11. Scratchpad binds
-The bar shows special workspaces, but there are no `togglespecialworkspace`
-binds or rules that send apps to them.
-
 ### C12. Window resizer
 Auto-place picture-in-picture and similar windows from a Hyprland event
 listener.

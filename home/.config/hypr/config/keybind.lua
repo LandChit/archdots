@@ -1,5 +1,6 @@
 local shell = require("config.helpers.shell")
 local settings = require("config.helpers.settings")
+local scratchpad = require("config.helpers.scratchpad")
 
 -- Every default bind is an entry in the table below, with a stable id, so the
 -- settings app (and you) can change or drop it as data in
@@ -100,6 +101,32 @@ for i = 1, 10 do
     local key = i % 10 -- 10 maps to key 0
     binds[#binds + 1] = { "workspace-" .. i, mainMod .. " + " .. key, hl.dsp.focus({ workspace = i }), "Workspace: Switch to workspace" }
     binds[#binds + 1] = { "move-to-workspace-" .. i, mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }), "Workspace: Move window to workspace" }
+end
+
+-- Scratchpads (special workspaces) drop over the current workspace and hide on
+-- the same keys. "terminal" starts one the first time; "scratch" holds
+-- whatever you send it. More in settings.json, each with the id
+-- "scratchpad-<name>":
+--   "keybinds": { "scratchpads": { "music": { "keys": "SUPER + M", "command": "spotify" } } }
+binds[#binds + 1] = { "scratchpad-terminal", mainMod .. " + GRAVE", scratchpad.toggle("terminal", apps.terminal), "Scratchpad: Drop-down terminal" }
+binds[#binds + 1] = { "scratchpad-scratch", mainMod .. " + MINUS", scratchpad.toggle("scratch"), "Scratchpad: Show / hide the scratchpad" }
+binds[#binds + 1] = { "scratchpad-send", mainMod .. " + SHIFT + MINUS", scratchpad.send("scratch"), "Scratchpad: Send window to / back from the scratchpad" }
+local extra_pads = settings.get("keybinds.scratchpads", {})
+if type(extra_pads) ~= "table" then
+    extra_pads = {}
+end
+local pad_names = {}
+for name, pad in pairs(extra_pads) do
+    local builtin = name == "terminal" or name == "scratch" or name == "send" -- change those with remap
+    if not builtin and type(pad) == "table" and type(pad.keys) == "string" and name:match("^[%w_-]+$") then
+        pad_names[#pad_names + 1] = name
+    end
+end
+table.sort(pad_names) -- pairs() has no order; keep the list stable
+for _, name in ipairs(pad_names) do
+    local pad = extra_pads[name]
+    local command = type(pad.command) == "string" and pad.command or nil
+    binds[#binds + 1] = { "scratchpad-" .. name, pad.keys, scratchpad.toggle(name, command), "Scratchpad: " .. name }
 end
 
 -- ── apply, with the user's remaps and removals ───────────────────────────

@@ -183,6 +183,9 @@ Singleton {
             property JsonObject keybinds: JsonObject {
                 property var remap: ({})
                 property list<string> disabled: []
+                // More scratchpads: name -> { "keys": "SUPER + M", "command":
+                // "spotify" }. The command starts when the scratchpad is empty.
+                property var scratchpads: ({})
             }
 
             // Written by the Displays page; read by hypr/config/monitor.lua.

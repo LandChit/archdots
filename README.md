@@ -56,7 +56,7 @@ looks like it belongs together.**
 | **Terminal** | alacritty |
 | **File manager** | dolphin |
 | **Browser** | zen-browser |
-| **Login screen** | SDDM, `silent` theme; or, experimental, the shell's own greeter on greetd (`install.sh --greeter`) |
+| **Login screen** | the shell's own greeter on greetd, with the lock screen's look; or SDDM, `silent` theme (`install.sh --no-greeter`) |
 | **Shell** | zsh + oh-my-zsh |
 | **Colors** | pywal16 — everything follows the wallpaper, 16 distinct colours |
 | **App theme** | `simplychit` — GTK 3 hand-written, GTK 4 recolours libadwaita |
@@ -132,7 +132,7 @@ Manjaro). The installer looks first and fits in with what is there: it uses
 your `paru` or `yay` (or builds `paru`), and asks before switching anything
 that changes how the machine boots or gets online. It replaces PulseAudio with
 PipeWire only if you agree, and it switches another login screen (GDM,
-LightDM, …) to SDDM or another network manager (iwd, systemd-networkd, …) to
+LightDM, …) to SimplyChit's own or another network manager (iwd, systemd-networkd, …) to
 NetworkManager only if you agree. Those switches are off by default and take
 effect at the next boot; the installer prints how to undo them. On a desktop
 it installs power-profiles-daemon rather than TLP, and it warns about an
@@ -183,13 +183,15 @@ them.
 > Until that second command runs, the links in `~/.config` point at paths
 > that no longer exist, so do it before logging out.
 
-**The shell's own login screen** (experimental): `./install.sh install
---greeter` sets up greetd with a greeter that looks like the lock screen, and
-asks before switching to it (default no). Try it in a virtual machine first:
-a broken login screen leaves only a text console. To see it without
-switching anything: `qs -p ~/.config/quickshell/simplychit/greeter.qml` (Esc
-closes it). Back to SDDM from a console: `sudo systemctl disable greetd &&
-sudo systemctl enable sddm && sudo reboot`.
+**The login screen** is the shell's own greeter on greetd, with the lock
+screen's look. The installer asks before switching to it: default yes on a
+machine with no login screen or with SDDM (what older installs set up),
+default no for any other. SDDM stays installed, and if the greeter cannot be
+set up, SDDM is enabled instead. To see the greeter without switching
+anything: `qs -p ~/.config/quickshell/simplychit/greeter.qml` (Esc closes
+it). Back to SDDM from a console (Ctrl+Alt+F2): `sudo systemctl disable
+greetd && sudo systemctl enable sddm && sudo reboot`. `./install.sh install
+--no-greeter` sets up the themed SDDM instead.
 
 **When it finishes, log out and pick Hyprland at the login screen.** The desktop
 starts itself. Press <kbd>SUPER</kbd> <kbd>/</kbd> for the cheatsheet.
@@ -295,7 +297,8 @@ zoxide fzf eza bat kwallet-pam kwalletmanager base-devel
 calls all four on every login — `alias cd="z"` means a missing zoxide breaks
 `cd` itself. `base-devel` is what building `paru` needs. hyprlock and
 hyprpolkitagent are fallbacks: the shell has its own lock screen (opt-in) and
-polkit dialog.
+polkit dialog. `sddm` is the login screen's fallback and the way back; the
+greeter adds `greetd cage wlr-randr` (not with `--no-greeter`).
 
 One core package is not in the official repos:
 
@@ -335,7 +338,7 @@ one-time setup (CUSTOMIZING.md, Calendar).
 
 ```
 paru zen-browser-bin visual-studio-code-bin hyprls-git xwaylandvideobridge
-python-pywalfox sddm-silent-theme
+python-pywalfox sddm-silent-theme (only with --no-greeter)
 ```
 
 An existing `paru` or `yay` is used as it is. Otherwise `paru` is built from

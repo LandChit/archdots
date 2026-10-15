@@ -370,8 +370,14 @@ then rewrite a file safely, and hand edits still work.
   - `simplychit doctor`: check dependencies, services, running daemons, config errors
     (done in phase 5: [simplychit](home/.local/bin/simplychit) `doctor [--json]`,
     shown on the settings app's About page)
-- [ ] **Replace SDDM with a greeter that shares the shell's theme**
-  (built and VM-tested: [greeter.qml](home/.config/quickshell/simplychit/greeter.qml),
+- [x] **Replace SDDM with a greeter that shares the shell's theme**
+  (done: the greeter is the default login screen. `install.sh` sets it up
+  unless `--no-greeter` (then the themed SDDM, as before). It asks before
+  switching: default yes with no login screen or SDDM, no for any other.
+  SDDM stays installed, unthemed, and `greeter_fallback` enables it when
+  the greeter cannot be set up, so a machine never boots without one.
+  `update` does not switch an existing install; it refreshes a greeter
+  that is there. Built and VM-tested: [greeter.qml](home/.config/quickshell/simplychit/greeter.qml),
   `install.sh install --greeter`. In a fresh Arch VM
   (`~/.cache/simplychit-greeter-vm`): the full install, greetd booting the
   greeter, wrong password, faillock's lockout notice, login into Hyprland

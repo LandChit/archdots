@@ -793,8 +793,8 @@ Five details are load-bearing:
 | Copy wallpapers to `~/Pictures/wallpapers` | that is where the picker looks |
 | First `wal -i` run | otherwise the shell starts on its fallback palette |
 | `gsettings` for blueman | dconf is a binary database — [see above](#settings-that-cannot-be-stowed) |
-| The SDDM theme | lives in `/usr/share` and `/etc` — [below](#the-sddm-theme) |
-| Enable `sddm`, `NetworkManager`, `bluetooth` | systemd, not files |
+| The greeter (default) or the SDDM theme (`--no-greeter`) | lives in `/usr/share`, `/var/lib` and `/etc` — [the greeter](#the-greeter), [the SDDM theme](#the-sddm-theme) |
+| Enable `greetd` (or `sddm`), `NetworkManager`, `bluetooth` | systemd, not files |
 
 `paru` is built **from source**, not `paru-bin`. The binary package is linked
 against one libalpm soname; the moment pacman bumps it, paru dies with

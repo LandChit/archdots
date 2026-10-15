@@ -153,7 +153,7 @@ REPO_DIR="$REPO_DIR_DEFAULT"
 WANT_UTILS=1
 WANT_AUR=1
 WANT_FLATPAK=1
-WANT_GREETER=0          # --greeter: greetd + the shell's login screen (experimental)
+WANT_GREETER=1          # greetd + the shell's login screen; --no-greeter: SDDM instead
 DO_PACKAGES=1
 DO_STOW=1
 DO_MACHINE=1
@@ -182,8 +182,8 @@ plain text, with every command's output on screen.
       --no-flatpak    Skip the flatpak applications.
       --no-utils      Skip the utility packages.
       --no-aur        Skip the AUR helper and every AUR package.
-      --greeter       Also set up greetd with the shell's login screen
-                      (experimental; asks before switching to it).
+      --no-greeter    Use SDDM (silent theme) as the login screen instead of
+                      the shell's own greeter on greetd.
       --skip-packages Install nothing; only link, build and configure.
       --skip-stow     Do not run stow.
       --skip-machine  Do not touch machine-specific config (GPU, monitors,
@@ -212,7 +212,8 @@ while [[ $# -gt 0 ]]; do
         --no-flatpak)    WANT_FLATPAK=0 ;;
         --no-utils)      WANT_UTILS=0 ;;
         --no-aur)        WANT_AUR=0 ;;
-        --greeter)       WANT_GREETER=1 ;;
+        --greeter)       WANT_GREETER=1 ;;   # kept: it used to be opt-in
+        --no-greeter)    WANT_GREETER=0 ;;
         --skip-packages) DO_PACKAGES=0 ;;
         --skip-stow)     DO_STOW=0 ;;
         # the fabric shell's virtualenv is gone; still accepted so older
@@ -971,8 +972,9 @@ pac_install() {
 # server, the network manager. All of it is read once, here, so the stages
 # fit in with it instead of fighting it, and every question that changes how
 # the machine boots or gets online is asked before anything runs. Those
-# questions default to no: --yes never switches a login screen or a network
-# manager.
+# questions default to no: --yes never switches someone else's login screen
+# or network manager. (Only SDDM, or no login screen at all, defaults to yes
+# for the greeter: see stage_greeter.)
 
 # Tested with these; older ones may not read the Lua config or the QML.
 MIN_HYPRLAND="0.56"
@@ -1109,7 +1111,12 @@ Replace PulseAudio with PipeWire?" y; then
     if [[ -n "$dm" && -e "$dm" ]]; then
         DM_CURRENT="$(basename -- "$dm" .service)"
     fi
-    if [[ -n "$DM_CURRENT" && "$DM_CURRENT" != sddm ]]; then
+    if (( WANT_GREETER )); then
+        # SDDM stays installed (the fallback, and the way back) but is neither
+        # themed nor enabled; stage_greeter asks about switching the login screen
+        WANT_SDDM=0
+        [[ -n "$DM_CURRENT" ]] && say "login screen: $DM_CURRENT"
+    elif [[ -n "$DM_CURRENT" && "$DM_CURRENT" != sddm ]]; then
         say "login screen: $DM_CURRENT"
         if interactive confirm "$DM_CURRENT is this system's login screen.
 
@@ -1950,11 +1957,11 @@ retire_old_name() {
     return 0
 }
 
-# ── the greeter (opt-in, --greeter) ─────────────────────────────────────────
+# ── the greeter (the default; --no-greeter for SDDM) ────────────────────────
 #
 # greetd runs the shell's greeter.qml inside cage, so the login screen has the
-# lock screen's look and colours. Experimental: try it in a VM first. What it
-# writes, all root-owned and outside $HOME:
+# lock screen's look and colours. What it writes, all root-owned and outside
+# $HOME:
 #   /usr/share/simplychit/shell/      a copy of the shell (the greeter user
 #                                     cannot read your home)
 #   /var/lib/simplychit/greeter/      the greeter's own HOME (greetd's user
@@ -1962,9 +1969,11 @@ retire_old_name() {
 #                                     palette, wallpaper and settings.json,
 #                                     its last login
 #   /etc/greetd/config.toml           the original kept as config.toml.simplychit-orig
-# An update refreshes the copies. The login screen itself is switched only on
-# a yes (default no, also under --yes); the old one stays installed and is
-# only disabled.
+# An update refreshes the copies. The login screen is switched only after a
+# question: default yes when there is none yet or it is SDDM (an older
+# SimplyChit install), default no for any other one. The old one stays
+# installed and is only disabled. If the greeter cannot be set up, SDDM is
+# enabled instead, so the machine never boots without a login screen.
 
 GREETER_DIR="/usr/share/simplychit/shell"
 GREETD_CONF="/etc/greetd/config.toml"
@@ -2000,19 +2009,43 @@ greeter_copy_files() {
     "${SUDO[@]}" chmod 700 "$gh"
 }
 
+# greeter_fallback: the greeter is not the login screen after all. With no
+# login screen enabled either, SDDM (installed with the core packages, but
+# unthemed) takes its place.
+greeter_fallback() {
+    [[ -e /etc/systemd/system/display-manager.service ]] && return 0
+    systemctl list-unit-files sddm.service &>/dev/null || return 0
+    if run_logged "Enabling sddm" "${SUDO[@]}" systemctl enable sddm.service; then
+        ok "SDDM is the login screen instead"
+        DM_LABEL="SDDM"
+        note "SDDM unthemed: './install.sh install --no-greeter' themes it"
+    else
+        warn "could not enable sddm either"
+        note "no login screen enabled: log in on a console and run 'sudo systemctl enable sddm'"
+    fi
+}
+
 stage_greeter() {
     (( WANT_GREETER )) || return 0
-    step "Login screen: the SimplyChit greeter (experimental)"
+    step "Login screen: the SimplyChit greeter"
 
     # wlr-randr: the greeter switches off every monitor but the primary one
-    pac_install "greetd and cage" greetd cage wlr-randr || {
-        warn "could not install greetd and cage — greeter skipped"
+    if (( DO_PACKAGES )); then
+        pac_install "greetd and cage" greetd cage wlr-randr || {
+            warn "could not install greetd and cage — greeter skipped"
+            greeter_fallback
+            return 0
+        }
+    elif ! pacman -Qq greetd cage &>/dev/null; then
+        skip "greetd and cage not installed (--skip-packages) — greeter skipped"
+        greeter_fallback
         return 0
-    }
+    fi
     if greeter_copy_files; then
         ok "greeter files in $GREETER_DIR, palette and wallpaper copied"
     else
         warn "could not set up the greeter's files — greeter skipped"
+        greeter_fallback
         return 0
     fi
 
@@ -2036,22 +2069,28 @@ user = \"greeter\""
         ok "wrote $GREETD_CONF"
     else
         skip "greetd config left alone — greeter not switched on"
+        greeter_fallback
         return 0
     fi
     note "preview the greeter any time: qs -p ~/.config/quickshell/simplychit/greeter.qml (Esc closes it)"
 
     if systemctl is-enabled greetd.service &>/dev/null; then
         skip "greetd is already the login screen"
+        DM_LABEL="SimplyChit"
         return 0
     fi
     # after stage_services, so this is whatever it left enabled
     current="$(basename -- "$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null)" .service)"
     [[ "$current" == . || "$current" == display-manager ]] && current=""
+    # Replacing someone else's login screen is their call; no login screen or
+    # SDDM (what SimplyChit used to set up) is ours to replace.
+    local default=y
+    [[ -n "$current" && "$current" != sddm ]] && default=n
     if interactive confirm "Switch the login screen to the SimplyChit greeter?
 
-Experimental: try it in a virtual machine first. If it fails, the next boot has no login screen, only a text console (Ctrl+Alt+F2). ${current:-The current login screen} stays installed and is only disabled. To go back, from that console:
+If it fails, the next boot has no login screen, only a text console (Ctrl+Alt+F2). ${current:-SDDM} stays installed and is only disabled. To go back, from that console:
 
-  sudo systemctl disable greetd && sudo systemctl enable ${current:-sddm} && sudo reboot" n; then
+  sudo systemctl disable greetd && sudo systemctl enable ${current:-sddm} && sudo reboot" "$default"; then
         if [[ -n "$current" ]]; then
             run_logged "Disabling $current" "${SUDO[@]}" systemctl disable "$current.service" || {
                 warn "could not disable $current — greetd not enabled"
@@ -2060,14 +2099,18 @@ Experimental: try it in a virtual machine first. If it fails, the next boot has 
         fi
         if run_logged "Enabling greetd" "${SUDO[@]}" systemctl enable greetd.service; then
             ok "greetd is the login screen from the next boot"
+            DM_LABEL="SimplyChit"
             note "greeter on from the next boot. Back: sudo systemctl disable greetd && sudo systemctl enable ${current:-sddm}"
         else
             warn "could not enable greetd"
             [[ -n "$current" ]] && "${SUDO[@]}" systemctl enable "$current.service" &>/dev/null
+            greeter_fallback
         fi
     else
         skip "login screen unchanged"
+        [[ -n "$current" ]] && DM_LABEL="${current/#sddm/SDDM}"
         note "greeter set up, not switched on: sudo systemctl disable ${current:-sddm} && sudo systemctl enable greetd"
+        greeter_fallback
     fi
 }
 
@@ -3003,7 +3046,7 @@ $KEYS_LIST" 21 76 8 \
         flatpak  "  the flatpak applications"              "$(on_off $WANT_FLATPAK)" \
         stow     "Link the dotfiles into \$HOME"           "$(on_off $DO_STOW)" \
         machine  "Machine config: GPU, monitors, wallpaper" "$(on_off $DO_MACHINE)" \
-        greeter  "Login screen: the greeter (experimental)" "$(on_off $WANT_GREETER)")" \
+        greeter  "Login screen: the greeter (off: SDDM)"   "$(on_off $WANT_GREETER)")" \
         || { say "cancelled"; exit 0; }
 
     # The tags are the same switches --help documents, so this checklist cannot

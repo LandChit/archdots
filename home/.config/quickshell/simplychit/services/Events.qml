@@ -139,6 +139,17 @@ Singleton {
         }
     }
 
+    // ── stay awake ───────────────────────────────────────────────────────
+    // SUPER+SHIFT+I or the control centre; also asked for, so always shown
+    Connections {
+        target: Idle
+
+        function onInhibitedChanged(): void {
+            if (root.armed)
+                Notifs.toast(Idle.inhibited ? "Staying awake" : "Idle back on", Idle.inhibited ? "Idle lock and suspend are off" : "The screen locks and suspends when idle again", "\u{f0176}", true);
+        }
+    }
+
     // ── DND ──────────────────────────────────────────────────────────────
     // shown even when it has just been switched on: you asked for it
     Connections {

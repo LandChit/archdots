@@ -15,14 +15,13 @@ on() {
     running && return 0
     systemd-inhibit --what=idle --who=simplychit --why="Idle inhibit toggle" \
         --mode=block sleep infinity &
+    # the shell sees the pid file change and shows a toast (services/Events.qml)
     echo $! > "$pidfile"
-    notify-send -t 2000 -a SimplyChit "Staying awake" "Idle lock and suspend are off"
 }
 
 off() {
     if running; then
         kill "$(cat "$pidfile")"
-        notify-send -t 2000 -a SimplyChit "Idle back on" "The screen locks and suspends when idle again"
     fi
     rm -f "$pidfile"
 }

@@ -161,6 +161,12 @@ belong to it. Done, apart from checking it all on a real session (last item).
   instead of stepping past it (Down with no query went to row 2).
 - [x] Restart-shell bind works in one press: `shell.restart()` waits for the
   old instance to exit; `qs kill` returns early and `-n` silently refused.
+- [x] Region recording (SUPER+SHIFT+R, menu) shows slurp again: a Process
+  kept slurp's stdin open and slurp waited on it for preset boxes.
+- [x] A panel closes when a window opens, so nm-applet's Wi-Fi password
+  (or blueman's PIN) can take the keyboard; the Wi-Fi page asks for a
+  missing password itself when there is no agent (NoSecrets).
+- [x] Stay awake on/off is a toast, not a notification (Events.qml).
 - [x] **C1. Launcher actions** (done): `>` prefix for scheme, wallpaper, light/dark,
   power actions; favourite and hidden apps
   - `>` power actions, panels, light/dark (`theme.mode`), random wallpaper,

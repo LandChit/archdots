@@ -617,12 +617,20 @@ Steps in order; the first is the quick win.
   contrast at 4.5:1 or more on every fill in all four; the container run.
   Hover and keyboard-focus states could only be checked element by element
   (an offscreen window never hovers or focuses)
-- [ ] **Check the theme in real apps**: Dolphin (its list view was broken
-  under KvGlass; the README note is dropped until checked), a KDE settings
-  dialog, menus and hover states on screen
-- [ ] **Cursor theme**: `gtk-cursor-theme-name=default` falls back to
-  Adwaita; ship one (XCursor and hyprcursor) and set it in GTK, Hyprland
-  (`XCURSOR_THEME`/`HYPRCURSOR_THEME`) and the greeter
+- [x] **Check the theme in real apps** (done, by the owner): Dolphin, Ark
+  and others on screen, after the glass change. Not looked at on purpose:
+  Dolphin's list view (broken under KvGlass)
+- [x] **Cursor theme** (done): Bibata Modern Classic (AUR
+  `bibata-cursor-theme-bin`), picked by the owner from a rendered preview of
+  Breeze, Capitaine, Vimix and both Bibatas. Named in both GTK
+  `settings.ini`, the theme's `index.theme`, Hyprland's `XCURSOR_THEME` (no
+  hyprcursor theme, so Hyprland draws the XCursor one, also for cursor-shape
+  clients) and the greeter's cage env; `stage_interface` (was `stage_fonts`)
+  puts it in dconf, skipped with a warning when not installed. Tested with a
+  gsettings shim (installed and not); the container run (stops at its
+  gtk-theme limit before this stage, so structure only). Not covered:
+  GTK 3 flatpaks, which cannot see `/usr/share/icons` and draw their own
+  cursor; GTK 4 ones hand it to Hyprland
 - [ ] **Qt5 apps**: `QT_QPA_PLATFORMTHEME=qt6ct` only reaches Qt6; Qt5 apps
   (sqlitebrowser and others) get plain Fusion. Add qt5ct and Kvantum's Qt5
   plugin, or decide Qt5 stays unthemed

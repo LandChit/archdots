@@ -607,7 +607,10 @@ Steps in order; the first is the quick win.
   (inline spin arrows, thin progress bars). Text on the accent is chosen
   from light and dark candidates (a mid-tone accent needs dark text), the
   pressed shade moves away from it, focus borders are the accent at 3:1.
-  KvGlass is gone from the repo. Tested in scratch homes: a widget gallery
+  Translucent like GTK (same alphas; `translucent_windows` with
+  `reduce_window_opacity=14`, views at 0.70, popups at 0.93), measured on
+  Wayland with a polished, never-shown window: background 86%, text
+  opaque. KvGlass is gone from the repo. Tested in scratch homes: a widget gallery
   rendered offscreen with the current, default, a light and a vivid
   palette; every element and state drawn the way Kvantum draws it; text
   contrast at 4.5:1 or more on every fill in all four; the container run.

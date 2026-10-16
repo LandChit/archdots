@@ -841,6 +841,18 @@ KV_RADIUS = {"button": 6, "lineedit": 6, "menu": 8, "menuitem": 5, "itemview": 5
              "menubaritem": 5, "titlebar": 6}
 
 
+# How opaque each surface is, the GTK theme's values (gtk.css): windows 0.86,
+# buttons 0.88, views 0.70, popups 0.93, text fields an accent wash. Hyprland
+# blurs what shows through, so Qt apps get the same frosted glass as GTK.
+KV_ALPHA = {"window": 0.86, "button": 0.88, "view": 0.70, "popup": 0.93, "field": 0.10}
+
+# Apps that paint their own video or canvas and break behind a translucent
+# window (KvGlass's list).
+KV_OPAQUE = ("kaffeine,kmplayer,subtitlecomposer,kdenlive,vlc,smplayer,smplayer2,avidemux,"
+             "avidemux2_qt4,avidemux3_qt4,avidemux3_qt5,kamoso,QtCreator,VirtualBox,VirtualBoxVM,"
+             "trojita,dragon,digikam,obs,krita")
+
+
 def kvantum_svg(c):
     """The SimplyChit Kvantum theme's SVG, drawn from the palette roles: flat,
     rounded, borders in the accent at the GTK theme's strength. Elements that
@@ -849,33 +861,33 @@ def kvantum_svg(c):
     svg = _Svg()
     accent, deep, text, on = c["accent"], c["accent_deep"], c["text"], c["on_accent"]
     hover = mix(c["button"], text, 0.14)
-    R = KV_RADIUS
+    R, A = KV_RADIUS, KV_ALPHA
 
     def frame(element, state, **kw):
         _frame(svg, f"{element}-{state}", R[element], R[element], **kw)
 
     # buttons, combo boxes, tool buttons (flat ones draw only from hover on)
-    frame("button", "normal", fill=c["button"], border=accent, ba=0.28)
-    frame("button", "focused", fill=hover, border=accent, ba=0.45)
+    frame("button", "normal", fill=c["button"], fa=A["button"], border=accent, ba=0.28)
+    frame("button", "focused", fill=hover, fa=A["button"], border=accent, ba=0.45)
     frame("button", "pressed", fill=deep, border=accent, ba=0.6)
     frame("button", "toggled", fill=accent, border=accent)
-    frame("button", "disabled", fill=c["button"], fa=0.5, border=accent, ba=0.14)
+    frame("button", "disabled", fill=c["button"], fa=A["button"] / 2, border=accent, ba=0.14)
     # tabs: flat until hovered, the current one raised like a button
     frame("tab", "normal", fill=None)
     frame("tab", "focused", fill=accent, fa=0.14)
-    frame("tab", "toggled", fill=c["button"], border=accent, ba=0.28)
-    frame("tab", "pressed", fill=c["button"], border=accent, ba=0.45)
+    frame("tab", "toggled", fill=c["button"], fa=A["button"], border=accent, ba=0.28)
+    frame("tab", "pressed", fill=c["button"], fa=A["button"], border=accent, ba=0.45)
     frame("tframe", "normal", border=accent, ba=0.22, interior=False)
     # text fields; keyboard focus shows as a full-strength accent border
-    frame("lineedit", "normal", fill=c["base"], border=accent, ba=0.28)
-    frame("lineedit", "focused", fill=c["base"], border=c["accent_ring"])
-    frame("lineedit", "disabled", fill=c["base"], fa=0.5, border=accent, ba=0.14)
+    frame("lineedit", "normal", fill=accent, fa=A["field"], border=accent, ba=0.28)
+    frame("lineedit", "focused", fill=accent, fa=A["field"], border=c["accent_ring"])
+    frame("lineedit", "disabled", fill=accent, fa=A["field"] / 2, border=accent, ba=0.14)
     # lists and trees: a wash on hover, the accent for the selection
     frame("itemview", "focused", fill=accent, fa=0.16)
     frame("itemview", "pressed", fill=deep)
     frame("itemview", "toggled", fill=accent)
     # menus and tooltips: the raised surface, like the shell's popups
-    frame("menu", "normal", fill=c["raised"], border=accent, ba=0.28)
+    frame("menu", "normal", fill=c["raised"], fa=A["popup"], border=accent, ba=0.28)
     # a hovered menu item is drawn in the "toggled" state
     frame("menuitem", "focused", fill=accent)
     frame("menuitem", "toggled", fill=accent)
@@ -883,12 +895,12 @@ def kvantum_svg(c):
     frame("menubaritem", "focused", fill=accent, fa=0.16)
     frame("menubaritem", "pressed", fill=accent)
     frame("menubaritem", "toggled", fill=accent)
-    frame("tooltip", "normal", fill=c["raised"], border=accent, ba=0.28)
+    frame("tooltip", "normal", fill=c["raised"], fa=A["popup"], border=accent, ba=0.28)
     # outlines
     frame("group", "normal", border=accent, ba=0.22, interior=False)
     frame("common", "normal", border=accent, ba=0.22, interior=False)
     frame("dock", "normal", border=accent, ba=0.22, interior=False)
-    frame("titlebar", "normal", fill=c["button"])
+    frame("titlebar", "normal", fill=c["button"], fa=A["button"])
     frame("titlebar", "focused", fill=c["raised"])
     # progress and slider grooves, filled with the accent
     groove = mix(c["window"], text, 0.12)
@@ -1000,8 +1012,11 @@ def kvantum_config(c):
     """The SimplyChit kvconfig: KvSimplicity's layout (rounded tabs, inline
     spin arrows, thin progress bars) with the SVG's element names, and every
     text colour from the palette roles."""
-    R = KV_RADIUS
+    R, A = KV_RADIUS, KV_ALPHA
     t, muted, on = c["text"], c["muted"], c["on_accent"]
+
+    def alpha(colour, a):
+        return f"{colour}{round(a * 255):02x}"
 
     def frame(element):
         n = R[element]
@@ -1027,7 +1042,10 @@ def kvantum_config(c):
             "center_toolbar_handle": "true", "check_size": 16,
             "textless_progressbar": "false", "progressbar_thickness": 8,
             "menubar_mouse_tracking": "true", "toolbutton_style": 0,
-            "click_behavior": 0, "translucent_windows": "false", "blurring": "false",
+            "click_behavior": 0, "translucent_windows": "true", "blurring": "false",
+            # the window background only; text and controls stay opaque
+            "reduce_window_opacity": round((1 - A["window"]) * 100), "reduce_menu_opacity": 0,
+            "opaque": KV_OPAQUE,
             "popup_blurring": "false", "vertical_spin_indicators": "false",
             "fill_rubberband": "false", "merge_menubar_with_toolbar": "true",
             "small_icon_size": 16, "large_icon_size": 32, "button_icon_size": 16,
@@ -1039,7 +1057,8 @@ def kvantum_config(c):
             "no_window_pattern": "true", "respect_DE": "true",
         },
         "GeneralColors": {
-            "window.color": c["window"], "base.color": c["base"], "alt.base.color": c["alt_base"],
+            "window.color": c["window"],
+            "base.color": alpha(c["base"], A["view"]), "alt.base.color": alpha(c["alt_base"], A["view"]),
             "button.color": c["button"], "light.color": c["light"], "mid.light.color": c["midlight"],
             "dark.color": c["dark"], "mid.color": c["mid"],
             "highlight.color": c["accent"], "inactive.highlight.color": c["accent_deep"],

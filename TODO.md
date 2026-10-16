@@ -441,6 +441,15 @@ then rewrite a file safely, and hand edits still work.
       ```
     - The installer must never switch the display manager without asking,
       and should print these rollback steps when it does
+  - [x] GTK theme missing on a fresh install, host and flatpak apps alike
+    (worked on the live machine only). Host GTK 4: `stage_gtk4_base`
+    returned before copying `overrides.css` into `~/.config/gtk-4.0/` when
+    gresource/libadwaita were absent, which is every fresh Arch; the copy
+    now comes first. Flatpaks: install.sh never granted them the theme (the
+    live machine had a hand-made override); `stage_flatpak_theming` sets a
+    per-user override (gtk-3.0/gtk-4.0 config and `~/.themes` read-only,
+    `GTK_THEME`) on install and update. Tested both stages in a scratch
+    HOME; not yet re-checked on screen in the VM.
 
 ## Phase 7: remaining features
 

@@ -2513,6 +2513,25 @@ stage_gtk4_base() {
         skip "$dir missing — was stow run?"
         return 0
     fi
+
+    # The recolour has to sit *beside* .config/gtk-4.0/gtk.css rather than be
+    # imported across from ~/.themes. A flatpak mounts that directory inside its
+    # own per-app home, so a relative "../.." climbs to ~/.var/app/<app-id>/ and
+    # the import fails with nothing but a warning on stderr — the sheet then
+    # loads with no colours at all, and every flatpak sits on Adwaita blue while
+    # the host looks perfectly fine. Copying it in keeps both resolving locally.
+    #
+    # Before the refresh below, not after it: a fresh Arch has neither gresource
+    # nor libadwaita, the refresh returns early there, and every host GTK 4 app
+    # stayed on Adwaita blue. overrides.css is tracked, the refresh never
+    # touches it, so the order costs nothing.
+    local cfg="$HOME/.config/gtk-4.0"
+    if [[ -d "$cfg" && -f "$dir/overrides.css" ]]; then
+        cp "$dir/overrides.css" "$cfg/overrides.css"
+        chmod 644 "$cfg/overrides.css"
+        ok "recolour copied into .config/gtk-4.0/"
+    fi
+
     if ! command -v gresource >/dev/null; then
         warn "gresource not found (glib2-devel) — keeping the vendored copy"
         return 0
@@ -2554,18 +2573,34 @@ stage_gtk4_base() {
         rm -f "$tmp"
         warn "could not read $res/gtk.css — keeping the vendored copy"
     fi
+}
 
-    # The recolour has to sit *beside* .config/gtk-4.0/gtk.css rather than be
-    # imported across from ~/.themes. A flatpak mounts that directory inside its
-    # own per-app home, so a relative "../.." climbs to ~/.var/app/<app-id>/ and
-    # the import fails with nothing but a warning on stderr — the sheet then
-    # loads with no colours at all, and every flatpak sits on Adwaita blue while
-    # the host looks perfectly fine. Copying it in keeps both resolving locally.
-    local cfg="$HOME/.config/gtk-4.0"
-    if [[ -d "$cfg" && -f "$dir/overrides.css" ]]; then
-        cp "$dir/overrides.css" "$cfg/overrides.css"
-        chmod 644 "$cfg/overrides.css"
-        ok "recolour copied into .config/gtk-4.0/"
+# ── flatpaks ────────────────────────────────────────────────────────────────
+#
+# A flatpak sees none of the theme unless it is let in: ~/.themes for the theme
+# GTK_THEME names (GTK 3, and GTK 4 apps that take a theme), the two GTK config
+# folders for settings.ini and the user CSS libadwaita apps load. All read-only.
+# A per-user override for every app, so a flatpak installed later is themed too.
+# Re-applying it each run also replaces a GTK_THEME left from before a rename.
+
+stage_flatpak_theming() {
+    step "Flatpak theming"
+    if ! command -v flatpak >/dev/null; then
+        skip "flatpak not installed"
+        return 0
+    fi
+    local theme
+    theme="$(awk -F= '/^gtk-theme-name=/{print $2}' \
+        "$HOME/.config/gtk-3.0/settings.ini" 2>/dev/null)"
+    if run_logged "flatpak override" flatpak override --user \
+        --filesystem=xdg-config/gtk-3.0:ro \
+        --filesystem=xdg-config/gtk-4.0:ro \
+        --filesystem=~/.themes:ro \
+        --env=GTK_THEME="${theme:-simplychit}"; then
+        ok "flatpaks can read the GTK theme (GTK_THEME=${theme:-simplychit})"
+    else
+        warn "could not set the flatpak override"
+        note "run by hand: flatpak override --user --filesystem=xdg-config/gtk-3.0:ro --filesystem=xdg-config/gtk-4.0:ro --filesystem=~/.themes:ro --env=GTK_THEME=simplychit"
     fi
 }
 
@@ -2960,6 +2995,7 @@ run_update() {
     retire_old_name     # archdots -> SimplyChit, once
     stage_wallpapers    # copies any new wallpapers into ~/Pictures/wallpapers
     stage_gtk4_base     # update_packages may have moved libadwaita under us
+    stage_flatpak_theming
     stage_app_theming   # palette copies (hyprlock's file), apps the update added
     stage_shell_services  # hyprpolkitagent off (the shell is the agent), tlp-pd
     refresh_idle_requests # browsers' stay-awake requests reach the shell
@@ -3015,6 +3051,7 @@ run_install() {
     stage_machine
     phase 98 99 "Theming"
     stage_gtk4_base
+    stage_flatpak_theming
     stage_theming
     stage_dconf
     phase 99 100 "Services"

@@ -452,7 +452,8 @@ then rewrite a file safely, and hand edits still work.
     HOME; not yet re-checked on screen in the VM.
   - [x] Flatpak apps moved to pacman where the official repos carry them
     (`PKG_APPS`, `--no-apps`): Flathub's bandwidth made a first install
-    take up to an hour. Only Packet stays a flatpak. Fresh installs only,
+    take up to an hour. Packet was dropped too, so `PKG_FLATPAK` is empty
+    and the step skips itself until an app id is added. Fresh installs only,
     so an update does not duplicate an existing install's flatpaks. The
     process manager default is `missioncenter || flatpak run …`, which
     covers both. Not installed in the VM yet.

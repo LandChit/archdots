@@ -358,13 +358,11 @@ flatpaks until Flathub's bandwidth made a first install take up to an hour;
 an install that already has the flatpak copies keeps them, since an update
 does not add these.
 
-### Flatpak — installed by default
+### Flatpak
 
-Only what the official repos do not carry. Pass `--no-flatpak` to skip it.
-
-```
-io.github.nozwock.Packet
-```
+None at the moment. `PKG_FLATPAK` in `install.sh` is kept for apps the official
+repos do not carry; while it is empty the step is skipped. `--no-flatpak` skips
+it once it lists something.
 
 <hr>
 

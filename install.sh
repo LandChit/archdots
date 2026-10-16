@@ -147,9 +147,10 @@ PKG_APPS=(
     gnome-text-editor
 )
 
-# Only what the official repos do not carry.
+# Only what the official repos do not carry. Empty for now (Packet was the
+# last, and not worth its runtime download); the flatpak stage skips itself
+# while it is, so adding an app id here is all it takes to bring it back.
 PKG_FLATPAK=(
-    io.github.nozwock.Packet
 )
 
 # The shell owns org.freedesktop.Notifications. Any of these takes that bus
@@ -1403,7 +1404,9 @@ These are built from source, which takes a few minutes." y; then
         skip "AUR"
     fi
 
-    if (( WANT_FLATPAK )) && confirm "Install the flatpak applications (${#PKG_FLATPAK[@]})?
+    if (( ! ${#PKG_FLATPAK[@]} )); then
+        skip "flatpaks (none listed)"
+    elif (( WANT_FLATPAK )) && confirm "Install the flatpak applications (${#PKG_FLATPAK[@]})?
 
 ${PKG_FLATPAK[*]}" y; then
         phase 64 72 "Flatpak applications"

@@ -641,11 +641,14 @@ Steps in order; the first is the quick win.
   Qt 5 gallery with qt5ct, kvantum-qt5 and PyQt5 extracted to a scratch
   dir, before and after; the container run. Not yet seen in a real Qt 5
   app on screen
-- [ ] **Chromium**: use its GTK theme mode, or a generated theme
-- [ ] **Discord** (optional): Vesktop with a wal CSS, instead of the stock
-  client
-- [ ] **Flatpak Qt apps** (optional): Kvantum's flatpak runtime extension
-  and an override exposing `~/.config/Kvantum`
-- [ ] **Accent-tinted icons** (optional): Papirus with `papirus-folders`
-  following color4, instead of plain `breeze-dark`
-- [ ] Tick "Create a custom uniform theme" in DEVELOPMENT.md's roadmap
+- [x] **Flatpak Qt apps** (done): `stage_flatpak_theming` installs Flathub's
+  `org.kde.KStyle.Kvantum` per user (no root) for every `org.kde.Platform`
+  branch present, and the global override adds `QT_STYLE_OVERRIDE=kvantum`
+  and read access to `~/.config/Kvantum` and `kdeglobals`. Runs on update;
+  a branch with no Kvantum on Flathub (6.11, qView's, today) is noted and
+  retried. Tested with a flatpak shim shaped like this machine (installs
+  5.15-25.08 and 6.10, notes 6.11, skips on a second run). Not yet run
+  against real Flathub, nor seen in a Qt flatpak on screen
+- Chromium, Discord and accent-tinted icons: left out by the owner, moved
+  to MISSING.md (U1-U3)
+- [x] Tick "Create a custom uniform theme" in DEVELOPMENT.md's roadmap

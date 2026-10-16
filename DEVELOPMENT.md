@@ -1098,7 +1098,9 @@ Bugs this harness caught that reading the script did not:
 - [x] Drop the unused waybar / rofi / dunst leftovers
 - [x] Shell: OSD, control centre, notification history, calendar, wallpaper
       picker, screenshot menu, media island, keybind cheatsheet
-- [ ] Create a custom uniform theme
+- [x] Create a custom uniform theme — generated from the wallpaper for
+      GTK, Qt 5/6 (Kvantum, flatpaks included), KDE, VS Code, the browser,
+      btop, hyprlock and the cursor (TODO.md, phase 8)
 - [x] Bluetooth pairing in the control centre (devices needing a typed passkey
       still need `bluetoothctl`)
 - [x] The shell rewritten in Quickshell (TODO.md, phases 3 and 4)

@@ -138,3 +138,22 @@ Not from DMS or Caelestia; suggested while tidying this list.
 
 - **Other compositors:** DMS supports niri, Sway and more. SimplyChit stays
   Hyprland-only.
+
+---
+
+## Uniform theme leftovers — *all currently undesired*
+
+Left out of TODO.md phase 8 (the uniform theme) by the owner's choice.
+
+### U1. Chromium
+Chromium draws its own UI. Its "GTK" theme mode (Settings > Appearance)
+would follow the GTK theme's colours; a generated Chromium theme from the
+palette is the other route.
+
+### U2. Discord
+The stock client cannot be themed. Vesktop with a CSS file generated from
+the palette would follow the wallpaper.
+
+### U3. Accent-tinted icons
+Papirus with `papirus-folders` following color4, instead of plain
+`breeze-dark`; the same idea as C3's Papirus folders.

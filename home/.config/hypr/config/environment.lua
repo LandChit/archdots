@@ -16,4 +16,8 @@ hl.env("XDG_MENU_PREFIX", "arch-")
 
 hl.env("QT_QPA_PLATFORM", "wayland")
 
-hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
+-- "qt5ct", not "qt6ct": Qt 5 and 6 read the same variable, and qt6ct's plugin
+-- answers to both names, so Qt 6 apps still get qt6ct (qt6ct.conf) while
+-- Qt 5 ones (VLC, sqlitebrowser) get qt5ct (qt5ct.conf) instead of plain
+-- Fusion. Both draw with the same Kvantum theme.
+hl.env("QT_QPA_PLATFORMTHEME", "qt5ct")

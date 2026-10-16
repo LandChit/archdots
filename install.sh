@@ -60,7 +60,7 @@ PKG_CORE=(
     sound-theme-freedesktop
     pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol
     networkmanager bluez bluez-utils blueman
-    qt6ct kvantum qt5-wayland qt6-wayland
+    qt6ct qt5ct kvantum kvantum-qt5 qt5-wayland qt6-wayland
     # .webp wallpapers: the picker lists them, and Qt cannot read them without
     # it (the palette would change and the picture would not)
     qt6-imageformats

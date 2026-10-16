@@ -523,4 +523,16 @@ then rewrite a file safely, and hand edits still work.
   one instance, SIGTERM), hypridle leaving the name, a scratch shell
   (dim disabled with the file, back without it, bad JSON ignored).
   Not yet tested live with Zen
+- [x] **Bar layout per screen** (SOMETHING_OFF.md): one default layout
+  (`bar.left` / `bar.center` / `bar.right`, a centre section is new) and, per
+  screen, the default or its own (`bar.monitors`, keyed by the monitor's
+  description so it follows the monitor across ports; port names still
+  work). The status island is split into `indicators`, `volume`, `cpu` and
+  `battery`, drawn as one island when next to each other (`modules/bar/Status.qml`);
+  `resources` still means all four. Rules in `services/BarLayout.qml`; the Bar
+  page picks Default or a screen, with "Use the default layout" and
+  move/remove/add per section. Tested in a scratch shell: both bars drawn
+  from a per-screen layout and the old `resources` default, the page in
+  both views, and its save logic driven offscreen (move across sections,
+  own layout on/off, add, remove, bar on/off)
 

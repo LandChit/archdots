@@ -3,10 +3,12 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import qs.config
+import qs.services
 
-// One floating row of islands along the top of a screen:
-// workspaces and the window title on the left, media, meters and the clock on
-// the right.
+// One floating row of islands along the top of a screen, in three sections:
+// left, centre and right. Which widgets, in what order, is the default layout
+// (bar.left / bar.center / bar.right) or this screen's own (bar.monitors);
+// services/BarLayout.qml works that out.
 PanelWindow {
     id: root
 
@@ -19,10 +21,9 @@ PanelWindow {
         clockFormat: Config.bar.clockFormat,
         emptyTitle: Config.bar.emptyTitle,
         titleChars: Config.bar.titleChars,
-        mediaChars: Config.bar.mediaChars,
-        left: Config.bar.left,
-        right: Config.bar.right
-    }, Config.bar.monitors[modelData.name] ?? {})
+        mediaChars: Config.bar.mediaChars
+    }, BarLayout.overrideFor(modelData))
+    readonly property var layout: BarLayout.layoutFor(modelData)
 
     screen: modelData
 
@@ -40,13 +41,13 @@ PanelWindow {
     color: "transparent"
     WlrLayershell.namespace: "simplychit-bar"
 
-    // bar.left / bar.right (per screen too): which islands, in this order
+    // the widgets that are islands of their own; the status parts are drawn
+    // by Status, several to an island
     readonly property var islands: ({
         workspaces: workspaces,
         special: special,
         title: title,
         media: media,
-        resources: resources,
         clock: clock
     })
 
@@ -77,45 +78,56 @@ PanelWindow {
         }
     }
     Component {
-        id: resources
-
-        Resources {
-            settings: root.settings
-        }
-    }
-    Component {
         id: clock
 
         Clock {
             settings: root.settings
         }
     }
+    Component {
+        id: statusIsland
 
-    component Side: RowLayout {
+        Status {
+            settings: root.settings
+        }
+    }
+
+    component BarSection: RowLayout {
         property var names: []
 
         anchors.verticalCenter: parent.verticalCenter
         spacing: 6
 
         Repeater {
-            model: parent.names.filter(n => root.islands[n] !== undefined)
+            model: BarLayout.groups(parent.names)
 
             Loader {
-                required property string modelData
+                id: slot
 
-                sourceComponent: root.islands[modelData]
+                required property var modelData
+
+                sourceComponent: modelData.status ? statusIsland : root.islands[modelData.name] ?? null
                 visible: item !== null && item.wanted !== false
+                onLoaded: {
+                    if (slot.modelData.status)
+                        item.parts = Qt.binding(() => slot.modelData.status);
+                }
             }
         }
     }
 
-    Side {
+    BarSection {
         anchors.left: parent.left
-        names: root.settings.left
+        names: root.layout.left
     }
 
-    Side {
+    BarSection {
+        anchors.horizontalCenter: parent.horizontalCenter
+        names: root.layout.center
+    }
+
+    BarSection {
         anchors.right: parent.right
-        names: root.settings.right
+        names: root.layout.right
     }
 }

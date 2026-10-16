@@ -41,7 +41,7 @@ GTK only reads its own folders, so those two files live there:
 | GTK 3 apps | `~/.config/gtk-3.0/gtk.css` | |
 | Wallpaper and colours | the wallpaper picker (SUPER + W); colours follow the wallpaper. Shift+Enter sets it for one screen | |
 | Light or dark colours, colour scheme | `theme.mode`, `theme.backend` in `settings.json`, or the launcher's `>` actions | |
-| Bar contents, per screen | `bar.*` and `bar.monitors` in `settings.json` | `"monitors": {"HDMI-A-1": {"showCpu": false}}` |
+| Bar layout, and a different one per screen | the Bar page (pick a screen, turn off "Use the default layout"), or `bar.left` / `bar.center` / `bar.right` and `bar.monitors` in `settings.json` | `"monitors": {"HDMI-A-1": {"right": ["volume", "clock"]}}` |
 | Stay awake (no dim, lock or suspend) | SUPER + SHIFT + I toggles it | |
 | Idle timeouts | Idle & power page, or `idle.*` in `settings.json` | `"idle": {"ac": {"lock": 10}}` |
 | Monitor layout, with a screen per profile | the Displays page (drag, Apply, Keep) | |
@@ -96,7 +96,8 @@ Every key, with its default:
     "monitors": {},
     "excluded": [],
     "left": ["workspaces", "special", "title"],
-    "right": ["media", "resources", "clock"]
+    "center": [],
+    "right": ["media", "indicators", "volume", "cpu", "battery", "clock"]
   },
   "appearance": {
     "opacity": 1
@@ -174,9 +175,9 @@ Every key, with its default:
 | Key | What it does |
 |---|---|
 | `bar.clockFormat` | [Qt's date format](https://doc.qt.io/qt-6/qml-qtqml-qt.html#formatDateTime-method): `HH:mm` for 24-hour, add `:ss` for seconds |
-| `bar.monitors` | any `bar` key per screen: `{"HDMI-A-1": {"showCpu": false}}` |
-| `bar.excluded` | screens with no bar: `["DP-2"]` |
-| `bar.left` / `bar.right` | the islands on each side, in order: `workspaces`, `special`, `title`, `media`, `resources`, `clock`; leave one out to hide it |
+| `bar.left` / `bar.center` / `bar.right` | the default layout: widgets in each section, in order: `workspaces`, `special`, `title`, `media`, `indicators` (recording, stay awake, do not disturb), `volume`, `cpu`, `battery`, `clock`; leave one out to hide it. Neighbouring status widgets (indicators, volume, cpu, battery) share one island; the old `resources` means all four |
+| `bar.monitors` | per screen, keyed by the monitor's description (`hyprctl monitors`, e.g. `"BOE 0x094D"`, which follows it to another port) or port name: its own `left` / `center` / `right` (sections left out use the default), and any other `bar` key: `{"HDMI-A-1": {"right": ["clock"], "showCpu": false}}` |
+| `bar.excluded` | screens with no bar, by description or port: `["DP-2"]` |
 | `appearance.opacity` | scales how opaque the bar's islands and the panels are, 0.5 to 1 |
 | `launcher.favourites` / `hidden` | desktop entry ids; easier with Ctrl+P / Ctrl+H in the launcher |
 | `apps.*` | what the launch keybinds start; `terminal` is also the launcher's for terminal apps |

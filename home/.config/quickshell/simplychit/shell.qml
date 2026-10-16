@@ -39,8 +39,8 @@ ShellRoot {
     }
 
     Variants {
-        // no bar on screens listed in bar.excluded (TODO C7)
-        model: Quickshell.screens.filter(s => !Config.bar.excluded.includes(s.name))
+        // no bar on screens listed in bar.excluded (by description or port)
+        model: Quickshell.screens.filter(s => !BarLayout.isExcluded(s))
 
         delegate: Bar {
             visible: root.barVisible

@@ -20,10 +20,12 @@ CONFIG = SHELL / "config/Config.qml"
 SCHEMA = SHELL / "config/settings.schema.json"
 
 # What the QML types cannot say. Keyed by dotted path.
-ISLANDS = ["workspaces", "special", "title", "media", "resources", "clock"]
+ISLANDS = ["workspaces", "special", "title", "media", "indicators", "volume", "cpu", "battery", "clock",
+           "resources"]
 EXTRA = {
     "bar.left": {"items": {"type": "string", "enum": ISLANDS}},
     "bar.right": {"items": {"type": "string", "enum": ISLANDS}},
+    "bar.center": {"items": {"type": "string", "enum": ISLANDS}},
     "bar.titleChars": {"minimum": 1},
     "bar.mediaChars": {"minimum": 1},
     "appearance.opacity": {"minimum": 0.5, "maximum": 1},

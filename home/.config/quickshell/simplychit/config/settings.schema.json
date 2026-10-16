@@ -44,7 +44,7 @@
         "monitors": {
           "type": "object",
           "default": {},
-          "description": "Per screen (TODO C7): any bar key above, by monitor name, e.g. { \"HDMI-A-1\": { \"showMedia\": false } }"
+          "description": "Per screen: any bar key, by the monitor's description (\"BOE 0x094D\") or port (\"eDP-1\"). One with left, center or right has its own layout: { \"HDMI-A-1\": { \"right\": [\"clock\"] } }"
         },
         "excluded": {
           "type": "array",
@@ -52,7 +52,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Screens with no bar at all."
+          "description": "Screens with no bar at all, by description or port."
         },
         "left": {
           "type": "array",
@@ -63,8 +63,12 @@
               "special",
               "title",
               "media",
-              "resources",
-              "clock"
+              "indicators",
+              "volume",
+              "cpu",
+              "battery",
+              "clock",
+              "resources"
             ]
           },
           "default": [
@@ -72,7 +76,26 @@
             "special",
             "title"
           ],
-          "description": "Which islands, in order, on each side."
+          "description": "The default layout: which widgets, in order, in each section. workspaces, special, title, media, indicators, volume, cpu, battery, clock (\"resources\" is the four status ones)."
+        },
+        "center": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "workspaces",
+              "special",
+              "title",
+              "media",
+              "indicators",
+              "volume",
+              "cpu",
+              "battery",
+              "clock",
+              "resources"
+            ]
+          },
+          "default": []
         },
         "right": {
           "type": "array",
@@ -83,13 +106,20 @@
               "special",
               "title",
               "media",
-              "resources",
-              "clock"
+              "indicators",
+              "volume",
+              "cpu",
+              "battery",
+              "clock",
+              "resources"
             ]
           },
           "default": [
             "media",
-            "resources",
+            "indicators",
+            "volume",
+            "cpu",
+            "battery",
             "clock"
           ]
         }

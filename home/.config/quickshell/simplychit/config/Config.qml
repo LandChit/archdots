@@ -92,14 +92,18 @@ Singleton {
                 property string emptyTitle: "Chit"
                 property int titleChars: 20
                 property int mediaChars: 28
-                // Per screen (TODO C7): any bar key above, by monitor name,
-                // e.g. { "HDMI-A-1": { "showMedia": false } }
+                // Per screen: any bar key, by the monitor's description
+                // ("BOE 0x094D") or port ("eDP-1"). One with left, center or
+                // right has its own layout: { "HDMI-A-1": { "right": ["clock"] } }
                 property var monitors: ({})
-                // Screens with no bar at all.
+                // Screens with no bar at all, by description or port.
                 property list<string> excluded: []
-                // Which islands, in order, on each side.
+                // The default layout: which widgets, in order, in each section.
+                // workspaces, special, title, media, indicators, volume, cpu,
+                // battery, clock ("resources" is the four status ones).
                 property list<string> left: ["workspaces", "special", "title"]
-                property list<string> right: ["media", "resources", "clock"]
+                property list<string> center: []
+                property list<string> right: ["media", "indicators", "volume", "cpu", "battery", "clock"]
             }
 
             property JsonObject appearance: JsonObject {

@@ -598,13 +598,24 @@ Steps in order; the first is the quick win.
   Roboto, is JetBrainsMono Nerd Font 12. `stage_fonts` (install and update)
   copies both into dconf, which GTK on Wayland and the portal read. Tested
   with a gsettings shim
-- [ ] **SimplyChit Kvantum theme**: generated, not hand-drawn. A Python
-  generator in `simplychit` writes `SimplyChit.kvconfig` and an SVG of
-  rounded rects with Kvantum's element ids (`button-normal`, `-top`,
-  `-topleft`, …, `-pressed`/`-focused`/`-toggled`), about 15 widget
-  families, coloured from `colors.json`; `sync-palette` reruns it on every
-  wallpaper change. Test: generate into a scratch HOME, `kvantummanager
-  --set`, screenshot a Qt app
+- [x] **SimplyChit Kvantum theme** (done): drawn in code, `kvantum_svg` and
+  `kvantum_config` in `simplychit`, rerun by `sync-palette` on every
+  wallpaper change. Flat rounded frames (buttons, fields, menus, tabs,
+  lists, tooltips, group/tab frames) with accent borders at the GTK theme's
+  strength; check boxes, radios, chevrons (arrows, combo, tree), slider
+  handle, scrollbar pill, grips, tab close. Layout after KvSimplicity
+  (inline spin arrows, thin progress bars). Text on the accent is chosen
+  from light and dark candidates (a mid-tone accent needs dark text), the
+  pressed shade moves away from it, focus borders are the accent at 3:1.
+  KvGlass is gone from the repo. Tested in scratch homes: a widget gallery
+  rendered offscreen with the current, default, a light and a vivid
+  palette; every element and state drawn the way Kvantum draws it; text
+  contrast at 4.5:1 or more on every fill in all four; the container run.
+  Hover and keyboard-focus states could only be checked element by element
+  (an offscreen window never hovers or focuses)
+- [ ] **Check the theme in real apps**: Dolphin (its list view was broken
+  under KvGlass; the README note is dropped until checked), a KDE settings
+  dialog, menus and hover states on screen
 - [ ] **Cursor theme**: `gtk-cursor-theme-name=default` falls back to
   Adwaita; ship one (XCursor and hyprcursor) and set it in GTK, Hyprland
   (`XCURSOR_THEME`/`HYPRCURSOR_THEME`) and the greeter

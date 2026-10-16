@@ -570,19 +570,34 @@ The DEVELOPMENT.md roadmap's last open item, "Create a custom uniform
 theme": every toolkit following the wallpaper palette, with the shell's look.
 Steps in order; the first is the quick win.
 
-- [ ] **Qt palette from wal**: `simplychit sync-palette` writes a qt6ct colour
-  scheme and a `kdeglobals` colour scheme from `colors.json` (same contrast
-  rules as the VS Code theme). Today qt6ct uses the static `darker.conf` plus
-  a fixed grey/`#4a90d9` palette, and `kdeglobals` names `ColorScheme=KvGlass`,
-  whose `kvantum/kvGlass.colors` install.sh never installs. Qt apps pick it
-  up on restart (no live reload)
-- [ ] **Clean up the Kvantum leftovers**: `kvantum.kvconfig` keeps
-  `freecad`/`KvAdaptaDark` app rules (theme not shipped), the
-  `KvGnomeDark#` folder is unused, and the root `kvantum/` copy of KvGlass
-  (same SVG, a different kvconfig, plus `kvGlass.colors`) sits beside
-  `home/.config/Kvantum/KvGlass`: keep one
-- [ ] **One font across toolkits**: qt6ct says Roboto 12, GTK says Adwaita
-  Sans 11; pick one and set both
+- [x] **Qt palette from wal** (done): Kvantum ignores qt6ct's palette
+  (checked: a red qt6ct scheme shows under Fusion, not under Kvantum), so
+  `sync-palette` generates a Kvantum theme, `~/.config/Kvantum/SimplyChit/`:
+  KvGlass's kvconfig with the GTK theme's derived roles (text at a contrast
+  floor) and its SVG with the blues turned to the accent and the greys moved
+  onto the background-to-text line, so a light palette gives a light theme.
+  KDE colours go into `~/.config/kdeglobals` (`[Colors:*]`, `[WM]`; a real
+  file now, no longer stowed, seeded with the old terminal and icon keys)
+  and `~/.local/share/color-schemes/SimplyChit.colors`. install.sh unfolds
+  `~/.config/Kvantum` (Kvantum reads themes from nowhere else) and removes
+  links to files the repo dropped; sync-palette refuses to write while it is
+  folded. Tested in scratch homes: rendered Qt widgets offscreen (PySide6)
+  for the current, default and a light palette; the folded guard; a
+  dangling kdeglobals link; the container run (5 palette copies, repo
+  clean). Apps pick the colours up on restart only. Not
+  yet seen in a real Qt app on screen (needs an install.sh update to unfold
+  the live `~/.config/Kvantum`)
+- [x] **Clean up the Kvantum leftovers** (done): `kvantum.kvconfig` is just
+  `theme=SimplyChit` (its `[Applications]` pinned Dolphin to KvGlass);
+  `KvGnomeDark#` and the root `kvantum/` (an older KvGlass plus
+  `kvGlass.colors`) are gone. The stowed `KvGlass/` stays as the generator's
+  base. qt6ct's own palette settings are left as they are: Kvantum ignores
+  them
+- [x] **One font across toolkits** (done): Roboto 12 in both GTK
+  `settings.ini` files and qt6ct (as before); qt6ct's fixed font, which was
+  Roboto, is JetBrainsMono Nerd Font 12. `stage_fonts` (install and update)
+  copies both into dconf, which GTK on Wayland and the portal read. Tested
+  with a gsettings shim
 - [ ] **SimplyChit Kvantum theme**: generated, not hand-drawn. A Python
   generator in `simplychit` writes `SimplyChit.kvconfig` and an SVG of
   rounded rects with Kvantum's element ids (`button-normal`, `-top`,

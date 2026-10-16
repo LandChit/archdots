@@ -129,6 +129,9 @@ PKG_AUR=(
     xwaylandvideobridge   # started by autorun.lua; moved out of extra to the AUR
     # the browser's colours from the wallpaper; needs its add-on in the browser
     python-pywalfox
+    # the cursor (Bibata Modern Classic): rounded like the shell, and dark with
+    # a light edge, so it shows on any wallpaper
+    bibata-cursor-theme-bin
 )
 
 # Tools only. Media players, office suites and game launchers are a matter of
@@ -2105,7 +2108,7 @@ stage_greeter() {
 vt = 1
 
 [default_session]
-command = \"env HOME=$GREETER_HOME QT_WAYLAND_DISABLE_WINDOWDECORATION=1 cage -s -d -- qs -p $GREETER_DIR/greeter.qml\"
+command = \"env HOME=$GREETER_HOME XCURSOR_THEME=Bibata-Modern-Classic XCURSOR_SIZE=24 QT_WAYLAND_DISABLE_WINDOWDECORATION=1 cage -s -d -- qs -p $GREETER_DIR/greeter.qml\"
 user = \"greeter\""
     if [[ -f "$GREETD_CONF" ]] && [[ "$("${SUDO[@]}" cat "$GREETD_CONF")" == "$body" ]]; then
         skip "$GREETD_CONF already correct"
@@ -2685,21 +2688,35 @@ stage_flatpak_theming() {
 # GSettings live in ~/.config/dconf/user, a binary database. Only a command can
 # set them.
 
-# One UI font for GTK, Qt and the portals: gtk-{3,4}.0/settings.ini and
-# qt6ct.conf say Roboto 12, but GTK on Wayland (GTK 4, libadwaita) and the
-# settings portal read dconf instead, so the same name goes there. The
-# monospace one is the terminal's. Run on update too, so an install from
-# before keeps no Adwaita Sans in dconf.
-stage_fonts() {
+# One UI font and one cursor for GTK, Qt and the portals:
+# gtk-{3,4}.0/settings.ini say Roboto 12 and Bibata Modern Classic (qt6ct
+# and Hyprland's env the same), but GTK on Wayland (GTK 4, libadwaita) and
+# the settings portal read dconf instead, so the same names go there. The
+# monospace font is the terminal's. Run on update too, so an install from
+# before keeps no Adwaita Sans or Adwaita cursor in dconf.
+stage_interface() {
     command -v gsettings >/dev/null || return 0
-    local font
-    font="$(awk -F= '/^gtk-font-name=/{print $2}' "$HOME/.config/gtk-3.0/settings.ini" 2>/dev/null)"
+    local ini="$HOME/.config/gtk-3.0/settings.ini" font cursor size
+    font="$(awk -F= '/^gtk-font-name=/{print $2}' "$ini" 2>/dev/null)"
+    cursor="$(awk -F= '/^gtk-cursor-theme-name=/{print $2}' "$ini" 2>/dev/null)"
+    size="$(awk -F= '/^gtk-cursor-theme-size=/{print $2}' "$ini" 2>/dev/null)"
     [[ -n "$font" ]] || return 0
     if gsettings set org.gnome.desktop.interface font-name "$font" 2>/dev/null \
         && gsettings set org.gnome.desktop.interface monospace-font-name "JetBrainsMono Nerd Font 12" 2>/dev/null; then
         ok "font = $font, monospace = JetBrainsMono Nerd Font 12"
     else
         warn "could not set the fonts in dconf (no dbus session?)"
+    fi
+    [[ -n "$cursor" ]] || return 0
+    if [[ ! -d "/usr/share/icons/$cursor" && ! -d "$HOME/.local/share/icons/$cursor" && ! -d "$HOME/.icons/$cursor" ]]; then
+        warn "cursor theme '$cursor' is not installed — the default cursor stays"
+        return 0
+    fi
+    if gsettings set org.gnome.desktop.interface cursor-theme "$cursor" 2>/dev/null \
+        && gsettings set org.gnome.desktop.interface cursor-size "${size:-24}" 2>/dev/null; then
+        ok "cursor = $cursor, ${size:-24} px"
+    else
+        warn "could not set the cursor in dconf (no dbus session?)"
     fi
 }
 
@@ -2731,7 +2748,7 @@ stage_dconf() {
         fi
     fi
 
-    stage_fonts
+    stage_interface
 
     # ── blueman ─────────────────────────────────────────────────────────────
     if ! command -v gsettings >/dev/null; then
@@ -3093,7 +3110,7 @@ run_update() {
     stage_gtk4_base     # update_packages may have moved libadwaita under us
     stage_flatpak_theming
     stage_app_theming   # palette copies (hyprlock's file), apps the update added
-    stage_fonts         # the UI font in dconf, where GTK on Wayland reads it
+    stage_interface     # the UI font and cursor in dconf, where GTK on Wayland reads them
     stage_shell_services  # hyprpolkitagent off (the shell is the agent), tlp-pd
     refresh_idle_requests # browsers' stay-awake requests reach the shell
     if [[ -d "$GREETER_DIR" ]]; then

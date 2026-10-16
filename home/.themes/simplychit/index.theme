@@ -7,5 +7,5 @@ Encoding=UTF-8
 [X-GNOME-Metatheme]
 GtkTheme=simplychit
 IconTheme=breeze-dark
-CursorTheme=default
+CursorTheme=Bibata-Modern-Classic
 ButtonLayout=:minimize,maximize,close

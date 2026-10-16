@@ -338,7 +338,8 @@ one-time setup (CUSTOMIZING.md, Calendar).
 
 ```
 paru zen-browser-bin visual-studio-code-bin hyprls-git xwaylandvideobridge
-python-pywalfox sddm-silent-theme (only with --no-greeter)
+python-pywalfox bibata-cursor-theme-bin
+sddm-silent-theme (only with --no-greeter)
 ```
 
 An existing `paru` or `yay` is used as it is. Otherwise `paru` is built from

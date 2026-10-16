@@ -631,9 +631,16 @@ Steps in order; the first is the quick win.
   gtk-theme limit before this stage, so structure only). Not covered:
   GTK 3 flatpaks, which cannot see `/usr/share/icons` and draw their own
   cursor; GTK 4 ones hand it to Hyprland
-- [ ] **Qt5 apps**: `QT_QPA_PLATFORMTHEME=qt6ct` only reaches Qt6; Qt5 apps
-  (sqlitebrowser and others) get plain Fusion. Add qt5ct and Kvantum's Qt5
-  plugin, or decide Qt5 stays unthemed
+- [x] **Qt5 apps** (done): `QT_QPA_PLATFORMTHEME=qt5ct`. Qt 5 and 6 read
+  the same variable, and qt6ct's plugin lists both "qt6ct" and "qt5ct" as
+  keys, so Qt 6 apps keep qt6ct and Qt 5 ones (VLC, sqlitebrowser) get
+  qt5ct instead of light Fusion at 9 pt. `qt5ct` and `kvantum-qt5` are core
+  packages; `qt5ct.conf` mirrors `qt6ct.conf`; both use the one generated
+  Kvantum theme. Cursor size also settled at 20 (Bibata's 24 looked big).
+  Tested: Qt 6 with qt6ct/qt5ct/a made-up name (qt6ct, qt6ct, Fusion); a
+  Qt 5 gallery with qt5ct, kvantum-qt5 and PyQt5 extracted to a scratch
+  dir, before and after; the container run. Not yet seen in a real Qt 5
+  app on screen
 - [ ] **Chromium**: use its GTK theme mode, or a generated theme
 - [ ] **Discord** (optional): Vesktop with a wal CSS, instead of the stock
   client

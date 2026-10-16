@@ -449,14 +449,14 @@ then rewrite a file safely, and hand edits still work.
     live machine had a hand-made override); `stage_flatpak_theming` sets a
     per-user override (gtk-3.0/gtk-4.0 config and `~/.themes` read-only,
     `GTK_THEME`) on install and update. Tested both stages in a scratch
-    HOME; not yet re-checked on screen in the VM.
+    HOME, and on a fresh VM install (by the owner).
   - [x] Flatpak apps moved to pacman where the official repos carry them
     (`PKG_APPS`, `--no-apps`): Flathub's bandwidth made a first install
     take up to an hour. Packet was dropped too, so `PKG_FLATPAK` is empty
     and the step skips itself until an app id is added. Fresh installs only,
     so an update does not duplicate an existing install's flatpaks. The
     process manager default is `missioncenter || flatpak run …`, which
-    covers both. Not installed in the VM yet.
+    covers both. Tested on a fresh VM install (by the owner).
   - [x] VS Code theme readable on any wallpaper. wal-theme put the dark half
     of the `--cols16 dual` palette on keywords and constants (1.5:1). Now
     our own theme extension (`vscode-theme/`), packed and installed by

@@ -2471,6 +2471,8 @@ stage_theming() {
 
 stage_app_theming() {
     step "Apps themed from the wallpaper"
+    # Before sync-palette, which writes the theme into the installed extension.
+    stage_vscode_theme
     local copies
     if copies="$("$REPO_ROOT/home/.local/bin/simplychit" sync-palette 2>&1)"; then
         ok "palette copied to $(grep -c . <<<"$copies") place(s)"
@@ -2488,21 +2490,6 @@ stage_app_theming() {
         ok "btop set to the wallpaper theme"
     fi
 
-    # VS Code: the wal-theme extension builds a colour theme from colors.json
-    # and follows it on its own. Choosing it ("Wal") is left to you.
-    local code
-    for code in code codium; do
-        command -v "$code" >/dev/null || continue
-        if "$code" --list-extensions 2>/dev/null | grep -qix 'dlasagno.wal-theme'; then
-            skip "$code: wal-theme already installed"
-        elif run_logged "VS Code wal-theme" "$code" --install-extension dlasagno.wal-theme; then
-            ok "$code: wal-theme installed"
-            note "VS Code: pick the colour theme \"Wal\" (Ctrl+K Ctrl+T) to follow the wallpaper"
-        else
-            warn "$code: could not install the wal-theme extension"
-        fi
-    done
-
     # The browser: pywalfox's native host, which its add-on talks to.
     if command -v pywalfox >/dev/null; then
         if run_logged "pywalfox" pywalfox install; then
@@ -2512,6 +2499,50 @@ stage_app_theming() {
             warn "pywalfox install failed"
         fi
     fi
+}
+
+# ── VS Code ─────────────────────────────────────────────────────────────────
+#
+# The SimplyChit theme (vscode-theme/), not dlasagno.wal-theme: that one maps the
+# dark half of the --cols16 dual palette onto keywords and constants, about
+# 1.5:1 on a dim wallpaper. `simplychit vscode-theme --vsix` packs ours with the
+# current palette, and sync-palette rewrites it on every wallpaper change; VS
+# Code reloads the active theme when its file changes.
+#
+# A user who picked "Wal" is moved to SimplyChit, which replaces it; any other
+# theme is their choice and stays.
+
+stage_vscode_theme() {
+    local code settings version vsix
+    version="$(awk -F'"' '/"version"/{print $4; exit}' "$REPO_ROOT/vscode-theme/package.json")"
+    for code in code codium; do
+        command -v "$code" >/dev/null || continue
+        if "$code" --list-extensions --show-versions 2>/dev/null \
+            | grep -qix "simplychit.simplychit-theme@$version"; then
+            skip "$code: SimplyChit theme $version already installed"
+        else
+            vsix="$(mktemp --suffix=.vsix)"
+            if "$REPO_ROOT/home/.local/bin/simplychit" vscode-theme --vsix "$vsix" &&
+                run_logged "VS Code theme" "$code" --install-extension "$vsix" --force; then
+                ok "$code: SimplyChit theme installed"
+            else
+                warn "$code: could not install the SimplyChit theme"
+            fi
+            rm -f "$vsix"
+        fi
+
+        case "$code" in
+            code)   settings="$HOME/.config/Code/User/settings.json" ;;
+            codium) settings="$HOME/.config/VSCodium/User/settings.json" ;;
+        esac
+        if [[ -f "$settings" ]] &&
+            grep -qE '"workbench\.colorTheme": *"Wal( Bordered)?"' "$settings"; then
+            sed -i -E 's/("workbench\.colorTheme": *)"Wal( Bordered)?"/\1"SimplyChit"/' "$settings" \
+                && ok "$code: colour theme Wal -> SimplyChit"
+        elif ! grep -q '"workbench\.colorTheme"' "$settings" 2>/dev/null; then
+            note "VS Code: pick the colour theme \"SimplyChit\" (Ctrl+K Ctrl+T) to follow the wallpaper"
+        fi
+    done
 }
 
 # ── the vendored libadwaita stylesheet ──────────────────────────────────────

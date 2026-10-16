@@ -457,6 +457,15 @@ then rewrite a file safely, and hand edits still work.
     so an update does not duplicate an existing install's flatpaks. The
     process manager default is `missioncenter || flatpak run …`, which
     covers both. Not installed in the VM yet.
+  - [x] VS Code theme readable on any wallpaper. wal-theme put the dark half
+    of the `--cols16 dual` palette on keywords and constants (1.5:1). Now
+    our own theme extension (`vscode-theme/`), packed and installed by
+    install.sh, rewritten by `simplychit sync-palette`: every syntax colour
+    keeps its hue and is lightened to a contrast floor (code 5.5:1,
+    comments 4.2:1), roles also split by lightness so a one-hue palette
+    stays distinguishable. A "Wal" selection is moved to "SimplyChit".
+    Tested install + sync in a scratch VS Code profile; live reload on a
+    wallpaper change not watched on screen yet.
 
 ## Phase 7: remaining features
 

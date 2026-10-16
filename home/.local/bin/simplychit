@@ -9,7 +9,10 @@
                                       JSON (today if no date)
     simplychit sync-palette             hand pywal16's palette to the apps that
                                       keep their own copy (GTK, hyprlock, btop,
-                                      the browser); run after every `wal`
+                                      the browser, VS Code); run after every `wal`
+    simplychit vscode-theme [--vsix F]  the VS Code colour theme for the current
+                                      palette, as JSON; --vsix packs the
+                                      extension into F (install.sh installs it)
     simplychit inhibitors               the service that hears apps asking the
                                       screen to stay awake (a video playing)
                                       and tells the shell; started at login
@@ -388,6 +391,302 @@ def hyprlock_colours(palette):
     ])
 
 
+# ── VS Code ─────────────────────────────────────────────────────────────────
+#
+# The theme of the SimplyChit extension (repo vscode-theme/, installed by
+# install.sh). wal-theme maps colours 1-6 straight onto keywords, constants and
+# types, and with --cols16 dual those are the *dark* half: on a dim wallpaper
+# they land at about 1.5:1 against the background and the code is unreadable.
+# Here every syntax colour keeps its hue but is lightened until it clears a
+# contrast floor, so any wallpaper gives readable code.
+
+VSCODE_EXTENSION = "simplychit.simplychit-theme"
+VSCODE_DEFAULTS = dict(HYPRLOCK_DEFAULTS, **{
+    "color0": "#080c14", "color1": "#3d332d", "color2": "#4a392f", "color3": "#222a30",
+    "color5": "#523f33", "color6": "#6d513c", "color7": "#8c9097", "color8": "#585f6b",
+    "color9": "#a36645", "color10": "#ae6f4a", "color11": "#3f6f93", "color13": "#b37550",
+    "color14": "#be8e69", "color15": "#c1c2c4",
+})
+
+
+def _rgb(hexc):
+    return tuple(b / 255 for b in bytes.fromhex(hexc.lstrip("#")))
+
+
+def _hex(rgb):
+    return "#" + "".join(f"{round(min(max(c, 0), 1) * 255):02x}" for c in rgb)
+
+
+def _luminance(hexc):
+    def lin(c):
+        return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+    r, g, b = (lin(c) for c in _rgb(hexc))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def contrast(a, b):
+    la, lb = sorted((_luminance(a), _luminance(b)), reverse=True)
+    return (la + 0.05) / (lb + 0.05)
+
+
+def readable(hexc, bg, target):
+    """hexc with its hue and saturation, made lighter (darker, on a light
+    background) in small steps until it reaches `target`:1 against bg."""
+    import colorsys
+    h, l, s = colorsys.rgb_to_hls(*_rgb(hexc))
+    step = 0.01 if _luminance(bg) < 0.5 else -0.01
+    out = hexc
+    while contrast(out, bg) < target and 0 <= l <= 1:
+        l += step
+        out = _hex(colorsys.hls_to_rgb(h, min(max(l, 0), 1), s))
+    return out
+
+
+def mix(a, b, t):
+    return _hex(tuple(x + (y - x) * t for x, y in zip(_rgb(a), _rgb(b))))
+
+
+def vscode_theme(palette):
+    def get(name):
+        value = palette.get(name, "")
+        return value if re.fullmatch(r"#[0-9a-fA-F]{6}", value or "") else VSCODE_DEFAULTS[name]
+
+    bg, fg = get("background"), get("foreground")
+    fg = readable(fg, bg, 9)
+
+    def code(name, floor=5.5):
+        return readable(get(name), bg, floor)
+
+    comment = readable(get("color8"), bg, 4.2)    # quieter than code, still legible
+    muted = readable(mix(fg, bg, 0.35), bg, 4.5)  # UI text that is not the focus
+    accent = code("color12", 4.5)
+    raised, overlay = mix(bg, fg, 0.05), mix(bg, fg, 0.09)
+    border = mix(bg, fg, 0.16)
+
+    # A wallpaper often gives one hue in four shades, and lightening each to the
+    # same floor would make them one colour. So the roles also differ in
+    # lightness, and two are tinted toward the foreground: that keeps strings,
+    # functions, constants and properties apart on a near-monochrome palette.
+    keyword, string, number = code("color11"), code("color10"), code("color14", 6.5)
+    func, typ = code("color13", 7.5), code("color14", 7)
+    constant = readable(mix(get("color11"), fg, 0.45), bg, 6.5)
+    prop = readable(mix(get("color12"), fg, 0.5), bg, 7)
+    tag, special = code("color13", 6), code("color6")
+    error, warn, info = code("color9"), code("color13"), code("color11")
+
+    def tok(scope, colour, style=None):
+        settings = {"foreground": colour}
+        if style is not None:
+            settings["fontStyle"] = style
+        return {"scope": scope, "settings": settings}
+
+    return {
+        "$schema": "vscode://schemas/color-theme",
+        "name": "SimplyChit",
+        "type": "dark" if _luminance(bg) < 0.5 else "light",
+        "semanticHighlighting": True,
+        "colors": {
+            "foreground": fg, "descriptionForeground": muted, "disabledForeground": comment,
+            "focusBorder": accent + "99", "widget.shadow": "#00000066",
+            "selection.background": accent + "55", "icon.foreground": muted,
+            "textLink.foreground": accent, "textLink.activeForeground": accent,
+            "textPreformat.foreground": number, "textBlockQuote.background": raised,
+            "button.background": accent, "button.foreground": bg, "button.hoverBackground": readable(accent, bg, 6),
+            "button.secondaryBackground": overlay, "button.secondaryForeground": fg,
+            "badge.background": accent, "badge.foreground": bg,
+            "progressBar.background": accent,
+            "dropdown.background": raised, "dropdown.border": border, "dropdown.foreground": fg,
+            "input.background": raised, "input.border": border, "input.foreground": fg,
+            "input.placeholderForeground": comment, "inputOption.activeBorder": accent,
+            "inputValidation.errorBorder": error, "inputValidation.warningBorder": warn,
+            "inputValidation.infoBorder": info,
+            "scrollbarSlider.background": fg + "22", "scrollbarSlider.hoverBackground": fg + "44",
+            "scrollbarSlider.activeBackground": fg + "66",
+            "list.activeSelectionBackground": accent + "33", "list.activeSelectionForeground": fg,
+            "list.inactiveSelectionBackground": overlay, "list.inactiveSelectionForeground": fg,
+            "list.hoverBackground": raised, "list.hoverForeground": fg,
+            "list.focusOutline": accent + "99", "list.highlightForeground": accent,
+            "activityBar.background": bg, "activityBar.foreground": fg,
+            "activityBar.inactiveForeground": comment, "activityBar.border": border,
+            "activityBarBadge.background": accent, "activityBarBadge.foreground": bg,
+            "activityBar.activeBorder": accent,
+            "sideBar.background": bg, "sideBar.foreground": muted, "sideBar.border": border,
+            "sideBarTitle.foreground": fg, "sideBarSectionHeader.background": bg,
+            "sideBarSectionHeader.foreground": fg, "sideBarSectionHeader.border": border,
+            "editorGroupHeader.tabsBackground": bg, "editorGroupHeader.tabsBorder": border,
+            "editorGroup.border": border,
+            "tab.activeBackground": raised, "tab.activeForeground": fg, "tab.activeBorderTop": accent,
+            "tab.inactiveBackground": bg, "tab.inactiveForeground": comment, "tab.border": border,
+            "tab.hoverBackground": raised, "tab.unfocusedActiveForeground": muted,
+            "editor.background": bg, "editor.foreground": fg,
+            "editorLineNumber.foreground": comment, "editorLineNumber.activeForeground": fg,
+            "editorCursor.foreground": accent,
+            "editor.selectionBackground": accent + "44", "editor.inactiveSelectionBackground": accent + "22",
+            "editor.selectionHighlightBackground": accent + "22",
+            "editor.wordHighlightBackground": fg + "18", "editor.wordHighlightStrongBackground": fg + "26",
+            "editor.findMatchBackground": accent + "66", "editor.findMatchHighlightBackground": accent + "33",
+            "editor.lineHighlightBackground": raised, "editor.lineHighlightBorder": "#00000000",
+            "editorIndentGuide.background1": border, "editorIndentGuide.activeBackground1": comment,
+            "editorWhitespace.foreground": border, "editorRuler.foreground": border,
+            "editorBracketMatch.background": accent + "22", "editorBracketMatch.border": accent + "88",
+            "editorBracketHighlight.foreground1": accent, "editorBracketHighlight.foreground2": keyword,
+            "editorBracketHighlight.foreground3": number, "editorBracketHighlight.unexpectedBracket.foreground": error,
+            "editorError.foreground": error, "editorWarning.foreground": warn, "editorInfo.foreground": info,
+            "editorGutter.addedBackground": string, "editorGutter.modifiedBackground": keyword,
+            "editorGutter.deletedBackground": error,
+            "editorWidget.background": raised, "editorWidget.border": border,
+            "editorSuggestWidget.background": raised, "editorSuggestWidget.border": border,
+            "editorSuggestWidget.selectedBackground": accent + "33",
+            "editorSuggestWidget.highlightForeground": accent,
+            "editorHoverWidget.background": raised, "editorHoverWidget.border": border,
+            "peekView.border": accent, "peekViewEditor.background": raised,
+            "peekViewResult.background": bg, "peekViewTitle.background": raised,
+            "minimap.selectionHighlight": accent + "88",
+            "panel.background": bg, "panel.border": border,
+            "panelTitle.activeForeground": fg, "panelTitle.inactiveForeground": comment,
+            "panelTitle.activeBorder": accent,
+            "statusBar.background": bg, "statusBar.foreground": muted, "statusBar.border": border,
+            "statusBar.noFolderBackground": bg, "statusBar.debuggingBackground": accent,
+            "statusBar.debuggingForeground": bg, "statusBarItem.hoverBackground": overlay,
+            "statusBarItem.remoteBackground": accent, "statusBarItem.remoteForeground": bg,
+            "titleBar.activeBackground": bg, "titleBar.activeForeground": fg,
+            "titleBar.inactiveBackground": bg, "titleBar.inactiveForeground": comment,
+            "titleBar.border": border,
+            "menu.background": raised, "menu.foreground": fg, "menu.selectionBackground": accent + "33",
+            "menu.selectionForeground": fg, "menu.border": border, "menu.separatorBackground": border,
+            "quickInput.background": raised, "quickInputList.focusBackground": accent + "33",
+            "pickerGroup.foreground": accent, "pickerGroup.border": border,
+            "notifications.background": raised, "notifications.border": border,
+            "notificationCenterHeader.background": overlay,
+            "terminal.background": bg, "terminal.foreground": fg, "terminalCursor.foreground": accent,
+            **{f"terminal.ansi{n}": get(f"color{i}") for i, n in enumerate(
+                ["Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan", "White",
+                 "BrightBlack", "BrightRed", "BrightGreen", "BrightYellow", "BrightBlue",
+                 "BrightMagenta", "BrightCyan", "BrightWhite"])},
+            "gitDecoration.addedResourceForeground": string,
+            "gitDecoration.modifiedResourceForeground": keyword,
+            "gitDecoration.deletedResourceForeground": error,
+            "gitDecoration.untrackedResourceForeground": number,
+            "gitDecoration.ignoredResourceForeground": comment,
+            "gitDecoration.conflictingResourceForeground": warn,
+            "breadcrumb.foreground": muted, "breadcrumb.focusForeground": fg,
+            "breadcrumb.activeSelectionForeground": fg,
+            "diffEditor.insertedTextBackground": string + "22", "diffEditor.removedTextBackground": error + "22",
+        },
+        "tokenColors": [
+            tok(["source", "text"], fg),
+            tok(["comment", "punctuation.definition.comment", "string.quoted.docstring"], comment, "italic"),
+            tok(["string", "constant.other.symbol", "string.other.link"], string),
+            tok(["string.regexp", "constant.character.escape", "constant.character"], special),
+            tok(["constant.numeric"], number),
+            tok(["constant.language", "constant.other", "support.constant", "variable.other.constant"], constant),
+            tok(["keyword", "storage", "storage.type", "storage.modifier", "keyword.control",
+                 "keyword.other", "keyword.operator.new", "keyword.operator.expression",
+                 "keyword.operator.logical", "keyword.operator.word"], keyword),
+            tok(["keyword.operator", "punctuation"], muted),
+            tok(["variable", "variable.other", "meta.definition.variable"], fg),
+            tok(["variable.parameter", "meta.parameter"], fg, "italic"),
+            tok(["variable.language", "variable.language.this", "variable.language.self"], constant, "italic"),
+            tok(["entity.name.function", "support.function", "meta.function-call entity.name.function",
+                 "variable.function", "meta.function-call.generic"], func),
+            tok(["entity.name.type", "entity.name.class", "entity.other.inherited-class",
+                 "support.type", "support.class", "storage.type.primitive"], typ),
+            tok(["entity.name.namespace", "entity.name.module", "entity.name.import",
+                 "entity.name.package", "support.other.namespace"], typ),
+            tok(["variable.other.property", "variable.other.object.property", "meta.property-name",
+                 "support.type.property-name", "variable.other.member", "entity.other.attribute-name"], prop),
+            tok(["entity.name.tag", "meta.tag.sgml", "punctuation.definition.tag"], tag),
+            tok(["meta.decorator", "storage.type.annotation", "entity.name.function.decorator"], special),
+            tok(["invalid", "invalid.illegal"], error),
+            tok(["markup.heading", "markup.heading entity.name"], func, "bold"),
+            tok(["markup.bold"], fg, "bold"),
+            tok(["markup.italic"], fg, "italic"),
+            tok(["markup.underline.link", "markup.underline"], accent, "underline"),
+            tok(["markup.inline.raw", "markup.raw", "markup.fenced_code"], number),
+            tok(["markup.quote"], comment, "italic"),
+            tok(["markup.list punctuation.definition.list.begin"], keyword),
+            tok(["markup.inserted", "meta.diff.header.to-file"], string),
+            tok(["markup.deleted", "meta.diff.header.from-file"], error),
+            tok(["markup.changed"], keyword),
+        ],
+        "semanticTokenColors": {
+            "namespace": typ, "type": typ, "class": typ, "enum": typ, "interface": typ,
+            "struct": typ, "typeParameter": typ, "parameter": {"foreground": fg, "italic": True},
+            "variable": fg, "variable.readonly": constant, "variable.defaultLibrary": constant,
+            "property": prop, "enumMember": constant, "function": func, "method": func,
+            "function.defaultLibrary": func, "macro": special, "keyword": keyword,
+            "comment": {"foreground": comment, "italic": True}, "string": string,
+            "number": number, "regexp": special, "operator": muted, "decorator": special,
+        },
+    }
+
+
+def vscode_theme_paths():
+    """themes/simplychit.json in every installed copy of the extension: VS Code
+    keeps extensions in ~/.vscode, VSCodium and Code - OSS in ~/.vscode-oss."""
+    import glob
+    paths = []
+    for root in (".vscode", ".vscode-oss"):
+        pattern = os.path.join(HOME, root, "extensions", VSCODE_EXTENSION + "-*", "themes", "simplychit.json")
+        paths.extend(glob.glob(pattern))
+    return paths
+
+
+VSIX_MANIFEST = """<?xml version="1.0" encoding="utf-8"?>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
+  <Metadata>
+    <Identity Language="en-US" Id="{name}" Version="{version}" Publisher="{publisher}"/>
+    <DisplayName>{display}</DisplayName>
+    <Description xml:space="preserve">{description}</Description>
+    <Categories>Themes</Categories>
+    <Properties>
+      <Property Id="Microsoft.VisualStudio.Code.Engine" Value="{engine}"/>
+    </Properties>
+  </Metadata>
+  <Installation>
+    <InstallationTarget Id="Microsoft.VisualStudio.Code"/>
+  </Installation>
+  <Dependencies/>
+  <Assets>
+    <Asset Type="Microsoft.VisualStudio.Code.Manifest" Path="extension/package.json" Addressable="true"/>
+  </Assets>
+</PackageManifest>
+"""
+VSIX_TYPES = """<?xml version="1.0" encoding="utf-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension=".json" ContentType="application/json"/><Default Extension=".vsixmanifest" ContentType="text/xml"/></Types>
+"""
+
+
+def build_vsix(out, palette):
+    """Pack <repo>/vscode-theme/ with the current theme into a .vsix that
+    `code --install-extension` takes. A theme needs no build step and no
+    vsce: the package is a zip with a manifest beside the extension folder."""
+    import html
+    import zipfile
+    with open(os.path.join(os.path.dirname(REPO_HOME), "vscode-theme", "package.json"), encoding="utf-8") as f:
+        raw = f.read()
+    pkg = json.loads(raw)
+    esc = {k: html.escape(str(v)) for k, v in {
+        "name": pkg["name"], "version": pkg["version"], "publisher": pkg["publisher"],
+        "display": pkg.get("displayName", pkg["name"]), "description": pkg.get("description", ""),
+        "engine": pkg["engines"]["vscode"]}.items()}
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("[Content_Types].xml", VSIX_TYPES)
+        z.writestr("extension.vsixmanifest", VSIX_MANIFEST.format(**esc))
+        z.writestr("extension/package.json", raw)
+        z.writestr("extension/themes/simplychit.json", json.dumps(vscode_theme(palette), indent=2) + "\n")
+    return 0
+
+
+def read_palette(cache):
+    try:
+        with open(os.path.join(cache, "colors.json"), encoding="utf-8") as f:
+            data = json.load(f)
+        return dict(data.get("colors", {}), **data.get("special", {}))
+    except (OSError, ValueError, AttributeError, TypeError):
+        return {}
+
+
 def sync_palette():
     """pywal16 renders into ~/.cache/wal; these are the consumers that cannot
     read from there and keep a copy. Each is skipped when it is not installed.
@@ -407,13 +706,7 @@ def sync_palette():
 
     # hyprlock first: always written, defaults when there is no palette yet, so
     # the file hyprlock.conf sources exists from the first install on
-    palette = {}
-    try:
-        with open(os.path.join(cache, "colors.json"), encoding="utf-8") as f:
-            data = json.load(f)
-        palette = dict(data.get("colors", {}), **data.get("special", {}))
-    except (OSError, ValueError, AttributeError, TypeError):
-        pass
+    palette = read_palette(cache)
     hyprlock = os.path.join(HOME, ".local/state/simplychit/hyprlock-colors.conf")
     try:
         write_atomic(hyprlock, hyprlock_colours(palette))
@@ -443,6 +736,17 @@ def sync_palette():
         try:
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             copy(btop, dst)
+        except OSError as e:
+            failed.append(f"{dst}: {e.strerror or e}")
+
+    # VS Code reloads the active theme when its file changes, so an open window
+    # follows the wallpaper. Written even before pywal16 has run (defaults),
+    # like hyprlock's, so the theme is never missing its colours.
+    theme = json.dumps(vscode_theme(palette), indent=2) + "\n"
+    for dst in vscode_theme_paths():
+        try:
+            write_atomic(dst, theme)
+            done.append(dst)
         except OSError as e:
             failed.append(f"{dst}: {e.strerror or e}")
 
@@ -616,6 +920,12 @@ def main():
         return events(args[1:])
     if args[0] == "sync-palette":
         return sync_palette()
+    if args[0] == "vscode-theme":
+        cache = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.join(HOME, ".cache"), "wal")
+        if len(args) == 3 and args[1] == "--vsix":
+            return build_vsix(args[2], read_palette(cache))
+        print(json.dumps(vscode_theme(read_palette(cache)), indent=2))
+        return 0
     if args[0] == "inhibitors":
         return inhibitors()
     print(f"simplychit: unknown command {args[0]!r}\n\n{__doc__.strip()}", file=sys.stderr)

@@ -24,7 +24,8 @@
 
 - `home/` is the only stowed tree (`stow --dir=<repo> --target=$HOME home`).
   Paths in docs and code are `home/.config/...`; repo-only things (install.sh,
-  docs, `simplychit_docker/`, `wallpapers/`, `kvantum/`, `.themes_sddm/`) sit at
+  docs, `simplychit_docker/`, `wallpapers/`, `kvantum/`, `.themes_sddm/`,
+  `vscode-theme/`) sit at
   the root. The root `.stow-local-ignore` ignores everything on purpose (a
   guard against old installers' `stow .`).
 - User files live in `~/.config/simplychit/` (`hypr/<module>.lua`, `local/`),

@@ -294,7 +294,7 @@ wallpaper, and templates in `.config/wal/templates/` push them everywhere:
 | `colors-alacritty.toml` | terminal | imported by the alacritty config |
 | *(none: `colors.json`)* | hyprlock | `simplychit sync-palette` writes `~/.local/state/simplychit/hyprlock-colors.conf`, which `hyprlock.conf` sources after its own defaults |
 | *(pywal16's own `btopwal.theme`)* | btop | copied to `~/.config/btop/themes/simplychit.theme`; install.sh seeds `color_theme` |
-| *(none: `colors.json`)* | VS Code | the `dlasagno.wal-theme` extension (install.sh adds it), theme "Wal" |
+| *(none: `colors.json`)* | VS Code | the SimplyChit extension (`vscode-theme/`, packed by `simplychit vscode-theme --vsix`); `sync-palette` rewrites its theme with every syntax colour lifted to a contrast floor |
 | *(none: `colors.json`)* | browser | pywalfox (`pywalfox update` in `sync-palette`) and its add-on |
 | *(none)* | fastfetch | its keys use ANSI colour 94, so it follows the terminal's palette |
 

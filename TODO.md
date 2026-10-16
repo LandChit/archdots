@@ -563,3 +563,43 @@ then rewrite a file safely, and hand edits still work.
   both views, and its save logic driven offscreen (move across sections,
   own layout on/off, add, remove, bar on/off)
 
+
+## Phase 8: uniform theme
+
+The DEVELOPMENT.md roadmap's last open item, "Create a custom uniform
+theme": every toolkit following the wallpaper palette, with the shell's look.
+Steps in order; the first is the quick win.
+
+- [ ] **Qt palette from wal**: `simplychit sync-palette` writes a qt6ct colour
+  scheme and a `kdeglobals` colour scheme from `colors.json` (same contrast
+  rules as the VS Code theme). Today qt6ct uses the static `darker.conf` plus
+  a fixed grey/`#4a90d9` palette, and `kdeglobals` names `ColorScheme=KvGlass`,
+  whose `kvantum/kvGlass.colors` install.sh never installs. Qt apps pick it
+  up on restart (no live reload)
+- [ ] **Clean up the Kvantum leftovers**: `kvantum.kvconfig` keeps
+  `freecad`/`KvAdaptaDark` app rules (theme not shipped), the
+  `KvGnomeDark#` folder is unused, and the root `kvantum/` copy of KvGlass
+  duplicates `home/.config/Kvantum/KvGlass`
+- [ ] **One font across toolkits**: qt6ct says Roboto 12, GTK says Adwaita
+  Sans 11; pick one and set both
+- [ ] **SimplyChit Kvantum theme**: generated, not hand-drawn. A Python
+  generator in `simplychit` writes `SimplyChit.kvconfig` and an SVG of
+  rounded rects with Kvantum's element ids (`button-normal`, `-top`,
+  `-topleft`, …, `-pressed`/`-focused`/`-toggled`), about 15 widget
+  families, coloured from `colors.json`; `sync-palette` reruns it on every
+  wallpaper change. Test: generate into a scratch HOME, `kvantummanager
+  --set`, screenshot a Qt app
+- [ ] **Cursor theme**: `gtk-cursor-theme-name=default` falls back to
+  Adwaita; ship one (XCursor and hyprcursor) and set it in GTK, Hyprland
+  (`XCURSOR_THEME`/`HYPRCURSOR_THEME`) and the greeter
+- [ ] **Qt5 apps**: `QT_QPA_PLATFORMTHEME=qt6ct` only reaches Qt6; Qt5 apps
+  (sqlitebrowser and others) get plain Fusion. Add qt5ct and Kvantum's Qt5
+  plugin, or decide Qt5 stays unthemed
+- [ ] **Chromium**: use its GTK theme mode, or a generated theme
+- [ ] **Discord** (optional): Vesktop with a wal CSS, instead of the stock
+  client
+- [ ] **Flatpak Qt apps** (optional): Kvantum's flatpak runtime extension
+  and an override exposing `~/.config/Kvantum`
+- [ ] **Accent-tinted icons** (optional): Papirus with `papirus-folders`
+  following color4, instead of plain `breeze-dark`
+- [ ] Tick "Create a custom uniform theme" in DEVELOPMENT.md's roadmap

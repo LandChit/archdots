@@ -9,14 +9,14 @@ Your desktop runs from `~/archdots` (branch `testing`, with a local change to
 
 ## 1. Switch your desktop to the rewrite
 
-- [ ] Save your `.zshrc` change somewhere the new setup reads it:
+- [x] Save your `.zshrc` change somewhere the new setup reads it:
   ```bash
   mkdir -p ~/.config/simplychit/local
   git -C ~/archdots diff .zshrc          # see what you changed
   # copy those lines into ~/.config/simplychit/local/zshrc, then:
   git -C ~/archdots checkout -- .zshrc
   ```
-- [ ] Bring the `rewrite` branch into `~/archdots` and run its installer
+- [x] Bring the `rewrite` branch into `~/archdots` and run its installer
   (update mode). Have a TTY ready (Ctrl+Alt+F2) in case the session needs a
   hand:
   ```bash
@@ -28,7 +28,7 @@ Your desktop runs from `~/archdots` (branch `testing`, with a local change to
   plugins), moves your untracked files across the `home/` move, relinks,
   removes the old fabric shell's venv, and disables hyprpolkitagent's unit
   (it becomes the fallback). Say yes to `tlp-pd` if it asks.
-- [ ] Log out and back in.
+- [x] Log out and back in.
 
 **Going back** if something is badly wrong (from a TTY if needed):
 ```bash
@@ -58,19 +58,19 @@ The update moves everything named archdots on its own. Afterwards:
 
 ## 2. Check the basics (phase 1)
 
-- [ ] zsh: autosuggestions (grey text as you type) and syntax colours work
-- [ ] `pkexec true` asks for your password (in the shell's dialog, see 4)
-- [ ] Idle: leave the machine and watch dim → lock → screens off. On battery
+- [x] zsh: autosuggestions (grey text as you type) and syntax colours work
+- [x] `pkexec true` asks for your password (in the shell's dialog, see 4)
+- [x] Idle: leave the machine and watch dim → lock → screens off. On battery
   it happens sooner (1/2/2.5 min)
 - [ ] SUPER+SHIFT+I: a "Staying awake" notification and a coffee mark in the
   bar; press again to undo
-- [ ] Your own settings in `~/.config/simplychit/local/` (zshrc,
+- [x] Your own settings in `~/.config/simplychit/local/` (zshrc,
   alacritty.toml) and `~/.config/gtk-{3,4}.0/` still apply
 
 ## 3. Check the layout (phase 2)
 
 - [ ] `git -C ~/archdots status` is clean apart from your own changes
-- [ ] Your old `~/.config/hypr/config/custom/*.lua` still applies (it is
+- [x] Your old `~/.config/hypr/config/custom/*.lua` still applies (it is
   read before `~/.config/simplychit/hypr/`); move it there when convenient
 - [ ] A bind changed with `bind.rebind` in
   `~/.config/simplychit/hypr/keybind.lua` replaces the default (does not add a
@@ -80,26 +80,26 @@ The update moves everything named archdots on its own. Afterwards:
 
 - [ ] The bar, wallpaper and every panel come up at login
   (`qs -c simplychit ipc show` lists 12 targets)
-- [ ] `notify-send hi` shows a shell card
-- [ ] `pkexec true` shows the shell's polkit dialog
+- [x] `notify-send hi` shows a shell card
+- [x] `pkexec true` shows the shell's polkit dialog
   (`qs -c simplychit ipc call polkit registered` prints `true`)
-- [ ] Volume keys show the OSD; brightness keys change brightness
-- [ ] Power profiles toggle in the control centre (needs `tlp-pd` running:
+- [x] Volume keys show the OSD; brightness keys change brightness
+- [x] Power profiles toggle in the control centre (needs `tlp-pd` running:
   `sudo systemctl enable --now tlp-pd`)
 - [ ] Wi-Fi: join a network that needs a password, from the control centre
 - [ ] Bluetooth: scan and pair something, from the control centre
 - [ ] Audio tab: switch the output; one app's own volume
-- [ ] Wallpaper: SUPER+W, pick one (re-themes live); Shift+Enter sets it on
+- [x] Wallpaper: SUPER+W, pick one (re-themes live); Shift+Enter sets it on
   one screen only
-- [ ] Launcher: `=2+2`, `/somefile`, `@`, `>` (try "Light mode", then back)
-- [ ] Caps Lock / Num Lock and a VPN coming up show toasts
+- [x] Launcher: `=2+2`, `/somefile`, `@`, `>` (try "Light mode", then back)
+- [x] Caps Lock / Num Lock and a VPN coming up show toasts
 - [ ] A special workspace shows its chip in the bar
 - [ ] On battery: set `battery.lowPercent` above the current charge in
   `~/.config/simplychit/settings.json` to see a warning; the 30 s countdown at
   `battery.actionPercent` (Cancel works)
-- [ ] An external monitor's brightness with `ddcutil` installed (needs the
+- [x] An external monitor's brightness with `ddcutil` installed (needs the
   `i2c-dev` module and the `i2c` group)
-- [ ] Lock screen (optional): `qs -c simplychit ipc call lock preview`, then
+- [x] Lock screen (optional): `qs -c simplychit ipc call lock preview`, then
   `"lock": {"enabled": true}` in settings.json, with a TTY ready. Recovery
   steps are at the top of `~/.config/quickshell/simplychit/modules/lock/Lock.qml`
 
@@ -109,24 +109,24 @@ Open it with SUPER+, (comma). Every page writes
 `~/.config/simplychit/settings.json`; keep a copy first
 (`cp ~/.config/simplychit/settings.json{,.bak}`) so you can go back.
 
-- [ ] SUPER+, opens a floating "SimplyChit settings" window; the launcher's `>`
+- [x] SUPER+, opens a floating "SimplyChit settings" window; the launcher's `>`
   Settings and the gear in the control centre open it too
-- [ ] The standalone copy opens while the shell runs or not:
+- [x] The standalone copy opens while the shell runs or not:
   `qs -p ~/.config/quickshell/simplychit/settings.qml`
-- [ ] **Displays** (have a TTY ready the first time):
-  - [ ] Drag a screen to a new place, Apply: a "Keep these display
+- [~] **Displays** (have a TTY ready the first time):
+  - [x] Drag a screen to a new place, Apply: a "Keep these display
     settings?" card shows on every screen. Do nothing: after 15 s it goes
     back on its own
-  - [ ] Apply again and press Keep: the layout stays after a logout and login
+  - [x] Apply again and press Keep: the layout stays after a logout and login
   - [ ] Change the mode or the scale, Apply, Revert
   - [ ] Identify shows each screen's name on it
-  - [ ] Unplug and replug the external screen: the kept layout comes back
-  - [ ] Put workspace 2 on the external screen; it moves there
-- [ ] **Appearance**: change the opacity (the bar and panels get more
+  - [x] Unplug and replug the external screen: the kept layout comes back
+  - [ ] Put workspace 2 on the external screen; it movexs there
+- [x] **Appearance**: change the opacity (the bar and panels get more
   see-through), light/dark, the wallpaper folder
-- [ ] **Bar**: move an island to the other side, remove one, add it back;
+- [x] **Bar**: move an island to the other side, remove one, add it back;
   turn the bar off on one screen
-- [ ] **Idle & power**: set the AC lock to 1 minute, wait a minute
+- [x] **Idle & power**: set the AC lock to 1 minute, wait a minute
   without touching anything: the screen locks. Set it back
 - [ ] **Default apps**: change the terminal, Apply; SUPER+RETURN starts the
   new one
@@ -136,7 +136,7 @@ Open it with SUPER+, (comma). Every page writes
   toast shows when you switch. Touchpad options change after Apply
 - [ ] **Keybinds**: give one bind new keys, Apply; the new keys work and
   the old ones don't. Turn one off, then Reset both. SUPER+/ shows the new keys
-- [ ] **About**: the doctor list is all green apart from things you don't
+- [x] **About**: the doctor list is all green apart from things you don't
   use. Also from a terminal: `simplychit doctor`
 - [ ] Break the file on purpose (delete a `}` in settings.json), then
   `hyprctl reload`: a notification names the line, nothing crashes, and the

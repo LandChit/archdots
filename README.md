@@ -380,7 +380,10 @@ it once it lists something.
   request it already, and the global override grants it —
   `flatpak override --user --show` to check.
 - Qt apps follow the wallpaper through a generated Kvantum theme, but only
-  when they are restarted.
+  when they are restarted. Qt flatpaks too, through Flathub's Kvantum
+  extension, which `install.sh` adds for each KDE runtime it finds; a
+  runtime Flathub has no Kvantum for yet (6.11 at the time of writing) keeps
+  its own style until a later update adds it.
 - Some tray icons show a generic placeholder if the app ships an icon the icon
   theme doesn't have.
 - Bluetooth devices that need a passkey typed in still need `bluetoothctl`;

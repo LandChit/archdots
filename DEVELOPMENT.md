@@ -236,6 +236,12 @@ Which file an app reads depends on where it runs, and there are two paths:
   libadwaita's whole sheet. `~/.themes` reaches them because the global flatpak
   override grants it (`flatpak override --user --show`) and because most app
   manifests request it themselves.
+- **Qt flatpaks** (the KDE runtime) have neither qt5ct/qt6ct nor Kvantum
+  inside. `stage_flatpak_theming` installs `org.kde.KStyle.Kvantum` per user,
+  one branch for each `org.kde.Platform` branch installed (flatpak finds a
+  user extension for a system runtime), and the global override adds
+  `QT_STYLE_OVERRIDE=kvantum` and read access to `~/.config/Kvantum` and
+  `kdeglobals`. A branch Flathub has no Kvantum for is retried on update.
 
 `xdg-config/gtk-4.0` *can* be granted too, and the global override does grant
 it — flatpak resolves the stow symlink and mounts the real directory. But it

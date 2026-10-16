@@ -2661,6 +2661,14 @@ stage_gtk4_base() {
 # folders for settings.ini and the user CSS libadwaita apps load. All read-only.
 # A per-user override for every app, so a flatpak installed later is themed too.
 # Re-applying it each run also replaces a GTK_THEME left from before a rename.
+#
+# Qt flatpaks (the KDE runtime) need Kvantum itself inside the sandbox: Flathub
+# ships it as the org.kde.KStyle.Kvantum extension, one branch per runtime
+# branch, and Qt has to be told to use it (QT_STYLE_OVERRIDE, since the host's
+# qt5ct/qt6ct is not in the runtime) and let read the generated theme and
+# kdeglobals. Installed per user, so no root: flatpak finds a user extension
+# for a system runtime too. A runtime branch Flathub has no Kvantum for yet
+# keeps its default style.
 
 stage_flatpak_theming() {
     step "Flatpak theming"
@@ -2675,12 +2683,48 @@ stage_flatpak_theming() {
         --filesystem=xdg-config/gtk-3.0:ro \
         --filesystem=xdg-config/gtk-4.0:ro \
         --filesystem=~/.themes:ro \
-        --env=GTK_THEME="${theme:-simplychit}"; then
-        ok "flatpaks can read the GTK theme (GTK_THEME=${theme:-simplychit})"
+        --filesystem=xdg-config/Kvantum:ro \
+        --filesystem=xdg-config/kdeglobals:ro \
+        --env=GTK_THEME="${theme:-simplychit}" \
+        --env=QT_STYLE_OVERRIDE=kvantum; then
+        ok "flatpaks can read the GTK and Kvantum themes (GTK_THEME=${theme:-simplychit})"
     else
         warn "could not set the flatpak override"
-        note "run by hand: flatpak override --user --filesystem=xdg-config/gtk-3.0:ro --filesystem=xdg-config/gtk-4.0:ro --filesystem=~/.themes:ro --env=GTK_THEME=simplychit"
+        note "run by hand: flatpak override --user --filesystem=xdg-config/gtk-3.0:ro --filesystem=xdg-config/gtk-4.0:ro --filesystem=~/.themes:ro --filesystem=xdg-config/Kvantum:ro --filesystem=xdg-config/kdeglobals:ro --env=GTK_THEME=simplychit --env=QT_STYLE_OVERRIDE=kvantum"
     fi
+    flatpak_kvantum
+}
+
+# Kvantum for every KDE runtime branch installed (system or user), so a Qt
+# flatpak draws with the SimplyChit theme. Run on update too: a new app can
+# bring a new runtime branch.
+flatpak_kvantum() {
+    local branches=() branch missing=() added=()
+    mapfile -t branches < <(flatpak list --runtime --columns=application,branch 2>/dev/null \
+        | awk '$1 == "org.kde.Platform" { print $2 }' | sort -u)
+    if (( ! ${#branches[@]} )); then
+        skip "no Qt flatpaks (no KDE runtime installed)"
+        return 0
+    fi
+    flatpak remote-add --user --if-not-exists flathub \
+        https://dl.flathub.org/repo/flathub.flatpakrepo &>/dev/null || true
+    for branch in "${branches[@]}"; do
+        if flatpak info "org.kde.KStyle.Kvantum//$branch" &>/dev/null; then
+            continue
+        elif run_logged "Kvantum for Qt flatpaks ($branch)" flatpak install --user -y --noninteractive \
+            flathub "org.kde.KStyle.Kvantum//$branch"; then
+            added+=("$branch")
+        else
+            missing+=("$branch")
+        fi
+    done
+    (( ${#added[@]} )) && ok "Kvantum added for the KDE runtime ${added[*]}"
+    if (( ${#missing[@]} )); then
+        note "no Kvantum on Flathub for the KDE runtime ${missing[*]} yet; those Qt flatpaks keep their own style"
+    else
+        ok "every Qt flatpak runtime has Kvantum (${branches[*]})"
+    fi
+    return 0
 }
 
 # ── settings that cannot be stowed ──────────────────────────────────────────

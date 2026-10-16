@@ -10,6 +10,9 @@
     simplychit sync-palette             hand pywal16's palette to the apps that
                                       keep their own copy (GTK, hyprlock, btop,
                                       the browser); run after every `wal`
+    simplychit inhibitors               the service that hears apps asking the
+                                      screen to stay awake (a video playing)
+                                      and tells the shell; started at login
 
 The settings app's About page shows the same checks (it runs --json).
 """
@@ -95,6 +98,24 @@ def checks():
         add("Running", "notifications", "fail", "owned by the old fabric shell (python): run install.sh update")
     else:
         add("Running", "notifications", "fail", f"owned by {comm or pid}, so the shell's cards never show (dunst, mako, swaync?)")
+    # where browsers ask to stay awake; the shell only hears it through this
+    owner = run("busctl", "--user", "status", "org.freedesktop.ScreenSaver") or ""
+    pid = next((line.split("=", 1)[1] for line in owner.splitlines() if line.startswith("PID=")), "")
+    cmdline = ""
+    if pid:
+        try:
+            with open(f"/proc/{pid}/cmdline", "rb") as f:
+                cmdline = f.read().replace(b"\0", b" ").decode(errors="replace")
+        except OSError:
+            pass
+    if "simplychit inhibitors" in cmdline:
+        add("Running", "stay-awake requests", "ok", "simplychit inhibitors: videos in browsers keep the screen on")
+    elif "hypridle" in cmdline:
+        add("Running", "stay-awake requests", "warn", "hypridle holds org.freedesktop.ScreenSaver, so videos in browsers do not stop the dim: run install.sh update")
+    elif pid:
+        add("Running", "stay-awake requests", "warn", f"org.freedesktop.ScreenSaver is held by {cmdline.split(' ')[0] or pid}, not simplychit inhibitors")
+    else:
+        add("Running", "stay-awake requests", "ok", "started by the first app that asks")
     registered = run("qs", "-c", "simplychit", "ipc", "call", "polkit", "registered")
     if registered == "true":
         add("Running", "polkit agent", "ok", "the shell's")
@@ -437,6 +458,151 @@ def sync_palette():
     return 1 if failed else 0
 
 
+# ── inhibitors ──────────────────────────────────────────────────────────────
+#
+# The shell's idle steps (services/IdleTimers.qml) only see Wayland idle
+# inhibitors. Browsers and most players ask over D-Bus instead, at
+# org.freedesktop.ScreenSaver (directly, or through the portal, which forwards
+# there), and some tools take a logind "idle" inhibitor. This service owns the
+# ScreenSaver name, watches logind, and keeps the current list in
+# $XDG_RUNTIME_DIR/simplychit-inhibitors.json for the shell (services/Idle.qml).
+# Event-driven: nothing runs between requests.
+
+SCREENSAVER_XML = """<node>
+  <interface name="org.freedesktop.ScreenSaver">
+    <method name="Inhibit">
+      <arg name="application_name" type="s" direction="in"/>
+      <arg name="reason_for_inhibit" type="s" direction="in"/>
+      <arg name="cookie" type="u" direction="out"/>
+    </method>
+    <method name="UnInhibit"><arg name="cookie" type="u" direction="in"/></method>
+    <method name="GetActive"><arg type="b" direction="out"/></method>
+    <method name="SimulateUserActivity"/>
+  </interface>
+</node>"""
+
+
+def inhibitors():
+    import fcntl
+    import signal
+
+    from gi.repository import Gio, GLib
+
+    runtime = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+    out_path = os.path.join(runtime, "simplychit-inhibitors.json")
+
+    # One at a time: D-Bus activation and the login start may both run it.
+    lock = open(os.path.join(runtime, "simplychit-inhibitors.lock"), "w")
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return 0
+
+    cookies = {}       # cookie -> (sender, app, reason)
+    watches = {}       # sender -> NameOwnerChanged subscription id
+    from_logind = []   # [(who, why)]
+    state = {"next": 0, "written": None}
+    session = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+    try:
+        system = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
+    except GLib.Error:
+        system = None
+
+    def publish():
+        rows = [{"app": app, "reason": reason, "via": "dbus"} for _, app, reason in cookies.values()]
+        rows += [{"app": who, "reason": why, "via": "logind"} for who, why in from_logind]
+        text = json.dumps(rows, ensure_ascii=False)
+        if text == state["written"]:
+            return
+        state["written"] = text
+        if rows:
+            write_atomic(out_path, text + "\n")
+        elif os.path.exists(out_path):
+            os.remove(out_path)
+
+    def sender_gone(conn, sender_name, path, iface, signal_name, params, sender):
+        _, _, new_owner = params.unpack()
+        if new_owner:
+            return
+        for cookie in [c for c, v in cookies.items() if v[0] == sender]:
+            del cookies[cookie]
+        session.signal_unsubscribe(watches.pop(sender))
+        publish()
+
+    def watch(sender):
+        if sender not in watches:
+            watches[sender] = session.signal_subscribe(
+                "org.freedesktop.DBus", "org.freedesktop.DBus", "NameOwnerChanged",
+                "/org/freedesktop/DBus", sender, Gio.DBusSignalFlags.NONE, sender_gone, sender)
+
+    def call(conn, sender, path, iface, method, params, invocation):
+        if method == "Inhibit":
+            app, reason = params.unpack()
+            state["next"] += 1
+            cookies[state["next"]] = (sender, app, reason)
+            watch(sender)
+            invocation.return_value(GLib.Variant("(u)", (state["next"],)))
+            publish()
+        elif method == "UnInhibit":
+            (cookie,) = params.unpack()
+            cookies.pop(cookie, None)
+            if sender in watches and not any(v[0] == sender for v in cookies.values()):
+                session.signal_unsubscribe(watches.pop(sender))
+            invocation.return_value(None)
+            publish()
+        elif method == "GetActive":
+            invocation.return_value(GLib.Variant("(b)", (False,)))
+        else:
+            invocation.return_value(None)
+
+    info = Gio.DBusNodeInfo.new_for_xml(SCREENSAVER_XML).interfaces[0]
+    for path in ("/org/freedesktop/ScreenSaver", "/ScreenSaver"):
+        session.register_object(path, info, call, None, None)
+    # Queued, not refused, while someone else (an old hypridle) holds the name:
+    # it is ours as soon as they let go.
+    Gio.bus_own_name_on_connection(session, "org.freedesktop.ScreenSaver",
+                                   Gio.BusNameOwnerFlags.NONE, None, None)
+
+    def logind_listed(conn, result):
+        try:
+            (rows,) = conn.call_finish(result).unpack()
+        except GLib.Error:
+            return
+        from_logind[:] = [(who, why) for what, who, why, mode, uid, pid in rows
+                          if "idle" in what.split(":") and mode == "block" and who != "simplychit"]
+        publish()
+
+    def logind_refresh(*_):
+        system.call("org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager",
+                    "ListInhibitors", None, GLib.VariantType("(a(ssssuu))"), Gio.DBusCallFlags.NONE, 3000,
+                    None, logind_listed)
+
+    def logind_changed(conn, sender, path, iface, signal_name, params, _):
+        _, changed, invalidated = params.unpack()
+        if "BlockInhibited" in changed or "BlockInhibited" in invalidated:
+            logind_refresh()
+
+    if system is not None:
+        system.signal_subscribe("org.freedesktop.login1", "org.freedesktop.DBus.Properties", "PropertiesChanged",
+                                "/org/freedesktop/login1", "org.freedesktop.login1.Manager",
+                                Gio.DBusSignalFlags.NONE, logind_changed, None)
+        logind_refresh()
+
+    loop = GLib.MainLoop()
+    try:
+        from gi.repository import GLibUnix
+        signal_add = GLibUnix.signal_add
+    except ImportError:  # PyGObject before 3.52
+        signal_add = GLib.unix_signal_add
+    for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal_add(GLib.PRIORITY_DEFAULT, sig, lambda *_: loop.quit() or False)
+    publish()
+    loop.run()
+    if os.path.exists(out_path):
+        os.remove(out_path)
+    return 0
+
+
 def main():
     args = sys.argv[1:]
     if not args or args[0] in ("-h", "--help", "help"):
@@ -450,6 +616,8 @@ def main():
         return events(args[1:])
     if args[0] == "sync-palette":
         return sync_palette()
+    if args[0] == "inhibitors":
+        return inhibitors()
     print(f"simplychit: unknown command {args[0]!r}\n\n{__doc__.strip()}", file=sys.stderr)
     return 2
 

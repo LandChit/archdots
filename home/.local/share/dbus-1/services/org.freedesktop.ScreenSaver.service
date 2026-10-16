@@ -1,0 +1,8 @@
+# Apps ask for the screen to stay awake here (browsers playing video, players,
+# presentations; also through the portal, which forwards here). `simplychit
+# inhibitors` takes the requests and tells the shell, whose idle timers would
+# not hear of them otherwise. Started by the first request, if autorun.lua has
+# not started it already; a second copy leaves at once.
+[D-BUS Service]
+Name=org.freedesktop.ScreenSaver
+Exec=/bin/sh -c 'exec "$HOME/.local/bin/simplychit" inhibitors'

@@ -8,6 +8,8 @@ Rectangle {
 
     property string glyph: ""
     property string label: ""
+    // a small third line under the label, e.g. who is keeping it on
+    property string note: ""
     property bool active: false
     signal clicked
 
@@ -37,6 +39,16 @@ Rectangle {
             text: root.label
             px: 10.5
             color: root.active ? Colours.foreground : Colours.subtext
+        }
+        BarText {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.maximumWidth: root.width - 12
+            visible: root.note !== ""
+            text: root.note
+            textFormat: Text.PlainText
+            elide: Text.ElideRight
+            px: 9
+            color: Colours.hint
         }
     }
 

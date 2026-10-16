@@ -10,6 +10,10 @@ hl.on("hyprland.start", function()
     shell.restart()
 
     hl.exec_cmd("hypridle &") -- locks before sleep; the idle timeouts are the shell's
+    -- Apps asking to stay awake (a video playing), over D-Bus or logind, for
+    -- the shell's idle timers. D-Bus starts it on the first request too; this
+    -- start is for logind inhibitors taken before any app has asked.
+    hl.exec_cmd("$HOME/.local/bin/simplychit inhibitors")
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     -- One polkit agent per session, first to register wins. The shell's is the
     -- one meant to; if it has not registered a few seconds in (shell not

@@ -33,13 +33,14 @@ Island {
         }
     }
 
-    // stay awake (SUPER+SHIFT+I) and do-not-disturb, only while on
+    // stay awake (SUPER+SHIFT+I), or dimmer while an app keeps the screen
+    // awake (a video playing), and do-not-disturb, only while on
     BarText {
-        visible: Idle.inhibited
+        visible: Idle.inhibited || Idle.appInhibited
         text: "\u{f0176}"
         leftPadding: 3
         rightPadding: 3
-        color: Colours.accentBright
+        color: Idle.inhibited ? Colours.accentBright : Colours.subtext
     }
     BarText {
         visible: Notifs.dnd

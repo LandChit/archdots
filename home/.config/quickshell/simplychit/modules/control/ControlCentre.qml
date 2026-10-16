@@ -167,6 +167,8 @@ Panel {
                 Toggle {
                     glyph: "\u{f0176}"
                     label: "Awake"
+                    // an app keeping the screen awake by itself (a video)
+                    note: !Idle.inhibited && Idle.appInhibited ? Idle.appSummary : ""
                     active: Idle.inhibited
                     onClicked: Idle.toggle()
                 }

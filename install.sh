@@ -2913,6 +2913,23 @@ This is 'pacman -S --needed' over the package lists: already-installed packages 
     fi
 }
 
+# Browsers ask to stay awake at org.freedesktop.ScreenSaver. hypridle used to
+# take that name and ignore it; its config now leaves it alone, and the stowed
+# D-Bus service file starts `simplychit inhibitors` there. A running session
+# needs the bus to see the new file and hypridle to restart without the name.
+refresh_idle_requests() {
+    [[ -n "${WAYLAND_DISPLAY:-}" ]] || return 0
+    step "Stay-awake requests from apps"
+    busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus \
+        ReloadConfig >/dev/null 2>&1 || true
+    if pgrep -x hypridle >/dev/null; then
+        pkill -x hypridle
+        setsid -f hypridle >/dev/null 2>&1 </dev/null || true
+    fi
+    setsid -f "$HOME/.local/bin/simplychit" inhibitors >/dev/null 2>&1 </dev/null || true
+    ok "videos in browsers now keep the screen awake"
+}
+
 run_update() {
     # Before the gauge, always: the password box is ours to draw, and after this
     # point sudo asks through the askpass helper instead of the terminal.
@@ -2945,6 +2962,7 @@ run_update() {
     stage_gtk4_base     # update_packages may have moved libadwaita under us
     stage_app_theming   # palette copies (hyprlock's file), apps the update added
     stage_shell_services  # hyprpolkitagent off (the shell is the agent), tlp-pd
+    refresh_idle_requests # browsers' stay-awake requests reach the shell
     if [[ -d "$GREETER_DIR" ]]; then
         step "The greeter"
         # wlr-randr arrived with the primary-screen-only login; older greeters lack it

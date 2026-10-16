@@ -8,8 +8,10 @@ import qs.config
 // Dim → lock → screens off → suspend after Config.idle's minutes, the AC or
 // the battery set depending on the power source. 0 turns a step off.
 //
-// Paused while stay-awake is on (Idle.inhibited, SUPER+SHIFT+I); idle
-// inhibitors from apps (a video playing) are respected too. Locking before a
+// Paused while stay-awake is on (Idle.inhibited, SUPER+SHIFT+I), and while an
+// app asks to stay awake: Wayland idle inhibitors (respectInhibitors), and
+// D-Bus or logind ones (Idle.appInhibited, from `simplychit inhibitors`;
+// browsers ask over D-Bus). Every step pauses, suspend too. Locking before a
 // suspend, and turning the screens back on after one, stay with hypridle,
 // which follows logind's sleep signals.
 Singleton {
@@ -23,7 +25,7 @@ Singleton {
         required property real minutes
         property bool restarting: false
 
-        enabled: minutes > 0 && !Idle.inhibited && !restarting
+        enabled: minutes > 0 && !Idle.inhibited && !Idle.appInhibited && !restarting
         timeout: Math.max(1, Math.round(minutes * 60))
         respectInhibitors: true
 

@@ -510,4 +510,17 @@ then rewrite a file safely, and hand edits still work.
   launcher's `> Welcome` or `ipc call welcome open`. Tested in a scratch
   shell copy: every step on screen, done writes the marker, no second show,
   IPC reopens. Not tested: typing into its fields (wtype is unsafe here)
+- [x] **Videos in browsers stop the dim** (SOMETHING_OFF.md): browsers ask over
+  D-Bus (`org.freedesktop.ScreenSaver`, directly or through the portal), which
+  hypridle owned and ignored, so only Wayland inhibitors reached the shell.
+  `simplychit inhibitors` now owns the name (D-Bus activation file, and
+  autorun.lua), also lists logind idle inhibitors, and writes
+  `$XDG_RUNTIME_DIR/simplychit-inhibitors.json`; `Idle.appInhibited` pauses
+  every idle step. The bar's stay-awake glyph shows dimmer and the Awake
+  toggle names the app. hypridle has `ignore_dbus_inhibit`; install.sh's
+  update reloads the bus and restarts hypridle; doctor names the owner.
+  Tested: the service on a private bus (cookies, a client dying, logind,
+  one instance, SIGTERM), hypridle leaving the name, a scratch shell
+  (dim disabled with the file, back without it, bad JSON ignored).
+  Not yet tested live with Zen
 

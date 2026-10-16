@@ -109,7 +109,11 @@ data, so the settings app never generates code and hand edits keep working.
 
 **Idle is the shell's too.** `services/IdleTimers.qml` dims, locks, turns the
 screens off and suspends after `idle.ac` / `idle.battery`; hypridle only locks
-before sleep and turns the screens on after. `simplychit doctor`
+before sleep and turns the screens on after. Apps asking to stay awake pause
+every step: Wayland inhibitors directly, and D-Bus (`org.freedesktop.ScreenSaver`,
+where browsers ask) and logind ones through `simplychit inhibitors`, which owns
+that name (hypridle has `ignore_dbus_inhibit`) and lists the requests in
+`$XDG_RUNTIME_DIR/simplychit-inhibitors.json` for `services/Idle.qml`. `simplychit doctor`
 (`home/.local/bin/simplychit`) checks the whole setup; the About page shows it.
 
 **Adding a setting:** declare it in `config/Config.qml` with its default and

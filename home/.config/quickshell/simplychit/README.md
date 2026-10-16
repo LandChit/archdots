@@ -7,6 +7,11 @@ login by `hypr/config/autorun.lua` (`shell.restart()` in
 which starts it again after a crash (the new shell says so in a toast) and
 gives up after three crashes in a minute. `qs kill` stops it for good.
 
+Apps that ask the screen to stay awake over D-Bus (browsers playing video)
+reach the idle timers through `simplychit inhibitors` (home/.local/bin), which
+writes `$XDG_RUNTIME_DIR/simplychit-inhibitors.json`; `services/Idle.qml`
+reads it.
+
 ```
 shell.qml        entry point: what is on screen, and the IPC targets
 config/          Config (settings.json over defaults), Colours (pywal16)

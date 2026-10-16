@@ -2108,7 +2108,7 @@ stage_greeter() {
 vt = 1
 
 [default_session]
-command = \"env HOME=$GREETER_HOME XCURSOR_THEME=Bibata-Modern-Classic XCURSOR_SIZE=24 QT_WAYLAND_DISABLE_WINDOWDECORATION=1 cage -s -d -- qs -p $GREETER_DIR/greeter.qml\"
+command = \"env HOME=$GREETER_HOME XCURSOR_THEME=Bibata-Modern-Classic XCURSOR_SIZE=20 QT_WAYLAND_DISABLE_WINDOWDECORATION=1 cage -s -d -- qs -p $GREETER_DIR/greeter.qml\"
 user = \"greeter\""
     if [[ -f "$GREETD_CONF" ]] && [[ "$("${SUDO[@]}" cat "$GREETD_CONF")" == "$body" ]]; then
         skip "$GREETD_CONF already correct"
@@ -2713,8 +2713,8 @@ stage_interface() {
         return 0
     fi
     if gsettings set org.gnome.desktop.interface cursor-theme "$cursor" 2>/dev/null \
-        && gsettings set org.gnome.desktop.interface cursor-size "${size:-24}" 2>/dev/null; then
-        ok "cursor = $cursor, ${size:-24} px"
+        && gsettings set org.gnome.desktop.interface cursor-size "${size:-20}" 2>/dev/null; then
+        ok "cursor = $cursor, ${size:-20} px"
     else
         warn "could not set the cursor in dconf (no dbus session?)"
     fi

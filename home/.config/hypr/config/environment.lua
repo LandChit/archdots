@@ -2,8 +2,8 @@
 -- Hyprland draws this XCursor theme, and so do apps that ask it to (Qt,
 -- GTK 4) through the cursor-shape protocol.
 hl.env("XCURSOR_THEME", "Bibata-Modern-Classic")
-hl.env("XCURSOR_SIZE", "24")
-hl.env("HYPRCURSOR_SIZE", "24")
+hl.env("XCURSOR_SIZE", "20")
+hl.env("HYPRCURSOR_SIZE", "20")
 
 
 hl.env("LIBVA_DRIVER_NAME", "nvidia")

@@ -2,14 +2,14 @@
   "name": "simplychit-theme",
   "displayName": "SimplyChit",
   "description": "The SimplyChit wallpaper palette, with every syntax colour lifted to a readable contrast. Rewritten by `simplychit sync-palette` on each wallpaper change.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "simplychit",
   "license": "MIT",
   "engines": { "vscode": "^1.70.0" },
   "categories": ["Themes"],
   "contributes": {
     "themes": [
-      { "label": "SimplyChit", "uiTheme": "vs-dark", "path": "./themes/simplychit.json" }
+      { "label": "SimplyChit", "uiTheme": "vs-dark", "path": "./themes/simplychit.json", "_watch": true }
     ]
   }
 }

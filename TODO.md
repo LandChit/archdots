@@ -465,8 +465,9 @@ then rewrite a file safely, and hand edits still work.
     comments 4.2:1), roles also split by lightness so a one-hue palette
     stays distinguishable. A "Wal" selection is moved to "SimplyChit".
     Tested install + sync in a scratch VS Code profile. The theme file is
-    rewritten in place: VS Code reloads only on an update event, and the
-    first version's atomic rename (delete + add) needed a restart.
+    rewritten in place, and the theme entry carries `"_watch": true`: VS
+    Code watches a theme file only with that flag (or in extension
+    development), and reloads only on an update event, not a rename.
 
 ## Phase 7: remaining features
 

@@ -841,10 +841,13 @@ KV_RADIUS = {"button": 6, "lineedit": 6, "menu": 8, "menuitem": 5, "itemview": 5
              "menubaritem": 5, "titlebar": 6}
 
 
-# How opaque each surface is, the GTK theme's values (gtk.css): windows 0.86,
-# buttons 0.88, views 0.70, popups 0.93, text fields an accent wash. Hyprland
-# blurs what shows through, so Qt apps get the same frosted glass as GTK.
-KV_ALPHA = {"window": 0.86, "button": 0.88, "view": 0.70, "popup": 0.93, "field": 0.10}
+# How opaque each surface is. Qt apps cannot be told apart the way GTK's CSS
+# tells a sidebar from the content, so instead of picking which parts are
+# glass, nearly everything is: the window at 0.80, views thin enough (0.30 on
+# top of it, about 0.86 in all) that a list or Dolphin's file view is still
+# glass rather than a solid slab, buttons 0.75, popups 0.85, text fields an
+# accent wash. Hyprland blurs what shows through. Text stays opaque.
+KV_ALPHA = {"window": 0.80, "button": 0.75, "view": 0.30, "popup": 0.85, "field": 0.10}
 
 # Apps that paint their own video or canvas and break behind a translucent
 # window (KvGlass's list).
@@ -1069,7 +1072,9 @@ def kvantum_config(c):
             "link.visited.color": c["visited"], "progress.indicator.text.color": t,
         },
         "Hacks": {
-            "transparent_ktitle_label": "true", "transparent_dolphin_view": "false",
+            "transparent_ktitle_label": "true",
+            # Dolphin paints its file view itself, solid unless told not to
+            "transparent_dolphin_view": "true",
             "respect_darkness": "true", "force_size_grip": "false",
             "iconless_pushbutton": "false", "iconless_menu": "false",
             "disabled_icon_opacity": 70, "normal_default_pushbutton": "true",

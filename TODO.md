@@ -579,7 +579,8 @@ Steps in order; the first is the quick win.
 - [ ] **Clean up the Kvantum leftovers**: `kvantum.kvconfig` keeps
   `freecad`/`KvAdaptaDark` app rules (theme not shipped), the
   `KvGnomeDark#` folder is unused, and the root `kvantum/` copy of KvGlass
-  duplicates `home/.config/Kvantum/KvGlass`
+  (same SVG, a different kvconfig, plus `kvGlass.colors`) sits beside
+  `home/.config/Kvantum/KvGlass`: keep one
 - [ ] **One font across toolkits**: qt6ct says Roboto 12, GTK says Adwaita
   Sans 11; pick one and set both
 - [ ] **SimplyChit Kvantum theme**: generated, not hand-drawn. A Python

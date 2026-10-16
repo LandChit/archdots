@@ -30,7 +30,7 @@ home/                stowed into $HOME: `stow --dir=<repo> --target=$HOME home`
     quickshell/simplychit/   the desktop shell, QML (README inside)
     wal/templates/   pywal16 templates — the source of all theming
     alacritty/ eza/ fastfetch/ cliphist/ fontconfig/
-    Kvantum/ qt6ct/  Qt theming (KvGlass is the base of the generated SimplyChit theme)
+    Kvantum/ qt6ct/  Qt theming (the Kvantum theme itself is generated)
     gtk-3.0/settings.ini          GTK theming — picks the theme in .themes/
     uwsm/            session env (forces Hyprland onto the iGPU)
   .themes/           GTK theme
@@ -294,7 +294,7 @@ wallpaper, and templates in `.config/wal/templates/` push them everywhere:
 | *(none: `colors.json`)* | hyprlock | `simplychit sync-palette` writes `~/.local/state/simplychit/hyprlock-colors.conf`, which `hyprlock.conf` sources after its own defaults |
 | *(pywal16's own `btopwal.theme`)* | btop | copied to `~/.config/btop/themes/simplychit.theme`; install.sh seeds `color_theme` |
 | *(none: `colors.json`)* | VS Code | the SimplyChit extension (`vscode-theme/`, packed by `simplychit vscode-theme --vsix`); `sync-palette` rewrites its theme with every syntax colour lifted to a contrast floor |
-| *(none: `colors.json`)* | Qt apps | `sync-palette` writes a Kvantum theme, `~/.config/Kvantum/SimplyChit/`: KvGlass's kvconfig with the palette's colours and its SVG with the blues turned to the accent and the greys moved onto the background-to-text line (so a light palette gives a light theme). Kvantum ignores qt6ct's palette, so this is where Qt's colours come from. Apps pick it up when they restart |
+| *(none: `colors.json`)* | Qt apps | `sync-palette` generates a Kvantum theme, `~/.config/Kvantum/SimplyChit/`: the kvconfig and an SVG of flat rounded shapes drawn in code (`kvantum_svg` in `simplychit`) from the GTK theme's roles, with text held to a contrast floor on every fill, so a light palette gives a light theme. Kvantum ignores qt6ct's palette, so this is where Qt's colours come from. Apps pick it up when they restart |
 | *(none: `colors.json`)* | KDE apps | `sync-palette` writes the `[Colors:*]` groups into `~/.config/kdeglobals` (a real file now, not stowed: KDE apps write their own settings into it) and `~/.local/share/color-schemes/SimplyChit.colors` |
 | *(none: `colors.json`)* | browser | pywalfox (`pywalfox update` in `sync-palette`) and its add-on |
 | *(none)* | fastfetch | its keys use ANSI colour 94, so it follows the terminal's palette |
@@ -573,8 +573,6 @@ flatpak list --app --columns=application
   and OSD surfaces translucent but leaves app windows opaque, so an app that
   paints its own chrome can still end up with an opaque panel next to a
   translucent one.
-- **Dolphin's list view is broken** under Kvantum `KvGlass` (and the SimplyChit
-  theme generated from it). Use icon view.
 - **The GPU pin names DRM device paths, and those are not stable.**
   `env-hyprland.d/10-gpu.sh` forces Hyprland onto the iGPU by listing
   `/dev/dri/cardN` in order, and card numbering can change between boots. If a

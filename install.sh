@@ -1737,12 +1737,14 @@ stage_stow() {
     fi
     mkdir -p "$HOME/.config" "$HOME/.config/Kvantum" "$HOME/.local/bin" "$HOME/.local/share/dbus-1/services"
     # Links to files the repo has since dropped (kdeglobals, now written by
-    # sync-palette rather than stowed): stow leaves them dangling.
+    # sync-palette rather than stowed; the KvGlass theme): stow leaves them
+    # dangling.
     while IFS= read -r -d '' link; do
         [[ "$(readlink -m -- "$link")" == "$real/home/"* && ! -e "$link" ]] || continue
         rm -- "$link"
         ok "removed a link to a file the repo no longer has: ${link#"$HOME/"}"
-    done < <(find "$HOME" "$HOME/.config" "$HOME/.local/bin" "$HOME/.local/share" -maxdepth 1 -type l -print0 2>/dev/null)
+    done < <(find "$HOME" "$HOME/.config" "$HOME/.config/Kvantum" "$HOME/.local/bin" "$HOME/.local/share" \
+                  -maxdepth 1 -type l -print0 2>/dev/null)
     simulate="$(stow --simulate --verbose=1 --dir="$REPO_ROOT" --target="$HOME" home 2>&1 || true)"
     while IFS= read -r line; do
         [[ "$line" == *"  * "* ]] || continue

@@ -378,8 +378,7 @@ it once it lists something.
   request it already, and the global override grants it —
   `flatpak override --user --show` to check.
 - Qt apps follow the wallpaper through a generated Kvantum theme, but only
-  when they are restarted, and they keep KvGlass's shapes for now.
-- Dolphin's list view is broken with this Qt theme — use icon view.
+  when they are restarted.
 - Some tray icons show a generic placeholder if the app ships an icon the icon
   theme doesn't have.
 - Bluetooth devices that need a passkey typed in still need `bluetoothctl`;

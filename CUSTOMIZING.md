@@ -111,7 +111,7 @@ Every key, with its default:
     "terminal": "alacritty",
     "browser": "zen-browser",
     "fileManager": "dolphin",
-    "processManager": "flatpak run io.missioncenter.MissionCenter"
+    "processManager": "missioncenter || flatpak run io.missioncenter.MissionCenter"
   },
   "idle": {
     "ac": { "dim": 2.5, "lock": 5, "screenOff": 5.5, "suspend": 30 },

@@ -133,14 +133,23 @@ PKG_AUR=(
 
 # Tools only. Media players, office suites and game launchers are a matter of
 # taste and are quicker to install by hand than to argue with in a script.
+#
+# From the official repos wherever they are packaged: these used to be
+# flatpaks, and a first install spent up to an hour on Flathub's bandwidth for
+# them (VLC and OBS alone pulled in the whole KDE runtime). Pacman mirrors are
+# ranked and close by. Arch splits VLC's codecs into plugin packages; without
+# vlc-plugins-all it plays next to nothing.
+#
+# Fresh installs only: an update does not add them, since an existing install
+# has the flatpak copies and would end up with every app twice.
+PKG_APPS=(
+    flatseal mission-center vlc vlc-plugins-all obs-studio snapshot
+    gnome-text-editor
+)
+
+# Only what the official repos do not carry.
 PKG_FLATPAK=(
-    com.github.tchx84.Flatseal
-    io.missioncenter.MissionCenter
-    org.videolan.VLC
-    com.obsproject.Studio
     io.github.nozwock.Packet
-    org.gnome.Snapshot
-    org.gnome.TextEditor
 )
 
 # The shell owns org.freedesktop.Notifications. Any of these takes that bus
@@ -155,6 +164,7 @@ WANT_GUI=1              # whiptail dialogs, when they are available
 REPO_URL="$REPO_URL_DEFAULT"
 REPO_DIR="$REPO_DIR_DEFAULT"
 WANT_UTILS=1
+WANT_APPS=1
 WANT_AUR=1
 WANT_FLATPAK=1
 WANT_GREETER=1          # greetd + the shell's login screen; --no-greeter: SDDM instead
@@ -183,6 +193,7 @@ plain text, with every command's output on screen.
                       question per step. (--gui forces the dialogs back on.)
       --repo URL      Clone from URL instead of the default remote.
       --dir PATH      Clone into PATH (default: ~/simplychit).
+      --no-apps       Skip the applications (VLC, OBS, Mission Center, ...).
       --no-flatpak    Skip the flatpak applications.
       --no-utils      Skip the utility packages.
       --no-aur        Skip the AUR helper and every AUR package.
@@ -215,6 +226,7 @@ while [[ $# -gt 0 ]]; do
         --flatpak)       WANT_FLATPAK=1 ;;   # kept: it used to be opt-in
         --no-flatpak)    WANT_FLATPAK=0 ;;
         --no-utils)      WANT_UTILS=0 ;;
+        --no-apps)       WANT_APPS=0 ;;
         --no-aur)        WANT_AUR=0 ;;
         --greeter)       WANT_GREETER=1 ;;   # kept: it used to be opt-in
         --no-greeter)    WANT_GREETER=0 ;;
@@ -1340,12 +1352,23 @@ Remove them?" y; then
     if (( WANT_UTILS )) && confirm "Install the utility packages (${#PKG_UTILS[@]})?
 
 ${PKG_UTILS[*]}" y; then
-        phase 42 46 "Utilities"
+        phase 42 44 "Utilities"
         step "Utilities"
         pac_install "Utilities" "${PKG_UTILS[@]}"
         ok "installed"
     else
         skip "utilities"
+    fi
+
+    if (( WANT_APPS )) && confirm "Install the applications (${#PKG_APPS[@]})?
+
+${PKG_APPS[*]}" y; then
+        phase 44 46 "Applications"
+        step "Applications"
+        pac_install "Applications" "${PKG_APPS[@]}"
+        ok "installed"
+    else
+        skip "applications"
     fi
 
     # Not optional, and not part of the AUR question below. The palette is core
@@ -3106,9 +3129,10 @@ choose_stages() {
     sel="$(wt --title "Custom install" --checklist \
         "Everything ticked here runs without asking again.
 
-$KEYS_LIST" 21 76 8 \
+$KEYS_LIST" 22 76 9 \
         packages "Install packages"                        "$(on_off $DO_PACKAGES)" \
         utils    "  the utility packages"                  "$(on_off $WANT_UTILS)" \
+        apps     "  the applications (VLC, OBS, ...)"      "$(on_off $WANT_APPS)" \
         aur      "  paru and the AUR packages"             "$(on_off $WANT_AUR)" \
         flatpak  "  the flatpak applications"              "$(on_off $WANT_FLATPAK)" \
         stow     "Link the dotfiles into \$HOME"           "$(on_off $DO_STOW)" \
@@ -3120,11 +3144,12 @@ $KEYS_LIST" 21 76 8 \
     # ask for anything the flags cannot. whiptail returns them quoted, space
     # separated.
     DO_PACKAGES=0; DO_STOW=0; DO_MACHINE=0
-    WANT_UTILS=0; WANT_AUR=0; WANT_FLATPAK=0; WANT_GREETER=0
+    WANT_UTILS=0; WANT_APPS=0; WANT_AUR=0; WANT_FLATPAK=0; WANT_GREETER=0
     for tag in ${sel//\"/}; do
         case "$tag" in
             packages) DO_PACKAGES=1 ;;
             utils)    WANT_UTILS=1 ;;
+            apps)     WANT_APPS=1 ;;
             aur)      WANT_AUR=1 ;;
             flatpak)  WANT_FLATPAK=1 ;;
             stow)     DO_STOW=1 ;;

@@ -450,6 +450,12 @@ then rewrite a file safely, and hand edits still work.
     per-user override (gtk-3.0/gtk-4.0 config and `~/.themes` read-only,
     `GTK_THEME`) on install and update. Tested both stages in a scratch
     HOME; not yet re-checked on screen in the VM.
+  - [x] Flatpak apps moved to pacman where the official repos carry them
+    (`PKG_APPS`, `--no-apps`): Flathub's bandwidth made a first install
+    take up to an hour. Only Packet stays a flatpak. Fresh installs only,
+    so an update does not duplicate an existing install's flatpaks. The
+    process manager default is `missioncenter || flatpak run …`, which
+    covers both. Not installed in the VM yet.
 
 ## Phase 7: remaining features
 

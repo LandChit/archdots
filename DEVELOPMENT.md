@@ -660,7 +660,7 @@ drawing — so those bracket the substitution with `prompt_begin`/`prompt_end`
 instead. With a real `--yes`, nothing asks anything.
 
 Everything else is foregone once the run has started: the utilities, the AUR
-packages, the flatpaks (on by default), oh-my-zsh, zsh as the login shell, the
+packages, the applications, the flatpaks (on by default), oh-my-zsh, zsh as the login shell, the
 SDDM theme and its `IgnorePkg` pin, the services, stow.
 
 That is also what makes the progress bar honest. `gauge_open()` refuses to raise

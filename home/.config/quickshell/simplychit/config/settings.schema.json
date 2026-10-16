@@ -270,7 +270,7 @@
         },
         "processManager": {
           "type": "string",
-          "default": "flatpak run io.missioncenter.MissionCenter"
+          "default": "missioncenter || flatpak run io.missioncenter.MissionCenter"
         }
       },
       "additionalProperties": false,

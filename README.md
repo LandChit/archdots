@@ -153,7 +153,7 @@ choose once — install, update, or pick the parts yourself — and the rest run
 its own behind a progress bar, with everything it did kept in
 `~/.local/state/simplychit/`. Pass `--no-gui` to be asked about each step in plain
 text and watch the output as it happens, `--yes` to accept every default and ask
-nothing at all, `--no-flatpak` to skip the flatpak applications, or `--help` for
+nothing at all, `--no-apps` or `--no-flatpak` to skip the applications, or `--help` for
 the full list.
 
 Already have the repo cloned? `./install.sh` from inside it does the same thing
@@ -347,15 +347,23 @@ linked against one libalpm version and stops working the moment pacman bumps
 it. `sddm-silent-theme` is pinned to a specific version and added to `IgnorePkg`,
 because a theme upgrade replaces the login screen's config.
 
-### Flatpak — installed by default
-
-Tools only. Pass `--no-flatpak` to skip them.
+### Applications — optional
 
 ```
-com.github.tchx84.Flatseal    io.missioncenter.MissionCenter
-org.videolan.VLC              com.obsproject.Studio
-io.github.nozwock.Packet      org.gnome.Snapshot
-org.gnome.TextEditor
+flatseal mission-center vlc vlc-plugins-all obs-studio snapshot gnome-text-editor
+```
+
+Tools only, from the official repos. Pass `--no-apps` to skip them. They were
+flatpaks until Flathub's bandwidth made a first install take up to an hour;
+an install that already has the flatpak copies keeps them, since an update
+does not add these.
+
+### Flatpak — installed by default
+
+Only what the official repos do not carry. Pass `--no-flatpak` to skip it.
+
+```
+io.github.nozwock.Packet
 ```
 
 <hr>

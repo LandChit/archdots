@@ -23,7 +23,7 @@ local apps = {
     terminal = settings.get("apps.terminal", "alacritty"),
     fileManager = settings.get("apps.fileManager", "dolphin"),
     browser = settings.get("apps.browser", "zen-browser"),
-    processManager = settings.get("apps.processManager", "flatpak run io.missioncenter.MissionCenter"),
+    processManager = settings.get("apps.processManager", "missioncenter || flatpak run io.missioncenter.MissionCenter"),
 }
 
 local mainMod = "SUPER"

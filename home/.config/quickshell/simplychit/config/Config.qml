@@ -155,7 +155,7 @@ Singleton {
                 property string terminal: "alacritty"
                 property string browser: "zen-browser"
                 property string fileManager: "dolphin"
-                property string processManager: "flatpak run io.missioncenter.MissionCenter"
+                property string processManager: "missioncenter || flatpak run io.missioncenter.MissionCenter"
             }
 
             property JsonObject notifications: JsonObject {

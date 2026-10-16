@@ -377,8 +377,8 @@ it once it lists something.
 - Flatpaks need `~/.themes` in their permissions to be themed at all. Most
   request it already, and the global override grants it —
   `flatpak override --user --show` to check.
-- Qt apps go through Kvantum and qt6ct instead, so they don't follow the
-  wallpaper the way GTK apps do.
+- Qt apps follow the wallpaper through a generated Kvantum theme, but only
+  when they are restarted, and they keep KvGlass's shapes for now.
 - Dolphin's list view is broken with this Qt theme — use icon view.
 - Some tray icons show a generic placeholder if the app ships an icon the icon
   theme doesn't have.

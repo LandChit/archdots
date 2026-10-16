@@ -8,8 +8,9 @@
     simplychit events [YYYY-MM-DD]      one day's calendar events from khal, as
                                       JSON (today if no date)
     simplychit sync-palette             hand pywal16's palette to the apps that
-                                      keep their own copy (GTK, hyprlock, btop,
-                                      the browser, VS Code); run after every `wal`
+                                      keep their own copy (GTK, Qt/Kvantum, KDE,
+                                      hyprlock, btop, the browser, VS Code); run
+                                      after every `wal`
     simplychit vscode-theme [--vsix F]  the VS Code colour theme for the current
                                       palette, as JSON; --vsix packs the
                                       extension into F (install.sh installs it)
@@ -678,6 +679,297 @@ def build_vsix(out, palette):
     return 0
 
 
+# ── Qt ──────────────────────────────────────────────────────────────────────
+#
+# Qt apps draw with Kvantum (qt6ct's style), and Kvantum ignores qt6ct's
+# palette: every colour comes from the theme's kvconfig and SVG. So the palette
+# goes into a generated theme, SimplyChit: KvGlass's settings and SVG with its
+# colours replaced. KDE apps also read [Colors:*] from kdeglobals (through
+# KColorScheme) for what the Qt palette has no role for, so that is written too.
+# Neither reloads live: a Qt app picks the new colours up when it restarts.
+
+KVANTUM_BASE = os.path.join(REPO_HOME, ".config/Kvantum/KvGlass")
+
+
+def qt_colours(palette):
+    """The roles the GTK theme derives (gtk.css), opaque: same names, same
+    mixes, with text pushed to a contrast floor like the VS Code theme."""
+    def get(name):
+        value = palette.get(name, "")
+        return value if re.fullmatch(r"#[0-9a-fA-F]{6}", value or "") else VSCODE_DEFAULTS[name]
+
+    bg, accent = get("background"), get("color4")
+    window = mix(bg, accent, 0.10)
+    c = {
+        "background": bg,
+        "window": window,
+        "base": mix(bg, accent, 0.04),
+        "alt_base": mix(bg, accent, 0.08),
+        "button": mix(bg, accent, 0.22),
+        "raised": mix(bg, accent, 0.30),
+        "accent": accent,
+        # selection and progress: deeper than the accent, as KvGlass had it
+        "accent_deep": mix(accent, bg, 0.30),
+    }
+    fg = readable(get("foreground"), window, 9)
+    c["text"] = fg
+    c["muted"] = readable(mix(fg, window, 0.30), window, 4.5)
+    c["disabled"] = readable(mix(fg, window, 0.55), window, 3)
+    c["accent_hover"] = mix(accent, fg, 0.18)
+    c["link"] = readable(c["accent_hover"], c["base"], 4.5)
+    c["visited"] = readable(mix(accent, get("color5"), 0.40), c["base"], 4.5)
+    # text on a selection: whichever of color7, the text and the background
+    # stands out more on both selection shades, pushed until it reads on both
+    on = max((get("color7"), fg, bg), key=lambda x: min(contrast(x, accent), contrast(x, c["accent_deep"])))
+    for fill in (accent, c["accent_deep"]):
+        on = readable(on, fill, 4.5)
+    c["on_accent"] = on
+    c["light"], c["midlight"] = mix(window, fg, 0.22), mix(window, fg, 0.12)
+    c["mid"], c["dark"] = mix(window, fg, 0.06), mix(bg, "#000000", 0.45)
+    c["negative"] = readable("#d97f8c", c["base"], 4.5)
+    c["neutral"] = readable("#d9b872", c["base"], 4.5)
+    c["positive"] = readable("#7fb08a", c["base"], 4.5)
+    return c
+
+
+def _hue_family(hexc, lo, hi):
+    import colorsys
+    h, l, s = colorsys.rgb_to_hls(*_rgb(hexc))
+    return s > 0.3 and 0.25 < l < 0.85 and lo <= h * 360 <= hi
+
+
+def kvantum_svg(svg, c):
+    """KvGlass's SVG with its blues (selection, focus, progress) and the one
+    purple in the palette's accent, and every grey moved onto the line from the
+    palette's background to its text by its lightness: black glass becomes
+    the background, white glass the text colour. On a light palette that line
+    runs the other way, so the dark glass theme turns light with it."""
+    import colorsys
+    ground = mix(c["background"], c["accent"], 0.10)
+
+    def swap(m):
+        colour = m.group(0)
+        if _hue_family(colour, 195, 230):
+            return c["accent_deep"] if _luminance(colour) < 0.15 else c["accent"]
+        if _hue_family(colour, 260, 300):
+            return c["accent_hover"]
+        _, l, s = colorsys.rgb_to_hls(*_rgb(colour))
+        if s < 0.35 or l > 0.85 or l < 0.12:
+            return mix(ground, c["text"], l)
+        return colour
+    return re.sub(r"#[0-9a-fA-F]{6}\b", swap, svg)
+
+
+def kvantum_config(base, c):
+    """KvGlass.kvconfig with [GeneralColors] replaced and every per-widget text
+    colour mapped onto the palette."""
+    general = {
+        "window.color": c["window"], "base.color": c["base"], "alt.base.color": c["alt_base"],
+        "button.color": c["button"], "light.color": c["light"], "mid.light.color": c["midlight"],
+        "dark.color": c["dark"], "mid.color": c["mid"],
+        "highlight.color": c["accent"], "inactive.highlight.color": c["accent_deep"],
+        "tooltip.base.color": c["raised"], "text.color": c["text"],
+        "window.text.color": c["text"], "button.text.color": c["text"],
+        "disabled.text.color": c["disabled"], "tooltip.text.color": c["text"],
+        "highlight.text.color": c["on_accent"], "link.color": c["link"],
+        "link.visited.color": c["visited"],
+        "progress.indicator.text.color": c["on_accent"],
+    }
+    # states drawn on the accent: hovered and selected items, menus, progress
+    on_accent = {"ItemView", "MenuItem", "MenuBarItem", "Progressbar"}
+    out, section = [], ""
+    for line in base.splitlines():
+        head = re.fullmatch(r"\[(.+)\]", line.strip())
+        if head:
+            section = head.group(1)
+            out.append(line)
+            if section == "GeneralColors":
+                out.extend(f"{k}={v}" for k, v in general.items())
+            continue
+        key, sep, _ = line.partition("=")
+        key = key.strip()
+        if section == "GeneralColors" and sep:
+            continue
+        if section == "%General" and key in ("author", "comment"):
+            line = f"{key}=" + ("SimplyChit" if key == "author" else
+                                "GENERATED by simplychit sync-palette from KvGlass; rewritten on every wallpaper change")
+        elif sep and re.fullmatch(r"text\.\w+\.color", key):
+            state = key.split(".")[1]
+            if section in on_accent and state in ("focus", "press", "toggle"):
+                line = f"{key}={c['on_accent']}"
+            elif section == "TitleBar" and state == "normal":
+                line = f"{key}={c['muted']}"
+            else:
+                line = f"{key}={c['text']}"
+        out.append(line)
+    return "\n".join(out) + "\n"
+
+
+def kde_colour_groups(c):
+    """[Colors:*] and [WM], as Plasma writes them when a scheme is applied."""
+    def rgb(h):
+        return ",".join(str(round(x * 255)) for x in _rgb(h))
+
+    def group(bg, alt, fg, inactive=None, **extra):
+        keys = {
+            "BackgroundNormal": bg, "BackgroundAlternate": alt,
+            "ForegroundNormal": fg, "ForegroundInactive": inactive or c["muted"],
+            "ForegroundActive": c["accent_hover"], "ForegroundLink": c["link"],
+            "ForegroundVisited": c["visited"], "ForegroundNegative": c["negative"],
+            "ForegroundNeutral": c["neutral"], "ForegroundPositive": c["positive"],
+            "DecorationFocus": c["accent"], "DecorationHover": c["accent_hover"],
+        }
+        keys.update(extra)
+        return {k: rgb(v) for k, v in keys.items()}
+
+    return {
+        "Colors:Window": group(c["window"], c["alt_base"], c["text"]),
+        "Colors:View": group(c["base"], c["alt_base"], c["text"]),
+        "Colors:Button": group(c["button"], c["raised"], c["text"]),
+        "Colors:Selection": group(c["accent"], c["accent_deep"], c["on_accent"], c["on_accent"],
+                                  ForegroundActive=c["on_accent"], ForegroundLink=c["on_accent"],
+                                  ForegroundVisited=c["on_accent"]),
+        "Colors:Tooltip": group(c["raised"], c["button"], c["text"]),
+        "Colors:Complementary": group(c["raised"], c["button"], c["text"]),
+        "Colors:Header": group(c["button"], c["window"], c["text"]),
+        "Colors:Header][Inactive": group(c["window"], c["base"], c["muted"]),
+        "WM": {
+            "activeBackground": rgb(c["button"]), "activeForeground": rgb(c["text"]),
+            "activeBlend": rgb(c["text"]),
+            "inactiveBackground": rgb(c["window"]), "inactiveForeground": rgb(c["muted"]),
+            "inactiveBlend": rgb(c["muted"]),
+        },
+    }
+
+
+# What the stowed kdeglobals used to carry, now that the file is written here
+# (KDE apps write their own settings into it, which landed in the clone). Set
+# only where missing, so a later change by an app or the user is kept.
+KDEGLOBALS_SEED = {
+    "General": {"TerminalApplication": "alacritty"},
+    "Icons": {"Theme": "breeze-dark"},
+}
+
+
+def ini_groups(text):
+    """KConfig text as [(group or None, [lines])], the lines kept verbatim."""
+    groups, name, lines = [], None, []
+    for line in text.splitlines():
+        head = re.fullmatch(r"\[(.+)\]", line.strip())
+        if head:
+            groups.append((name, lines))
+            name, lines = head.group(1), []
+        else:
+            lines.append(line)
+    groups.append((name, lines))
+    return groups
+
+
+def kdeglobals(text, c):
+    """`text` with the colour groups replaced, [General] ColorScheme set, the
+    seed keys added where missing, and everything else left as it was."""
+    owned = kde_colour_groups(c)
+    seeds = {g: dict(keys) for g, keys in KDEGLOBALS_SEED.items()}
+    seeds.setdefault("General", {})
+    out = []
+
+    def emit(name, lines):
+        out.append(f"[{name}]")
+        out.extend(lines)
+        out.append("")
+
+    for name, lines in ini_groups(text):
+        if name in owned:
+            continue
+        if name is None:
+            lines = [x for x in lines if x.strip()]
+            if lines:
+                out.extend(lines + [""])
+            continue
+        keys = [x.split("=", 1)[0].strip() for x in lines if "=" in x]
+        if name == "General":
+            lines = [x for x in lines if x.split("=", 1)[0].strip() != "ColorScheme"]
+        # the scheme Dolphin was told to use in the old stowed file; there is
+        # no such scheme, and these colours replace it
+        if name == "UiSettings":
+            lines = [x for x in lines if x.strip() != "ColorScheme=KvGlass"]
+        while lines and not lines[-1].strip():
+            lines.pop()
+        if name == "General":
+            lines.append("ColorScheme=SimplyChit")
+        lines.extend(f"{k}={v}" for k, v in seeds.pop(name, {}).items() if k not in keys)
+        if any(x.strip() for x in lines):
+            emit(name, lines)
+    for name, seed in seeds.items():
+        emit(name, (["ColorScheme=SimplyChit"] if name == "General" else [])
+             + [f"{k}={v}" for k, v in seed.items()])
+    for name, keys in owned.items():
+        emit(name, [f"{k}={v}" for k, v in keys.items()])
+    return "\n".join(out)
+
+
+def kde_scheme(c):
+    """The same groups as a colour scheme file, for apps that pick one by name
+    (Dolphin's Settings > Window Color Scheme)."""
+    out = ["# GENERATED by `simplychit sync-palette`; rewritten on every wallpaper change.",
+           "[General]", "Name=SimplyChit", "ColorScheme=SimplyChit", ""]
+    for name, keys in kde_colour_groups(c).items():
+        out.append(f"[{name}]")
+        out.extend(f"{k}={v}" for k, v in keys.items())
+        out.append("")
+    return "\n".join(out)
+
+
+def inside_repo(path):
+    return os.path.realpath(path).startswith(os.path.realpath(REPO_HOME) + os.sep)
+
+
+def sync_qt(palette, done, failed):
+    c = qt_colours(palette)
+
+    kv = os.path.join(HOME, ".config/Kvantum")
+    if inside_repo(kv):
+        # folded by stow into one link to the clone, so the theme would be
+        # written into the repo; install.sh makes it a real folder
+        failed.append(f"{kv}/SimplyChit: ~/.config/Kvantum is a link into the clone; "
+                      "run install.sh to make it a folder")
+    else:
+        try:
+            with open(os.path.join(KVANTUM_BASE, "KvGlass.kvconfig"), encoding="utf-8") as f:
+                config = kvantum_config(f.read(), c)
+            with open(os.path.join(KVANTUM_BASE, "KvGlass.svg"), encoding="utf-8") as f:
+                svg = kvantum_svg(f.read(), c)
+            for name, text in (("SimplyChit.kvconfig", config), ("SimplyChit.svg", svg)):
+                dst = os.path.join(kv, "SimplyChit", name)
+                write_atomic(dst, text)
+                done.append(dst)
+        except OSError as e:
+            failed.append(f"{kv}/SimplyChit: {e.strerror or e}")
+
+    data = os.environ.get("XDG_DATA_HOME") or os.path.join(HOME, ".local/share")
+    scheme = os.path.join(data, "color-schemes", "SimplyChit.colors")
+    try:
+        write_atomic(scheme, kde_scheme(c))
+        done.append(scheme)
+    except OSError as e:
+        failed.append(f"{scheme}: {e.strerror or e}")
+
+    # kdeglobals was stowed until the colours went in; a link still pointing
+    # at the clone (dangling once the repo dropped the file) is read if it can
+    # be, and the rename replaces the link with a real file
+    path = os.path.join(HOME, ".config/kdeglobals")
+    try:
+        try:
+            with open(path, encoding="utf-8") as f:
+                old = f.read()
+        except FileNotFoundError:
+            old = ""
+        write_atomic(path, kdeglobals(old, c))
+        done.append(path)
+    except OSError as e:
+        failed.append(f"{path}: {e.strerror or e}")
+
+
 def read_palette(cache):
     try:
         with open(os.path.join(cache, "colors.json"), encoding="utf-8") as f:
@@ -755,6 +1047,9 @@ def sync_palette():
             done.append(dst)
         except OSError as e:
             failed.append(f"{dst}: {e.strerror or e}")
+
+    # Qt and KDE apps: the generated Kvantum theme and kdeglobals' colours
+    sync_qt(palette, done, failed)
 
     # the browser, through the pywalfox add-on (it reads colors.json itself)
     if shutil.which("pywalfox"):

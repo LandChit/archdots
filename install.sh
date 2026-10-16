@@ -1725,7 +1725,24 @@ stage_stow() {
     # one symlink to the repo. Folded, everything any app
     # later creates there, ~/.config/simplychit/ included, lands in the clone.
     # Same for the D-Bus services folder, which other installs write into.
-    mkdir -p "$HOME/.config" "$HOME/.local/bin" "$HOME/.local/share/dbus-1/services"
+    # ~/.config/Kvantum too: `simplychit sync-palette` writes the generated
+    # SimplyChit theme there, and Kvantum reads themes from nowhere else. An
+    # install from before that has it folded; the link goes and stow links
+    # the folders inside again.
+    local real link
+    real="$(cd -- "$REPO_ROOT" && pwd -P)"
+    if [[ -L "$HOME/.config/Kvantum" && "$(readlink -m -- "$HOME/.config/Kvantum")" == "$real/home/.config/Kvantum" ]]; then
+        rm -- "$HOME/.config/Kvantum"
+        ok "~/.config/Kvantum is a folder now (the generated theme goes there)"
+    fi
+    mkdir -p "$HOME/.config" "$HOME/.config/Kvantum" "$HOME/.local/bin" "$HOME/.local/share/dbus-1/services"
+    # Links to files the repo has since dropped (kdeglobals, now written by
+    # sync-palette rather than stowed): stow leaves them dangling.
+    while IFS= read -r -d '' link; do
+        [[ "$(readlink -m -- "$link")" == "$real/home/"* && ! -e "$link" ]] || continue
+        rm -- "$link"
+        ok "removed a link to a file the repo no longer has: ${link#"$HOME/"}"
+    done < <(find "$HOME" "$HOME/.config" "$HOME/.local/bin" "$HOME/.local/share" -maxdepth 1 -type l -print0 2>/dev/null)
     simulate="$(stow --simulate --verbose=1 --dir="$REPO_ROOT" --target="$HOME" home 2>&1 || true)"
     while IFS= read -r line; do
         [[ "$line" == *"  * "* ]] || continue

@@ -37,7 +37,6 @@ home/                stowed into $HOME: `stow --dir=<repo> --target=$HOME home`
   .ohmyzsh_custom/   zsh theme (the plugins come from pacman)
   .zshrc
 .themes_sddm/        SDDM theme (install.sh copies it into /usr/share/sddm)
-kvantum/             Kvantum theme sources
 wallpapers/          copied to ~/Pictures/wallpapers
 simplychit_docker/     container test harness
 install.sh  README.md  DEVELOPMENT.md  CUSTOMIZING.md  TODO.md

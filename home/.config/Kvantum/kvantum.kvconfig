@@ -1,7 +1,2 @@
 [General]
 theme=SimplyChit
-
-[Applications]
-Default=freecad
-KvAdaptaDark=freecad
-KvGlass=dolphin

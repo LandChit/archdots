@@ -2683,6 +2683,24 @@ stage_flatpak_theming() {
 # GSettings live in ~/.config/dconf/user, a binary database. Only a command can
 # set them.
 
+# One UI font for GTK, Qt and the portals: gtk-{3,4}.0/settings.ini and
+# qt6ct.conf say Roboto 12, but GTK on Wayland (GTK 4, libadwaita) and the
+# settings portal read dconf instead, so the same name goes there. The
+# monospace one is the terminal's. Run on update too, so an install from
+# before keeps no Adwaita Sans in dconf.
+stage_fonts() {
+    command -v gsettings >/dev/null || return 0
+    local font
+    font="$(awk -F= '/^gtk-font-name=/{print $2}' "$HOME/.config/gtk-3.0/settings.ini" 2>/dev/null)"
+    [[ -n "$font" ]] || return 0
+    if gsettings set org.gnome.desktop.interface font-name "$font" 2>/dev/null \
+        && gsettings set org.gnome.desktop.interface monospace-font-name "JetBrainsMono Nerd Font 12" 2>/dev/null; then
+        ok "font = $font, monospace = JetBrainsMono Nerd Font 12"
+    else
+        warn "could not set the fonts in dconf (no dbus session?)"
+    fi
+}
+
 stage_dconf() {
     step "dconf settings"
 
@@ -2710,6 +2728,8 @@ stage_dconf() {
             note "GTK will fall back to Adwaita light and the shell will look washed out"
         fi
     fi
+
+    stage_fonts
 
     # ── blueman ─────────────────────────────────────────────────────────────
     if ! command -v gsettings >/dev/null; then
@@ -3071,6 +3091,7 @@ run_update() {
     stage_gtk4_base     # update_packages may have moved libadwaita under us
     stage_flatpak_theming
     stage_app_theming   # palette copies (hyprlock's file), apps the update added
+    stage_fonts         # the UI font in dconf, where GTK on Wayland reads it
     stage_shell_services  # hyprpolkitagent off (the shell is the agent), tlp-pd
     refresh_idle_requests # browsers' stay-awake requests reach the shell
     if [[ -d "$GREETER_DIR" ]]; then

@@ -464,8 +464,9 @@ then rewrite a file safely, and hand edits still work.
     keeps its hue and is lightened to a contrast floor (code 5.5:1,
     comments 4.2:1), roles also split by lightness so a one-hue palette
     stays distinguishable. A "Wal" selection is moved to "SimplyChit".
-    Tested install + sync in a scratch VS Code profile; live reload on a
-    wallpaper change not watched on screen yet.
+    Tested install + sync in a scratch VS Code profile. The theme file is
+    rewritten in place: VS Code reloads only on an update event, and the
+    first version's atomic rename (delete + add) needed a restart.
 
 ## Phase 7: remaining features
 

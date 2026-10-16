@@ -742,10 +742,16 @@ def sync_palette():
     # VS Code reloads the active theme when its file changes, so an open window
     # follows the wallpaper. Written even before pywal16 has run (defaults),
     # like hyprlock's, so the theme is never missing its colours.
+    #
+    # Rewritten in place, not through write_atomic: VS Code reloads the theme
+    # only on an *update* event for that file, and replacing it by rename
+    # arrives as delete + add, which it ignores. The window then kept the old
+    # colours until a restart. wal-theme writes in place for the same reason.
     theme = json.dumps(vscode_theme(palette), indent=2) + "\n"
     for dst in vscode_theme_paths():
         try:
-            write_atomic(dst, theme)
+            with open(dst, "w", encoding="utf-8") as f:
+                f.write(theme)
             done.append(dst)
         except OSError as e:
             failed.append(f"{dst}: {e.strerror or e}")

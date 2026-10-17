@@ -127,7 +127,13 @@ Singleton {
     }
 
     function setWorkspaces(workspaces: var): void {
-        const monitorsByDesc = profile ? profile.monitors : Object.fromEntries(monitors.map(m => [m.description, specOf(draftOf(m))]));
+        // no Object.fromEntries in QML's JS engine
+        let monitorsByDesc = profile ? profile.monitors : null;
+        if (!monitorsByDesc) {
+            monitorsByDesc = {};
+            for (const m of monitors)
+                monitorsByDesc[m.description] = specOf(draftOf(m));
+        }
         save(monitorsByDesc, workspaces);
         Quickshell.execDetached(["hyprctl", "eval", workspacesLua(workspaces)]);
     }

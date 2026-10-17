@@ -1305,6 +1305,10 @@ ICON_GREYS = re.compile(r"#(?:2e343[46]|474747|bebebe|222(?![0-9a-fA-F])|000(?![
 def sync_icons(c, done, failed):
     data = os.environ.get("XDG_DATA_HOME") or os.path.join(HOME, ".local/share")
     theme = os.path.join(data, "icons", "SimplyChit")
+    # stowed for a while before it was generated: a link into the clone to a
+    # folder the repo no longer has, so nothing of the user's is in it
+    if os.path.islink(theme) and inside_repo(theme) and not os.path.exists(theme):
+        os.remove(theme)
     if inside_repo(theme):
         failed.append(f"{theme}: a link into the clone; run install.sh")
         return

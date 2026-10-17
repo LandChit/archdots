@@ -31,7 +31,6 @@ home/                stowed into $HOME: `stow --dir=<repo> --target=$HOME home`
     wal/templates/   pywal16 templates — the source of all theming
     alacritty/ eza/ fastfetch/ cliphist/ fontconfig/
     Kvantum/ qt5ct/ qt6ct/  Qt 5 and 6 theming (the Kvantum theme itself is generated)
-  .local/share/icons/SimplyChit/  Qt's icon theme: breeze-dark, then Adwaita
     gtk-3.0/settings.ini          GTK theming — picks the theme in .themes/
     uwsm/            session env (forces Hyprland onto the iGPU)
   .themes/           GTK theme
@@ -306,6 +305,7 @@ wallpaper, and templates in `.config/wal/templates/` push them everywhere:
 | *(pywal16's own `btopwal.theme`)* | btop | copied to `~/.config/btop/themes/simplychit.theme`; install.sh seeds `color_theme` |
 | *(none: `colors.json`)* | VS Code | the SimplyChit extension (`vscode-theme/`, packed by `simplychit vscode-theme --vsix`); `sync-palette` rewrites its theme with every syntax colour lifted to a contrast floor |
 | *(none: `colors.json`)* | Qt apps | `sync-palette` generates a Kvantum theme, `~/.config/Kvantum/SimplyChit/`: the kvconfig and an SVG of flat rounded shapes drawn in code (`kvantum_svg` in `simplychit`) from the GTK theme's roles, with text held to a contrast floor on every fill, so a light palette gives a light theme. Nearly everything is glass, since Qt apps cannot be split into sidebar and content the way GTK's CSS can (`KV_ALPHA`: windows 0.80, views 0.30 on top of that, buttons 0.75, popups 0.85; Dolphin's file view too, through `transparent_dolphin_view`), with Hyprland's blur behind; text stays opaque, and the video and canvas apps in `KV_OPAQUE` stay solid. Kvantum ignores qt6ct's palette, so this is where Qt's colours come from. Apps pick it up when they restart |
+| *(none: `colors.json`)* | Qt icons | `sync-palette` writes the SimplyChit icon theme, `~/.local/share/icons/SimplyChit/` (qt5ct/qt6ct `icon_theme`): Adwaita's symbolic icons that breeze has no icon for (tray menus ask for `bluetooth-symbolic` and the like, which Qt, unlike GTK, does not fall back from), their fixed greys turned into the palette's text colour; it inherits breeze-dark for the rest. Rewritten only when the text colour changes. GTK keeps breeze-dark, since flatpaks cannot see that folder |
 | *(none: `colors.json`)* | KDE apps | `sync-palette` writes the `[Colors:*]` groups into `~/.config/kdeglobals` (a real file now, not stowed: KDE apps write their own settings into it) and `~/.local/share/color-schemes/SimplyChit.colors` |
 | *(none: `colors.json`)* | browser | pywalfox (`pywalfox update` in `sync-palette`) and its add-on |
 | *(none)* | fastfetch | its keys use ANSI colour 94, so it follows the terminal's palette |

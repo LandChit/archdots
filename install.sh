@@ -1750,7 +1750,7 @@ stage_stow() {
         rm -- "$link"
         ok "removed a link to a file the repo no longer has: ${link#"$HOME/"}"
     done < <(find "$HOME" "$HOME/.config" "$HOME/.config/Kvantum" "$HOME/.local/bin" "$HOME/.local/share" \
-                  -maxdepth 1 -type l -print0 2>/dev/null)
+                  "$HOME/.local/share/icons" -maxdepth 1 -type l -print0 2>/dev/null)
     simulate="$(stow --simulate --verbose=1 --dir="$REPO_ROOT" --target="$HOME" home 2>&1 || true)"
     while IFS= read -r line; do
         [[ "$line" == *"  * "* ]] || continue

@@ -15,8 +15,9 @@ ColumnLayout {
     readonly property var nodes: Pipewire.nodes.values.filter(n => n.audio !== null)
     readonly property var outputs: nodes.filter(n => n.isSink && !n.isStream)
     readonly property var inputs: nodes.filter(n => !n.isSink && !n.isStream)
-    // an app playing sound is a stream that outputs (is not a sink)
-    readonly property var apps: nodes.filter(n => n.isStream && !n.isSink)
+    // an app playing sound: Quickshell flags a playback stream as a sink
+    // (type AudioOutStream, Audio | Stream | Sink); a recording one is not
+    readonly property var apps: nodes.filter(n => n.isStream && n.isSink)
 
     function portName(n: var): string {
         return n.nickname || n.properties["node.nick"] || n.properties["device.profile.description"] || n.description || n.name;

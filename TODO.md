@@ -662,9 +662,15 @@ Steps in order; the first is the quick win.
 Moved from MISSING.md (notification grouping, privacy indicators, C6 media
 extras), with the owner's choices.
 
-- [ ] **Notification grouping**: in the history (SUPER+N) only, cards from
-  one app stack into a group with a count, expandable, with a clear-group
-  button. Popups stay one per notification
+- [x] **Notification grouping** (done): `Notifs.historyGroups` groups the
+  history by app (ordered by each app's newest); `NotificationGroup.qml`
+  shows one notification as a plain card, two or more under a header (app,
+  count, expand, Clear) with the newest card and the stacked edges of the
+  rest, or every card when open. Open groups are kept by app name while the
+  centre is open, so a new notification does not close them. Popups are
+  unchanged. Tested in a scratch shell on a private bus (notify-send from
+  three apps): collapsed, and expanded (a scratch copy forced open; a click
+  cannot be sent safely)
 - [ ] **Privacy indicators**: microphone, camera and screen-share dots in the
   bar's indicators, from PipeWire streams; hovering or clicking lists the
   apps using them

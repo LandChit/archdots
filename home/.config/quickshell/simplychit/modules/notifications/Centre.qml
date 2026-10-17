@@ -5,10 +5,13 @@ import qs.config
 import qs.services
 import qs.widgets
 
-// The notification history (the last 50), newest first, with Clear and the
-// DND switch. Opened with SUPER+N.
+// The notification history (the last 50), newest first and grouped by app,
+// with Clear and the DND switch. Opened with SUPER+N.
 Panel {
     id: root
+
+    // which app groups are open, by app name; all closed again on each open
+    property var expanded: ({})
 
     name: "notifications"
     anchors.top: true
@@ -18,7 +21,10 @@ Panel {
     implicitWidth: 400
     implicitHeight: card.implicitHeight + 20
 
-    onOpened: keys.forceActiveFocus()
+    onOpened: {
+        expanded = {};
+        keys.forceActiveFocus();
+    }
 
     Item {
         id: keys
@@ -102,15 +108,21 @@ Panel {
                     spacing: 6
 
                     Repeater {
-                        model: Notifs.history
+                        model: Notifs.historyGroups
 
-                        NotificationCard {
+                        NotificationGroup {
                             required property var modelData
 
                             Layout.fillWidth: true
-                            entry: modelData
-                            inHistory: true
-                            onClosed: Notifs.removeFromHistory(modelData.key)
+                            group: modelData
+                            // kept by app name, so a new notification (which
+                            // rebuilds the groups) leaves a group open
+                            expanded: root.expanded[modelData.app] === true
+                            onToggled: {
+                                const next = Object.assign({}, root.expanded);
+                                next[modelData.app] = !expanded;
+                                root.expanded = next;
+                            }
                         }
                     }
                 }

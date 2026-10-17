@@ -68,6 +68,30 @@ Singleton {
         history = history.filter(h => h.key !== key);
     }
 
+    // The history by app, for the notification centre: one group per app,
+    // ordered by each app's newest notification, newest first inside.
+    function groupOf(entry): string {
+        return entry.appName || "Other";
+    }
+
+    readonly property var historyGroups: {
+        const groups = [];
+        const byApp = {};
+        for (const entry of history) {
+            const app = groupOf(entry);
+            if (!(app in byApp)) {
+                byApp[app] = { app: app, items: [] };
+                groups.push(byApp[app]);
+            }
+            byApp[app].items.push(entry);
+        }
+        return groups;
+    }
+
+    function removeGroup(app: string): void {
+        history = history.filter(h => groupOf(h) !== app);
+    }
+
     // Do not disturb on a daily schedule (notifications.schedule): switched on
     // and off at the edges only, so DND set by hand in between is left alone.
     property bool inSchedule: false

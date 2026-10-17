@@ -501,6 +501,13 @@ then rewrite a file safely, and hand edits still work.
     reach nothing). `stage_zen_theme` also sets it false in user.js.
     Tested with Marionette on a scratch profile: a pywalfox-style dynamic
     theme sets `[lwtheme]` and the sidebar only with the pref false
+  - [x] Fresh installs: Zen has no profile until its first start, so the
+    install step found nothing. Moved into `simplychit zen-theme`
+    (`sync_zen`), run by sync-palette (install, update, every wallpaper)
+    and by a once-a-session `window.open` hook for class `zen`
+    (autorun.lua); install.sh's own copy is gone. Tested: fake HOME with
+    no profile / two profiles / a second run (no changes), and the hook's
+    event and class live with a throwaway handler and a scratch Zen
 
 ### Nice to have
 

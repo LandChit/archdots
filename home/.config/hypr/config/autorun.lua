@@ -28,3 +28,14 @@ hl.on("hyprland.start", function()
     -- at ~/simplychit, and this file has no business knowing where it is.
     hl.exec_cmd("sh $HOME/.config/hypr/Scripts/fix_dolphin.sh")
 end)
+
+-- Zen makes its profile on first start, after install.sh ran, so the sidebar
+-- theme (`simplychit zen-theme`) is set up when it first opens a window; Zen
+-- reads it from its next start. Once a session: it only fills in what is missing.
+local zen_checked = false
+hl.on("window.open", function(window)
+    if not zen_checked and window and window.class == "zen" then
+        zen_checked = true
+        hl.exec_cmd("$HOME/.local/bin/simplychit zen-theme")
+    end
+end)

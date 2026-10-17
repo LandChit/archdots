@@ -14,6 +14,9 @@
     simplychit vscode-theme [--vsix F]  the VS Code colour theme for the current
                                       palette, as JSON; --vsix packs the
                                       extension into F (install.sh installs it)
+    simplychit zen-theme                let Zen's sidebar follow the browser
+                                      theme (pywalfox) in every Zen profile;
+                                      sync-palette runs it too
     simplychit inhibitors               the service that hears apps asking the
                                       screen to stay awake (a video playing)
                                       and tells the shell; started at login
@@ -1426,6 +1429,93 @@ def read_palette(cache):
         return {}
 
 
+# ── Zen ─────────────────────────────────────────────────────────────────────
+#
+# pywalfox sets a Firefox theme, but Zen paints its sidebar and toolbar from its
+# own workspace gradient, and drops every theme while zen.theme.disable-lightweight
+# is on (its default). <repo>/zen-theme/simplychit.css points the sidebar at the
+# theme's colours; each profile gets a copy, imported first in userChrome.css
+# (an @import after any rule is ignored), and two prefs in user.js: that one,
+# and the one that makes Firefox read userChrome.css at all.
+#
+# Zen makes its profile on first start, so a fresh install has none: this runs
+# from sync-palette (install, update, every wallpaper) and when a Zen window
+# opens (rules.lua). Only changes what is missing; Zen reads it on next start.
+
+ZEN_IMPORT = '@import "simplychit.css";'
+ZEN_PREFS = (
+    'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);',
+    'user_pref("zen.theme.disable-lightweight", false);',
+)
+
+
+def zen_profiles():
+    for root in (os.path.join(HOME, ".zen"), os.path.join(HOME, ".config/zen")):
+        try:
+            with open(os.path.join(root, "profiles.ini"), encoding="utf-8") as f:
+                lines = f.read().splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            if line.startswith("Path="):
+                path = os.path.join(root, line[5:])  # an absolute Path= wins
+                if os.path.isdir(path):
+                    yield path
+
+
+def sync_zen(done, failed):
+    try:
+        with open(os.path.join(os.path.dirname(REPO_HOME), "zen-theme", "simplychit.css"), encoding="utf-8") as f:
+            css = f.read()
+    except OSError as e:
+        failed.append(f"zen-theme/simplychit.css: {e.strerror or e}")
+        return
+    for profile in zen_profiles():
+        chrome = os.path.join(profile, "chrome")
+        try:
+            os.makedirs(chrome, exist_ok=True)
+            changed = False
+
+            dst = os.path.join(chrome, "simplychit.css")
+            try:
+                with open(dst, encoding="utf-8") as f:
+                    current = f.read()
+            except OSError:
+                current = None
+            if current != css:
+                write_atomic(dst, css)
+                changed = True
+
+            user_chrome = os.path.join(chrome, "userChrome.css")
+            try:
+                with open(user_chrome, encoding="utf-8") as f:
+                    text = f.read()
+            except FileNotFoundError:
+                text = ""
+            if ZEN_IMPORT not in text.splitlines():
+                write_atomic(user_chrome, ZEN_IMPORT + "\n" + text)
+                changed = True
+
+            user_js = os.path.join(profile, "user.js")
+            try:
+                with open(user_js, encoding="utf-8") as f:
+                    have = f.read()
+            except FileNotFoundError:
+                have = ""
+            missing = [p for p in ZEN_PREFS if p not in have.splitlines()]
+            if missing:
+                with open(user_js, "a", encoding="utf-8") as f:
+                    if have and not have.endswith("\n"):
+                        f.write("\n")
+                    f.write("\n".join(missing) + "\n")
+                changed = True
+
+            if changed:
+                done.append(profile)
+        except OSError as e:
+            failed.append(f"{profile}: {e.strerror or e}")
+
+
 def sync_palette():
     """pywal16 renders into ~/.cache/wal; these are the consumers that cannot
     read from there and keep a copy. Each is skipped when it is not installed.
@@ -1502,6 +1592,7 @@ def sync_palette():
     if shutil.which("pywalfox"):
         if run("pywalfox", "update", timeout=10) is not None:
             done.append("pywalfox")
+    sync_zen(done, failed)
 
     for d in done:
         print(d.replace(HOME, "~"))
@@ -1776,6 +1867,14 @@ def main():
             return build_vsix(args[2], read_palette(cache))
         print(json.dumps(vscode_theme(read_palette(cache)), indent=2))
         return 0
+    if args[0] == "zen-theme":
+        done, failed = [], []
+        sync_zen(done, failed)
+        for d in done:
+            print(d.replace(HOME, "~"))
+        for f in failed:
+            print("not copied: " + f.replace(HOME, "~"), file=sys.stderr)
+        return 1 if failed else 0
     if args[0] == "inhibitors":
         return inhibitors()
     if args[0] == "privacy-watch":

@@ -2524,46 +2524,11 @@ stage_app_theming() {
             warn "pywalfox install failed"
         fi
     fi
-    stage_zen_theme
-}
-
-# ── Zen's sidebar ───────────────────────────────────────────────────────────
-#
-# pywalfox sets a Firefox theme, but Zen paints its sidebar and toolbar from
-# its own workspace gradient and never reads that theme. zen-theme/simplychit.css
-# points Zen's background at the theme's colours; it goes into every profile's
-# chrome/ and is imported first in userChrome.css (an @import after any rule is
-# ignored). Two prefs in user.js: Firefox only reads userChrome.css with the
-# legacy-stylesheets one, and Zen ignores every theme (pywalfox's too: no
-# [lwtheme], no colours anywhere) while zen.theme.disable-lightweight is on,
-# its default. Takes effect on Zen's next start.
-
-stage_zen_theme() {
-    local root ini path dir chrome pref css="$REPO_ROOT/zen-theme/simplychit.css"
-    local import='@import "simplychit.css";'
-    local prefs=(
-        'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);'
-        'user_pref("zen.theme.disable-lightweight", false);'
-    )
-    for root in "$HOME/.zen" "$HOME/.config/zen"; do
-        ini="$root/profiles.ini"
-        [[ -f "$ini" ]] || continue
-        while IFS= read -r path; do
-            [[ "$path" == /* ]] && dir="$path" || dir="$root/$path"
-            [[ -d "$dir" ]] || continue
-            chrome="$dir/chrome"
-            mkdir -p "$chrome"
-            cp "$css" "$chrome/simplychit.css"
-            if ! grep -qxF "$import" "$chrome/userChrome.css" 2>/dev/null; then
-                { printf '%s\n' "$import"; cat "$chrome/userChrome.css" 2>/dev/null || :; } \
-                    > "$chrome/userChrome.css.new" && mv "$chrome/userChrome.css.new" "$chrome/userChrome.css"
-            fi
-            for pref in "${prefs[@]}"; do
-                grep -qxF "$pref" "$dir/user.js" 2>/dev/null || printf '%s\n' "$pref" >> "$dir/user.js"
-            done
-            ok "Zen: sidebar follows the browser theme (${dir##*/})"
-        done < <(sed -n 's/^Path=//p' "$ini")
-    done
+    # Zen's sidebar is set up by sync-palette above, once Zen has made its
+    # profile (on first start); see sync_zen in home/.local/bin/simplychit.
+    if command -v zen-browser >/dev/null && [[ ! -f "$HOME/.zen/profiles.ini" ]]; then
+        note "Zen: its sidebar follows the wallpaper from the second start on"
+    fi
 }
 
 # ── VS Code ─────────────────────────────────────────────────────────────────

@@ -656,3 +656,22 @@ Steps in order; the first is the quick win.
 - Chromium, Discord and accent-tinted icons: left out by the owner, moved
   to MISSING.md (U1-U3)
 - [x] Tick "Create a custom uniform theme" in DEVELOPMENT.md's roadmap
+
+## Phase 9: notifications, privacy, media
+
+Moved from MISSING.md (notification grouping, privacy indicators, C6 media
+extras), with the owner's choices.
+
+- [ ] **Notification grouping**: in the history (SUPER+N) only, cards from
+  one app stack into a group with a count, expandable, with a clear-group
+  button. Popups stay one per notification
+- [ ] **Privacy indicators**: microphone, camera and screen-share dots in the
+  bar's indicators, from PipeWire streams; hovering or clicking lists the
+  apps using them
+- [ ] **Media panel**: clicking the bar's media island opens it. Cover art,
+  title, artist, a seek bar, the controls, and a switcher when several
+  players are open (the one picked stays the bar's player)
+- [ ] **Visualiser**: a cava spectrum in the media panel (`cava` from the
+  official repos), running only while the panel is open
+- [ ] **Synced lyrics**: from LRCLIB for the playing track, the current line
+  highlighted in the media panel

@@ -49,12 +49,10 @@ screencopy thumbnails).
 |---|---|
 | Colour picker | `hyprpicker -a` on a key, history in a panel |
 | Screenshot annotation | pipe to `satty` from the screenshot menu |
-| Privacy indicators | watch PipeWire nodes for mic/camera/screenshare, dot in the bar |
 | System updater | `checkupdates` + AUR count in the bar, click runs `simplychit update` |
 | Browser picker | `.desktop` URL handler that asks which browser |
 | Workspace rename | Hyprland `renameworkspace` from a dialog |
 | User profile picture | `~/.face` in the power menu and lock screen |
-| Notification grouping | group history cards by app |
 | Hibernate in the power menu | only suspend is there; hibernate is in the critical-battery action |
 | Auto-hide bar | drop the exclusive zone, reveal on edge hover |
 | Desktop widgets | clock or meters on a bottom-layer window |
@@ -80,10 +78,6 @@ fprintd and Howdy, an avatar, power off / reboot from the lock screen.
 ### C5. Desktop clock and audio visualiser
 A clock and a cava visualiser on the wallpaper layer, hidden when nothing
 plays.
-
-### C6. Media extras
-Synced lyrics (LRCLIB), a visualiser in the media panel, a preferred player
-when several are open.
 
 ### C7. Remaining bar details
 Done: special-workspace chips, per-monitor bar config, scroll for volume.

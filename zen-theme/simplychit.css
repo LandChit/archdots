@@ -6,6 +6,8 @@
  * The --lwt-* variables are the theme's, and pywalfox changes them live, so
  * this follows every wallpaper change without a restart. Only while a theme
  * is on ([lwtheme]); with the default theme Zen keeps its own gradient.
+ * Zen ignores themes altogether unless zen.theme.disable-lightweight is
+ * false (install.sh sets it in user.js).
  *
  * Copied into each Zen profile's chrome/ by install.sh and imported from
  * userChrome.css; edits here are overwritten on update.

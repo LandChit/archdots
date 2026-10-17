@@ -496,6 +496,11 @@ then rewrite a file safely, and hand edits still work.
     the mod on and off (override wins over Zen's gradient and the mod),
     the installer step on a fake HOME (run twice, nothing changes the
     second time). Not yet seen with pywalfox itself on the live profile
+  - [x] It still did nothing live: Zen ships `zen.theme.disable-lightweight`
+    = true, which drops every theme (no `[lwtheme]`, pywalfox's colours
+    reach nothing). `stage_zen_theme` also sets it false in user.js.
+    Tested with Marionette on a scratch profile: a pywalfox-style dynamic
+    theme sets `[lwtheme]` and the sidebar only with the pref false
 
 ### Nice to have
 

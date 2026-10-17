@@ -16,6 +16,9 @@ Panel {
     id: root
 
     name: "control"
+    // paused while a tray menu is open: the menu is another surface, and a
+    // click in it would otherwise count as a click outside
+    closeOnOutsideClick: !tray.menuOpen
     anchors.top: true
     anchors.right: true
     margins.top: 46
@@ -330,6 +333,8 @@ Panel {
                         active: root.shown && root.page === "audio"
                     }
                     TrayPage {
+                        id: tray
+
                         Layout.fillWidth: true
                         visible: root.page === "tray"
                         window: root

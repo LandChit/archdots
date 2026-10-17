@@ -487,6 +487,15 @@ then rewrite a file safely, and hand edits still work.
   hyprlock itself (only its parser's source/override behaviour, with
   hyprlang), the VS Code extension, pywalfox in Zen. DO_THIS: pick theme
   "Wal" in VS Code, add the Pywalfox add-on)
+  - [x] Zen's sidebar ignored pywalfox: Zen paints it from its workspace
+    gradient, not the Firefox theme. `zen-theme/simplychit.css` maps it to
+    the theme's `--lwt-accent-color` (live, only under `[lwtheme]`) and
+    tints the Transparent Zen mod's background colour when that is on.
+    install.sh's `stage_zen_theme` copies it into every profile's chrome/
+    and imports it from userChrome.css. Tested: a scratch Zen profile with
+    the mod on and off (override wins over Zen's gradient and the mod),
+    the installer step on a fake HOME (run twice, nothing changes the
+    second time). Not yet seen with pywalfox itself on the live profile
 
 ### Nice to have
 

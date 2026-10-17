@@ -1,0 +1,34 @@
+/* SimplyChit: Zen's sidebar and toolbar in the browser theme's colours.
+ *
+ * Zen paints them from its workspace gradient, set inline on
+ * #zen-browser-background and #zen-toolbar-background, and never reads the
+ * Firefox theme, so pywalfox's colours stop at the URL bar and the panels.
+ * The --lwt-* variables are the theme's, and pywalfox changes them live, so
+ * this follows every wallpaper change without a restart. Only while a theme
+ * is on ([lwtheme]); with the default theme Zen keeps its own gradient.
+ *
+ * Copied into each Zen profile's chrome/ by install.sh and imported from
+ * userChrome.css; edits here are overwritten on update.
+ */
+
+:root[lwtheme] {
+  --zen-primary-color: var(--toolbarbutton-icon-fill-attention) !important;
+  /* The Transparent Zen mod's "background colour": a see-through tint of the
+     theme instead of its fixed one. */
+  --mod-sameerasw-zen_transparency_color: color-mix(
+    in srgb,
+    var(--lwt-accent-color) 55%,
+    transparent
+  ) !important;
+}
+
+/* Not while that mod paints the background itself (it reads the tint above). */
+@media not -moz-pref("mod.sameerasw.zen_bg_color_enabled") {
+  :root[lwtheme] :is(#zen-browser-background, #zen-toolbar-background) {
+    /* -old is what Zen fades from when switching workspaces */
+    --zen-main-browser-background: var(--lwt-accent-color) !important;
+    --zen-main-browser-background-old: var(--lwt-accent-color) !important;
+    --zen-main-browser-background-toolbar: var(--lwt-accent-color) !important;
+    --zen-main-browser-background-toolbar-old: var(--lwt-accent-color) !important;
+  }
+}

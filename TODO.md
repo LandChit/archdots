@@ -647,8 +647,12 @@ Steps in order; the first is the quick win.
   and read access to `~/.config/Kvantum` and `kdeglobals`. Runs on update;
   a branch with no Kvantum on Flathub (6.11, qView's, today) is noted and
   retried. Tested with a flatpak shim shaped like this machine (installs
-  5.15-25.08 and 6.10, notes 6.11, skips on a second run). Not yet run
-  against real Flathub, nor seen in a Qt flatpak on screen
+  5.15-25.08 and 6.10, notes 6.11, skips on a second run), then for real:
+  PrismLauncher came up in Kvantum's grey built-in theme. A flatpak sees
+  `~/.config/Kvantum` mounted inside its own config folder, where the
+  stowed `kvantum.kvconfig` (a relative link into the clone) points at
+  nothing. It is now a real file written by `sync-palette` (kept when the
+  user has their own); checked from inside Prism's sandbox
 - Chromium, Discord and accent-tinted icons: left out by the owner, moved
   to MISSING.md (U1-U3)
 - [x] Tick "Create a custom uniform theme" in DEVELOPMENT.md's roadmap

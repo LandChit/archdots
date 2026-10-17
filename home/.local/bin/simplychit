@@ -1302,6 +1302,18 @@ def sync_qt(palette, done, failed):
                 done.append(dst)
         except OSError as e:
             failed.append(f"{kv}/SimplyChit: {e.strerror or e}")
+        # Which theme Kvantum uses. A real file, not a stowed link: a flatpak
+        # sees ~/.config/Kvantum mounted inside its own config folder, where a
+        # relative link into the clone points at nothing, and Kvantum then
+        # falls back to its grey built-in theme. Written when missing or still
+        # a link; a real file is the user's choice (Kvantum Manager) and kept.
+        chooser = os.path.join(kv, "kvantum.kvconfig")
+        if os.path.islink(chooser) or not os.path.exists(chooser):
+            try:
+                write_atomic(chooser, "[General]\ntheme=SimplyChit\n")
+                done.append(chooser)
+            except OSError as e:
+                failed.append(f"{chooser}: {e.strerror or e}")
 
     data = os.environ.get("XDG_DATA_HOME") or os.path.join(HOME, ".local/share")
     scheme = os.path.join(data, "color-schemes", "SimplyChit.colors")

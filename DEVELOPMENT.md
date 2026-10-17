@@ -242,6 +242,10 @@ Which file an app reads depends on where it runs, and there are two paths:
   user extension for a system runtime), and the global override adds
   `QT_STYLE_OVERRIDE=kvantum` and read access to `~/.config/Kvantum` and
   `kdeglobals`. A branch Flathub has no Kvantum for is retried on update.
+  Nothing under `~/.config/Kvantum` may be a stow link: the sandbox mounts
+  the folder inside the app's own config folder, where a relative link into
+  the clone points at nothing, so `kvantum.kvconfig` is written by
+  `sync-palette` too.
 
 `xdg-config/gtk-4.0` *can* be granted too, and the global override does grant
 it — flatpak resolves the stow symlink and mounts the real directory. But it

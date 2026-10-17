@@ -1729,9 +1729,9 @@ stage_stow() {
     # later creates there, ~/.config/simplychit/ included, lands in the clone.
     # Same for the D-Bus services folder, which other installs write into.
     # ~/.config/Kvantum too: `simplychit sync-palette` writes the generated
-    # SimplyChit theme there, and Kvantum reads themes from nowhere else. An
-    # install from before that has it folded; the link goes and stow links
-    # the folders inside again.
+    # SimplyChit theme and kvantum.kvconfig there (nothing in it is stowed any
+    # more), and Kvantum reads themes from nowhere else. An install from
+    # before that has it folded into one link to the clone; the link goes.
     local real link
     real="$(cd -- "$REPO_ROOT" && pwd -P)"
     if [[ -L "$HOME/.config/Kvantum" && "$(readlink -m -- "$HOME/.config/Kvantum")" == "$real/home/.config/Kvantum" ]]; then

@@ -31,6 +31,7 @@ home/                stowed into $HOME: `stow --dir=<repo> --target=$HOME home`
     wal/templates/   pywal16 templates — the source of all theming
     alacritty/ eza/ fastfetch/ cliphist/ fontconfig/
     Kvantum/ qt5ct/ qt6ct/  Qt 5 and 6 theming (the Kvantum theme itself is generated)
+  .local/share/icons/SimplyChit/  Qt's icon theme: breeze-dark, then Adwaita
     gtk-3.0/settings.ini          GTK theming — picks the theme in .themes/
     uwsm/            session env (forces Hyprland onto the iGPU)
   .themes/           GTK theme

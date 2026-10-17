@@ -1740,7 +1740,8 @@ stage_stow() {
         rm -- "$HOME/.config/Kvantum"
         ok "~/.config/Kvantum is a folder now (the generated theme goes there)"
     fi
-    mkdir -p "$HOME/.config" "$HOME/.config/Kvantum" "$HOME/.local/bin" "$HOME/.local/share/dbus-1/services"
+    mkdir -p "$HOME/.config" "$HOME/.config/Kvantum" "$HOME/.local/bin" "$HOME/.local/share/dbus-1/services" \
+        "$HOME/.local/share/icons"
     # Links to files the repo has since dropped (kdeglobals, now written by
     # sync-palette rather than stowed; the KvGlass theme): stow leaves them
     # dangling.

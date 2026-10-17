@@ -56,7 +56,9 @@ Flow {
                 width: 20
                 height: 20
                 sourceSize: Qt.size(40, 40)
-                source: icon.modelData.icon
+                // Spotify's snap names its icon folder under /snap, a link
+                // Arch's snapd does not make; the snaps are mounted here
+                source: icon.modelData.icon.replace("?path=/snap/", "?path=/var/lib/snapd/snap/")
                 asynchronous: true
             }
 

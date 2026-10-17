@@ -1,0 +1,10 @@
+# The icon theme Qt apps and the shell use (qt5ct/qt6ct icon_theme): no icons
+# of its own, only the order to look in. breeze-dark has no "-symbolic"
+# names such as bluetooth-symbolic, which tray menus (blueman) ask for, and
+# Qt, unlike GTK, does not drop the suffix to find another; Adwaita has them.
+# GTK stays on breeze-dark: flatpaks cannot see ~/.local/share/icons.
+[Icon Theme]
+Name=SimplyChit
+Comment=breeze-dark, with Adwaita for what breeze lacks
+Inherits=breeze-dark,Adwaita,hicolor
+Directories=

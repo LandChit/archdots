@@ -62,7 +62,7 @@ The update moves everything named archdots on its own. Afterwards:
 - [x] `pkexec true` asks for your password (in the shell's dialog, see 4)
 - [x] Idle: leave the machine and watch dim → lock → screens off. On battery
   it happens sooner (1/2/2.5 min)
-- [ ] SUPER+SHIFT+I: a "Staying awake" notification and a coffee mark in the
+- [x] SUPER+SHIFT+I: a "Staying awake" notification and a coffee mark in the
   bar; press again to undo
 - [x] Your own settings in `~/.config/simplychit/local/` (zshrc,
   alacritty.toml) and `~/.config/gtk-{3,4}.0/` still apply
@@ -78,7 +78,7 @@ The update moves everything named archdots on its own. Afterwards:
 
 ## 4. Check the shell (phases 3 and 4)
 
-- [ ] The bar, wallpaper and every panel come up at login
+- [x] The bar, wallpaper and every panel come up at login
   (`qs -c simplychit ipc show` lists 12 targets)
 - [x] `notify-send hi` shows a shell card
 - [x] `pkexec true` shows the shell's polkit dialog
@@ -86,14 +86,14 @@ The update moves everything named archdots on its own. Afterwards:
 - [x] Volume keys show the OSD; brightness keys change brightness
 - [x] Power profiles toggle in the control centre (needs `tlp-pd` running:
   `sudo systemctl enable --now tlp-pd`)
-- [ ] Wi-Fi: join a network that needs a password, from the control centre
-- [ ] Bluetooth: scan and pair something, from the control centre
-- [ ] Audio tab: switch the output; one app's own volume
+- [x] Wi-Fi: join a network that needs a password, from the control centre
+- [x] Bluetooth: scan and pair something, from the control centre
+- [x] Audio tab: switch the output; one app's own volume
 - [x] Wallpaper: SUPER+W, pick one (re-themes live); Shift+Enter sets it on
   one screen only
 - [x] Launcher: `=2+2`, `/somefile`, `@`, `>` (try "Light mode", then back)
 - [x] Caps Lock / Num Lock and a VPN coming up show toasts
-- [ ] A special workspace shows its chip in the bar
+- [x] A special workspace shows its chip in the bar
 - [ ] On battery: set `battery.lowPercent` above the current charge in
   `~/.config/simplychit/settings.json` to see a warning; the 30 s countdown at
   `battery.actionPercent` (Cancel works)
@@ -119,7 +119,7 @@ Open it with SUPER+, (comma). Every page writes
     back on its own
   - [x] Apply again and press Keep: the layout stays after a logout and login
   - [ ] Change the mode or the scale, Apply, Revert
-  - [ ] Identify shows each screen's name on it
+  - [x] Identify shows each screen's name on it
   - [x] Unplug and replug the external screen: the kept layout comes back
   - [ ] Put workspace 2 on the external screen; it movexs there
 - [x] **Appearance**: change the opacity (the bar and panels get more
@@ -162,22 +162,22 @@ covered). `hypr-vm`'s disk is gone; the test VM is in
 folder when done). Left for you: the buttons, and real hardware. In a VM
 first if you want to see it yourself:
 
-- [ ] Snapshot the VM first:
+- [x] Snapshot the VM first:
   `virsh -c qemu:///session snapshot-create-as hypr-vm before-greeter`
-- [ ] In the VM: get the `rewrite` branch, then
+- [x] In the VM: get the `rewrite` branch, then
   `./install.sh install --greeter`. It shows `/etc/greetd/config.toml`
   before writing it, then asks to switch the login screen (default no)
-- [ ] Before saying yes: check a text login works (Ctrl+Alt+F2), then come
+- [x] Before saying yes: check a text login works (Ctrl+Alt+F2), then come
   back (Ctrl+Alt+F1)
-- [ ] Say yes and reboot. The greeter shows your wallpaper and colours:
-  - [ ] a wrong password says "Wrong password"; the right one starts Hyprland
-  - [ ] the session button cycles the sessions; the last user and session are
+- [x] Say yes and reboot. The greeter shows your wallpaper and colours:
+  - [x] a wrong password says "Wrong password"; the right one starts Hyprland
+  - [x] the session button cycles the sessions; the last user and session are
     remembered at the next boot
-  - [ ] Restart and Shut down work
-- [ ] Undo it from a console: `sudo systemctl disable greetd && sudo systemctl
+  - [x] Restart and Shut down work
+- [x] Undo it from a console: `sudo systemctl disable greetd && sudo systemctl
   enable sddm && sudo reboot`: SDDM is back. If anything goes wrong,
   `virsh -c qemu:///session snapshot-revert hypr-vm before-greeter`
-- [ ] Only after all that: the same on real hardware, with a TTY ready
+- [x] Only after all that: the same on real hardware, with a TTY ready
 
 ## 7. Check phase 7 and the extras
 
@@ -188,21 +188,21 @@ AUR list). Then:
 - [ ] Calendar: set up vdirsyncer + khal (CUSTOMIZING.md, Calendar), then
   click the clock: today's events are under the month; click another day.
   `simplychit events` prints what the panel sees
-- [ ] Lock the screen (hyprlock): the input field and clock use the
+- [x] Lock the screen (hyprlock): the input field and clock use the
   wallpaper's colours, and the field turns the accent colour while it checks
   the password. Change the wallpaper (SUPER+W) and lock again: the colours follow
-- [ ] VS Code: pick the colour theme "Wal" (Ctrl+K Ctrl+T); it follows the
+- [x] VS Code: pick the colour theme "Wal" (Ctrl+K Ctrl+T); it follows the
   wallpaper from then on
-- [ ] Browser: add the Pywalfox add-on (addons.mozilla.org) in Zen, press
+- [x] Browser: add the Pywalfox add-on (addons.mozilla.org) in Zen, press
   "Fetch Pywal colors" once
-- [ ] `btop`: in the wallpaper's colours
-- [ ] SUPER+SHIFT+N: the notepad; type, close, reopen: the text is still there
-- [ ] SUPER+SHIFT+R, drag a box: a red dot and a timer in the bar; click it.
+- [x] `btop`: in the wallpaper's colours
+- [x] SUPER+SHIFT+N: the notepad; type, close, reopen: the text is still there
+- [x] SUPER+SHIFT+R, drag a box: a red dot and a timer in the bar; click it.
   "Recording saved" names a file in ~/Videos/recordings that plays. Try
   "Record screen" from the screenshot menu, and `recording.audio: "desktop"`
-- [ ] Launcher `>` "QR code of the clipboard" with a link copied: your phone
+- [x] Launcher `>` "QR code of the clipboard" with a link copied: your phone
   reads it. "Scan a QR code" on a code on screen copies what it says
-- [ ] Sounds: a tick when you change the volume (once per press, not a burst
+- [x] Sounds: a tick when you change the volume (once per press, not a burst
   while held) and a chime on `notify-send hi`; both switch off on the
   Notifications page; nothing under do not disturb
 

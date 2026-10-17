@@ -167,6 +167,23 @@ hl.window_rule({
     workspace = "special:games",
 })
 
+-- More games, from settings.json: "games": { "classes": ["^Albion Online$"] }.
+-- Windows sent there by hand (SUPER+SHIFT+G) are noted in
+-- ~/.config/simplychit/games-to-review.txt to pick these from.
+local game_classes = require("config.helpers.settings").get("games.classes", {})
+if type(game_classes) == "table" then
+    for i, class in ipairs(game_classes) do
+        if type(class) == "string" and class ~= "" then
+            hl.window_rule({
+                name = "game-" .. i,
+                match = { class = class },
+                fullscreen = true,
+                workspace = "special:games",
+            })
+        end
+    end
+end
+
 -- Frosted glass for the shell's surfaces (namespaces "simplychit-<name>").
 -- ignore_alpha 0.5 blurs behind the 0.88-0.94 alpha islands and cards but not
 -- behind their soft edges. The wallpaper layer is opaque and left out.

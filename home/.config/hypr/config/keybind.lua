@@ -1,6 +1,7 @@
 local shell = require("config.helpers.shell")
 local settings = require("config.helpers.settings")
 local scratchpad = require("config.helpers.scratchpad")
+local games = require("config.helpers.games")
 
 -- Every default bind is an entry in the table below, with a stable id, so the
 -- settings app (and you) can change or drop it as data in
@@ -113,6 +114,8 @@ binds[#binds + 1] = { "scratchpad-scratch", mainMod .. " + MINUS", scratchpad.to
 binds[#binds + 1] = { "scratchpad-send", mainMod .. " + SHIFT + MINUS", scratchpad.send("scratch"), "Scratchpad: Send window to / back from the scratchpad" }
 -- games open there by themselves (rules.lua); their launchers stay put
 binds[#binds + 1] = { "scratchpad-games", mainMod .. " + G", scratchpad.toggle("games"), "Scratchpad: Show / hide games" }
+-- a game not ruled there: send it (and note its class for games.classes)
+binds[#binds + 1] = { "scratchpad-games-send", mainMod .. " + SHIFT + G", games.send(), "Scratchpad: Send window to / back from games" }
 local extra_pads = settings.get("keybinds.scratchpads", {})
 if type(extra_pads) ~= "table" then
     extra_pads = {}

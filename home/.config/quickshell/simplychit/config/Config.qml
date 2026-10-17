@@ -186,6 +186,15 @@ Singleton {
                 }
             }
 
+            // Read by hypr/config/rules.lua: the games scratchpad.
+            property JsonObject games: JsonObject {
+                // More window classes (regular expressions, ^…$ for an exact
+                // one) that open fullscreen in the games scratchpad. Windows
+                // sent there by hand are listed in
+                // ~/.config/simplychit/games-to-review.txt.
+                property list<string> classes: []
+            }
+
             // Read by hypr/config/keybind.lua: id -> keys, and ids to drop.
             property JsonObject keybinds: JsonObject {
                 property var remap: ({})

@@ -391,6 +391,21 @@
       "additionalProperties": false,
       "description": "Read by hypr/config/input.lua (only known keys, right types)."
     },
+    "games": {
+      "type": "object",
+      "properties": {
+        "classes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "More window classes (regular expressions, ^\u2026$ for an exact one) that open fullscreen in the games scratchpad. Windows sent there by hand are listed in ~/.config/simplychit/games-to-review.txt."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Read by hypr/config/rules.lua: the games scratchpad."
+    },
     "keybinds": {
       "type": "object",
       "properties": {

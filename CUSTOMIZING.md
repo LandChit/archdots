@@ -186,7 +186,8 @@ Every key, with its default:
 | `input.*` | keyboard layouts (`kb_layout: "us,de"`), variants, xkb options, pointer speed (-1..1), touchpad |
 | `keybinds.remap` | default bind id → new keys: `{"browser": "SUPER + Z"}`; ids are in the Keybinds page and `~/.cache/simplychit/keybinds.json` |
 | `keybinds.disabled` | default bind ids to turn off |
-| `keybinds.scratchpads` | more scratchpads, name → `{"keys": …, "command": …}`: the keys show or hide special workspace `<name>`, and the command starts when it is empty. SUPER+` is a drop-down terminal, SUPER+- the scratchpad and SUPER+SHIFT+- sends a window there and back. SUPER+G shows or hides the games scratchpad: Steam games and Minecraft open there by themselves (`hypr/config/rules.lua`), their launchers where they are |
+| `keybinds.scratchpads` | more scratchpads, name → `{"keys": …, "command": …}`: the keys show or hide special workspace `<name>`, and the command starts when it is empty. SUPER+` is a drop-down terminal, SUPER+- the scratchpad and SUPER+SHIFT+- sends a window there and back. SUPER+G shows or hides the games scratchpad: Steam games and Minecraft open there by themselves (`hypr/config/rules.lua`), their launchers where they are. SUPER+SHIFT+G sends any other game there (and back), and notes its class once in `~/.config/simplychit/games-to-review.txt`; to make one open there by itself, add its class to `games.classes` |
+| `games.classes` | more window classes (regular expressions, `^…$` for an exact one) that open fullscreen in the games scratchpad, e.g. `["^Albion Online$"]` |
 | `displays` | written by the Displays page: one layout per set of connected monitors, by description |
 | `wallpaper.cycleMinutes` | switch to another wallpaper from the folder every N minutes; 0 is off |
 | `theme.mode` | `light` or `dark` palette from the wallpaper (the launcher's `>` has it too) |

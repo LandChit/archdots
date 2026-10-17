@@ -682,10 +682,24 @@ extras), with the owner's choices.
   nothing records. Tested in a scratch shell: `pw-record` (mic) and a
   process holding `/dev/video0` (camera) shown, listed, and cleared after.
   Screen sharing not tested (it needs the portal's share dialog)
-- [ ] **Media panel**: clicking the bar's media island opens it. Cover art,
-  title, artist, a seek bar, the controls, and a switcher when several
-  players are open (the one picked stays the bar's player)
-- [ ] **Visualiser**: a cava spectrum in the media panel (`cava` from the
-  official repos), running only while the panel is open
-- [ ] **Synced lyrics**: from LRCLIB for the playing track, the current line
-  highlighted in the media panel
+- [x] **Media panel** (done): `modules/media/MediaPanel.qml`, opened by a
+  click on the bar's media island. Cover art, title, artist · album, a seek
+  bar (position read twice a second while open), the controls (Space, ←, →
+  too), and chips to pick the player when several are open. The pick is
+  kept by name in `~/.local/state/simplychit/media-player` and wins while
+  that player is open; the island now shows while any player plays, so a
+  paused pinned one never hides the way back in
+- [x] **Visualiser** (done): `services/Visualiser.qml` runs cava (core
+  package now) only while the panel is open and its player plays, config
+  through a process substitution (nothing on disk), 36 bars; left out when
+  cava is missing
+- [x] **Synced lyrics** (done): `services/Lyrics.qml`, LRCLIB's exact match
+  (title, artist, album, length) then its search, only while the panel is
+  open, cached per track. A stub entry (LRCLIB's exact match for "Never
+  Gonna Give You Up" is "[00:00.00]probe") does not count; search hits are
+  ranked synced first, nearest in length. The current line centred and
+  bright, the rest fading; plain lyrics scroll. Tested in a scratch shell
+  with two fake MPRIS players on a private bus and a near-silent tone: the
+  lines follow the position, the spectrum moves, a pinned paused player is
+  shown while the other plays, "No lyrics found" for an unknown track. Not
+  tested: a real player's seek bar, cover art over http, the chips by click

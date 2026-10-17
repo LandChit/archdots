@@ -18,13 +18,13 @@ directly come from `simplychit privacy-watch`, which the service runs.
 shell.qml        entry point: what is on screen, and the IPC targets
 config/          Config (settings.json over defaults), Colours (pywal16)
 services/        state, no UI: Audio, Battery, Brightness, CalendarEvents, CpuTemp, Displays,
-                 Events, Hypr, Idle, IdleTimers, Media, Notifs, Panels, Power, Privacy,
+                 Events, Hypr, Idle, IdleTimers, Lyrics, Media, Notifs, Panels, Power, Privacy,
                  FirstRun, PowerProfile, QrScan, Recorder, SettingsCheck, SettingsState,
-                 Sounds, Theme, UsageCounts
+                 Sounds, Theme, UsageCounts, Visualiser
 widgets/         shared pieces: Panel, SearchPanel, ListPanel, ListRow,
                  CardMenu, Island, BarText, Hot, Toggle, Slider, InfoRow, …
 modules/         one folder per surface: bar, launcher, clipboard, emoji,
-                 calendar, battery, control, notifications, osd, powermenu,
+                 calendar, battery, control, media, notifications, osd, powermenu,
                  screenshot, keybinds, notepad, qr, privacy, wallpaper, polkit, lock,
                  settings, welcome
 settings.qml     the settings app on its own (qs -p …/settings.qml)

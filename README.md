@@ -25,8 +25,14 @@ looks like it belongs together.**
   per app, brightness, power profiles, whatever's playing, and your tray icons
   — one panel instead of five apps.
 - **Notifications** with a history you can scroll back through
-  (<kbd>SUPER</kbd> <kbd>N</kbd>), and a do-not-disturb switch that silences
-  popups while still keeping a record.
+  (<kbd>SUPER</kbd> <kbd>N</kbd>), grouped by app, and a do-not-disturb
+  switch that silences popups while still keeping a record.
+- **A media panel** (click the song in the bar): cover art, a seek bar, a
+  visualiser, synced lyrics, and a switcher when several players are open.
+  Opening it looks the song up on [LRCLIB](https://lrclib.net), so the
+  artist and title are sent there.
+- **Privacy dots** in the bar while an app uses the microphone, the camera
+  or shares the screen; click them to see which apps.
 - **A wallpaper picker** (<kbd>SUPER</kbd> <kbd>W</kbd>) that changes the
   wallpaper *and* re-themes the entire desktop, without restarting anything.
 - **A screenshot menu** (<kbd>SUPER</kbd> <kbd>PrtSc</kbd>) — region, window,
@@ -288,7 +294,7 @@ xdg-desktop-portal-hyprland xdg-desktop-portal-gtk uwsm sddm alacritty dolphin
 cliphist wl-clipboard grim slurp brightnessctl playerctl libnotify
 sound-theme-freedesktop pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol
 networkmanager bluez bluez-utils blueman
-qt6ct qt5ct kvantum kvantum-qt5 qt5-wayland qt6-wayland qt6-imageformats breeze-icons
+qt6ct qt5ct kvantum kvantum-qt5 qt5-wayland qt6-wayland cava qt6-imageformats breeze-icons
 adwaita-fonts
 zsh zsh-autosuggestions zsh-syntax-highlighting stow git
 zoxide fzf eza bat kwallet-pam kwalletmanager base-devel

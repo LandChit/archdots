@@ -13,6 +13,7 @@ import qs.modules.emoji
 import qs.modules.keybinds
 import qs.modules.launcher
 import qs.modules.lock
+import qs.modules.media
 import qs.modules.notepad
 import qs.modules.notifications
 import qs.modules.osd
@@ -92,6 +93,7 @@ ShellRoot {
     readonly property var sounds: Sounds
     BatteryCard {}
     PrivacyCard {}
+    MediaPanel {}
 
     Osd {
         id: osd

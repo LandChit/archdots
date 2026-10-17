@@ -169,7 +169,7 @@ hl.window_rule({
 hl.layer_rule(
     {
         name = "simplychit-surfaces",
-        match = { namespace = "simplychit-(bar|launcher|clipboard|emoji|calendar|control|notifications|battery|osd|wallpaper|notepad|qr|privacy)" },
+        match = { namespace = "simplychit-(bar|launcher|clipboard|emoji|calendar|control|notifications|battery|osd|wallpaper|notepad|qr|privacy|media)" },
         blur = true,
         ignore_alpha = 0.5,
     }

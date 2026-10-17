@@ -61,6 +61,8 @@ PKG_CORE=(
     pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol
     networkmanager bluez bluez-utils blueman
     qt6ct qt5ct kvantum kvantum-qt5 qt5-wayland qt6-wayland
+    # the media panel's visualiser (runs only while the panel is open)
+    cava
     # .webp wallpapers: the picker lists them, and Qt cannot read them without
     # it (the palette would change and the picture would not)
     qt6-imageformats

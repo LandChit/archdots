@@ -683,7 +683,9 @@ extras), with the owner's choices.
   process holding `/dev/video0` (camera) shown, listed, and cleared after.
   Screen sharing not tested (it needs the portal's share dialog)
 - [x] **Media panel** (done): `modules/media/MediaPanel.qml`, opened by a
-  click on the bar's media island. Cover art, title, artist · album, a seek
+  click on the bar's media island and placed under it (left, centre or
+  right, after the section the island sits in on that screen; tested all
+  three in a scratch shell). Cover art, title, artist · album, a seek
   bar (position read twice a second while open), the controls (Space, ←, →
   too), and chips to pick the player when several are open. The pick is
   kept by name in `~/.local/state/simplychit/media-player` and wins while

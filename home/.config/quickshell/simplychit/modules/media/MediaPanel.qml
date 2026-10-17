@@ -5,17 +5,28 @@ import qs.config
 import qs.services
 import qs.widgets
 
-// The media panel, opened from the bar's media island: cover art, the track,
-// a seek bar, the controls, a switcher when several players are open (the one
-// picked becomes the bar's player), a cava spectrum (services/Visualiser.qml)
-// and synced lyrics from LRCLIB (services/Lyrics.qml). The visualiser and the
-// lyrics only run while the panel is open.
+// The media panel, opened from the bar's media island and placed under it:
+// cover art, the track, a seek bar, the controls, a switcher when several
+// players are open (the one picked becomes the bar's player), a cava
+// spectrum (services/Visualiser.qml) and synced lyrics from LRCLIB
+// (services/Lyrics.qml). The visualiser and the lyrics only run while the
+// panel is open.
 Panel {
     id: root
 
     name: "media"
+    // under the bar's media island: the side of the bar it sits in on this
+    // screen, like the notification centre on the right; centred otherwise
+    readonly property string side: {
+        const layout = BarLayout.layoutFor(Panels.screen);
+        return ["left", "right"].find(s => (layout[s] ?? []).includes("media")) ?? "center";
+    }
     anchors.top: true
+    anchors.left: side === "left"
+    anchors.right: side === "right"
     margins.top: 46
+    margins.left: 14
+    margins.right: 14
     implicitWidth: 440
     implicitHeight: card.implicitHeight + 20
 

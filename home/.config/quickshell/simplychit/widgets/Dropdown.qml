@@ -3,8 +3,10 @@ import QtQuick.Layouts
 import qs.config
 import qs.widgets
 
-// A drop-down for longer lists. `options` is [[value, label], ...]. The list
-// opens in place, above the rest of the page.
+// A drop-down for longer lists. `options` is [[value, label], ...]. The open
+// list is moved onto the window's root item: `z` only orders siblings, so in
+// place the rows below would cover it and take its clicks. A click or scroll
+// outside it closes it.
 Item {
     id: root
 
@@ -18,7 +20,15 @@ Item {
 
     implicitWidth: fieldWidth
     implicitHeight: 30
-    z: open ? 100 : 0
+
+    onOpenChanged: {
+        if (!open)
+            return;
+        const top = root.mapToItem(overlay, 0, 0);
+        const below = top.y + root.height + 4;
+        menu.x = top.x;
+        menu.y = below + menu.height <= overlay.height ? below : Math.max(0, top.y - 4 - menu.height);
+    }
 
     Rectangle {
         anchors.fill: parent
@@ -53,50 +63,65 @@ Item {
         }
     }
 
-    Rectangle {
+    Item {
+        id: overlay
+
+        parent: root.Window.window ? root.Window.window.contentItem : root
+        anchors.fill: parent
         visible: root.open
-        y: parent.height + 4
-        width: parent.width
-        height: Math.min(260, list.contentHeight + 8)
-        radius: 10
-        color: Colours.alpha(Colours.mix(Colours.background, Colours.accent, 0.18), 0.98)
-        border.width: 1
-        border.color: Colours.selectionBorder
+        z: 1000
 
-        ListView {
-            id: list
-
+        MouseArea {
             anchors.fill: parent
-            anchors.margins: 4
-            clip: true
-            model: root.options
-            boundsBehavior: Flickable.StopAtBounds
+            onClicked: root.open = false
+            onWheel: root.open = false
+        }
 
-            delegate: Rectangle {
-                required property var modelData
+        Rectangle {
+            id: menu
 
-                width: ListView.view.width
-                height: 28
-                radius: 7
-                color: modelData[0] === root.value ? Colours.selection : itemArea.containsMouse ? Colours.hover : "transparent"
+            width: root.width
+            height: Math.min(260, list.contentHeight + 8)
+            radius: 10
+            color: Colours.alpha(Colours.mix(Colours.background, Colours.accent, 0.18), 0.98)
+            border.width: 1
+            border.color: Colours.selectionBorder
 
-                BarText {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: 8
-                    width: parent.width - 16
-                    text: parent.modelData[1]
-                    elide: Text.ElideRight
-                }
-                MouseArea {
-                    id: itemArea
+            ListView {
+                id: list
 
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        root.open = false;
-                        root.chosen(parent.modelData[0]);
+                anchors.fill: parent
+                anchors.margins: 4
+                clip: true
+                model: root.options
+                boundsBehavior: Flickable.StopAtBounds
+
+                delegate: Rectangle {
+                    required property var modelData
+
+                    width: ListView.view.width
+                    height: 28
+                    radius: 7
+                    color: modelData[0] === root.value ? Colours.selection : itemArea.containsMouse ? Colours.hover : "transparent"
+
+                    BarText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left: parent.left
+                        anchors.leftMargin: 8
+                        width: parent.width - 16
+                        text: parent.modelData[1]
+                        elide: Text.ElideRight
+                    }
+                    MouseArea {
+                        id: itemArea
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            root.open = false;
+                            root.chosen(parent.modelData[0]);
+                        }
                     }
                 }
             }

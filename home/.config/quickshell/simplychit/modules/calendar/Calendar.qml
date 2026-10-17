@@ -178,12 +178,13 @@ Panel {
                 }
             }
 
-            // khal not installed: say nothing, the panel stays a plain month.
-            // Installed but not set up: one line on where to start.
+            // khal not installed, or events turned off (bar.calendarEvents):
+            // say nothing, the panel stays a plain month. Installed but not
+            // set up: one line on where to start.
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.topMargin: 10
-                visible: CalendarEvents.available || CalendarEvents.reason.startsWith("Cannot find a config")
+                visible: CalendarEvents.enabled && (CalendarEvents.available || CalendarEvents.reason.startsWith("Cannot find a config"))
                 spacing: 4
 
                 BarText {

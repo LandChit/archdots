@@ -26,6 +26,11 @@
           "type": "string",
           "default": "hh:mm AP"
         },
+        "calendarEvents": {
+          "type": "boolean",
+          "default": true,
+          "description": "The calendar's events from khal, and its \"set up khal\" line. Off: a plain month, and khal is never run."
+        },
         "emptyTitle": {
           "type": "string",
           "default": "Chit",

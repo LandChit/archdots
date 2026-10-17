@@ -88,6 +88,9 @@ Singleton {
                 property bool showCpu: true
                 property bool showBattery: true
                 property string clockFormat: "hh:mm AP"
+                // The calendar's events from khal, and its "set up khal" line.
+                // Off: a plain month, and khal is never run.
+                property bool calendarEvents: true
                 // Shown in place of the window title when nothing is focused.
                 property string emptyTitle: "Chit"
                 property int titleChars: 20

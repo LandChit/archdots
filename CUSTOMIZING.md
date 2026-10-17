@@ -246,6 +246,10 @@ as files; `vdirsyncer` keeps those files in step with Google, Nextcloud, iCloud
 or any CalDAV server. Both come with the optional utilities. Without them the
 panel is a plain month.
 
+Don't want events, or the "Set up khal" line? Turn off **Calendar events**
+in Settings → Bar (`"bar": { "calendarEvents": false }`): the panel is a
+plain month and khal is never run.
+
 1. `~/.config/vdirsyncer/config`, for a CalDAV server (Google needs an OAuth
    client of your own; vdirsyncer's docs, "Google"):
 

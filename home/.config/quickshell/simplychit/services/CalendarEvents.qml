@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.config
 
 // One day's events from khal, for the calendar panel (TODO 9). khal reads
 // local calendars; vdirsyncer keeps them in step with Google or any CalDAV
@@ -25,8 +26,23 @@ Singleton {
         return Qt.formatDate(d, "yyyy-MM-dd");
     }
 
+    // bar.calendarEvents: off, khal is never run and the panel shows nothing
+    readonly property bool enabled: Config.bar.calendarEvents !== false
+
+    onEnabledChanged: {
+        if (!enabled) {
+            proc.running = false;
+            available = false;
+            reason = "";
+            events = [];
+            loading = false;
+        }
+    }
+
     function load(d: date): void {
         day = iso(d);
+        if (!enabled)
+            return;
         loading = true;
         proc.running = false;
         proc.command = [Quickshell.env("HOME") + "/.local/bin/simplychit", "events", day];

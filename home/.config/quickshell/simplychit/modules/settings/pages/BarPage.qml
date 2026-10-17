@@ -253,6 +253,14 @@ ColumnLayout {
             }
         }
         Setting {
+            label: "Calendar events"
+            help: "Events from khal under the calendar, or the line on setting it up"
+            Switch {
+                checked: Config.bar.calendarEvents
+                onToggled: v => Config.set("bar.calendarEvents", v)
+            }
+        }
+        Setting {
             label: "Title when nothing has focus"
             TextField {
                 fieldWidth: 160

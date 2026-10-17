@@ -17,6 +17,9 @@
     simplychit inhibitors               the service that hears apps asking the
                                       screen to stay awake (a video playing)
                                       and tells the shell; started at login
+    simplychit privacy-watch            the apps holding a camera open, as a
+                                      JSON line on start and on every change
+                                      (the shell's privacy indicator runs it)
 
 The settings app's About page shows the same checks (it runs --json).
 """
@@ -1577,6 +1580,108 @@ def inhibitors():
     return 0
 
 
+# ── privacy ─────────────────────────────────────────────────────────────────
+#
+# The shell sees microphone, screen-share and PipeWire camera streams in
+# PipeWire itself (services/Privacy.qml). An app that opens /dev/video*
+# directly (Zoom, Discord, OBS) never shows up there, so this watches the
+# device nodes with inotify (no polling, no package): on any open or close it
+# looks for the processes holding one and prints the list when it changed.
+# PipeWire's own processes are left out; they hold the camera on behalf of
+# the streams the shell already sees.
+
+PRIVACY_IGNORE = {"pipewire", "wireplumber", "pipewire-pulse", "pipewire-media-session"}
+
+
+def camera_users():
+    users = {}
+    for pid in os.listdir("/proc"):
+        if not pid.isdigit():
+            continue
+        try:
+            fds = os.listdir(f"/proc/{pid}/fd")
+        except OSError:
+            continue  # gone, or another user's
+        for fd in fds:
+            try:
+                target = os.readlink(f"/proc/{pid}/fd/{fd}")
+            except OSError:
+                continue
+            if target.startswith("/dev/video"):
+                try:
+                    with open(f"/proc/{pid}/comm", encoding="utf-8") as f:
+                        name = f.read().strip()
+                except OSError:
+                    name = pid
+                if name not in PRIVACY_IGNORE:
+                    users[int(pid)] = name
+                break
+    return [{"pid": pid, "app": name} for pid, name in sorted(users.items())]
+
+
+def privacy_watch():
+    import ctypes
+    import select
+    import signal
+    import struct
+    import time
+
+    libc = ctypes.CDLL(None, use_errno=True)
+    IN_OPEN, IN_CLOSE_WRITE, IN_CLOSE_NOWRITE = 0x20, 0x08, 0x10
+    IN_CREATE, IN_DELETE = 0x100, 0x200
+    fd = libc.inotify_init1(os.O_NONBLOCK | os.O_CLOEXEC)
+    if fd < 0:
+        print(f"simplychit: inotify: {os.strerror(ctypes.get_errno())}", file=sys.stderr)
+        return 1
+    watched = set()
+
+    def watch_devices():
+        for name in os.listdir("/dev"):
+            if name.startswith("video") and name not in watched:
+                if libc.inotify_add_watch(fd, f"/dev/{name}".encode(), IN_OPEN | IN_CLOSE_WRITE | IN_CLOSE_NOWRITE) >= 0:
+                    watched.add(name)
+
+    # /dev itself, for a camera plugged in later
+    libc.inotify_add_watch(fd, b"/dev", IN_CREATE | IN_DELETE)
+    watch_devices()
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+
+    last = None
+
+    def report():
+        nonlocal last
+        now = camera_users()
+        if now != last:
+            last = now
+            print(json.dumps({"camera": now}), flush=True)
+
+    report()
+    while True:
+        select.select([fd], [], [])
+        try:
+            data = os.read(fd, 65536)
+        except BlockingIOError:
+            continue
+        # a camera added or removed: watch the new node, forget a gone one
+        offset = 0
+        while offset < len(data):
+            _, mask, _, length = struct.unpack_from("iIII", data, offset)
+            name = data[offset + 16:offset + 16 + length].rstrip(b"\0").decode(errors="replace")
+            offset += 16 + length
+            if mask & IN_DELETE:
+                watched.discard(name)
+        watch_devices()
+        # an open is seen before the app has finished setting the camera up,
+        # and several opens come at once: let them settle
+        time.sleep(0.3)
+        try:
+            while os.read(fd, 65536):
+                pass
+        except BlockingIOError:
+            pass
+        report()
+
+
 def main():
     args = sys.argv[1:]
     if not args or args[0] in ("-h", "--help", "help"):
@@ -1598,6 +1703,8 @@ def main():
         return 0
     if args[0] == "inhibitors":
         return inhibitors()
+    if args[0] == "privacy-watch":
+        return privacy_watch()
     print(f"simplychit: unknown command {args[0]!r}\n\n{__doc__.strip()}", file=sys.stderr)
     return 2
 

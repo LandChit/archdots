@@ -671,9 +671,17 @@ extras), with the owner's choices.
   unchanged. Tested in a scratch shell on a private bus (notify-send from
   three apps): collapsed, and expanded (a scratch copy forced open; a click
   cannot be sent safely)
-- [ ] **Privacy indicators**: microphone, camera and screen-share dots in the
-  bar's indicators, from PipeWire streams; hovering or clicking lists the
-  apps using them
+- [x] **Privacy indicators** (done): `services/Privacy.qml` reads PipeWire
+  capture streams by their type flags (Audio/Video + Stream + Source),
+  tracking only those so their properties (app name, `stream.capture.sink`)
+  fill in: microphone (not output captures such as visualisers), screen
+  (streams fed by `xdph-streaming-*`), camera (other video captures, plus
+  `simplychit privacy-watch`: inotify on `/dev/video*` for apps that bypass
+  PipeWire, no polling, no package). Dots in the bar's indicators; a click
+  opens the "privacy" panel listing the apps, which closes itself when
+  nothing records. Tested in a scratch shell: `pw-record` (mic) and a
+  process holding `/dev/video0` (camera) shown, listed, and cleared after.
+  Screen sharing not tested (it needs the portal's share dialog)
 - [ ] **Media panel**: clicking the bar's media island opens it. Cover art,
   title, artist, a seek bar, the controls, and a switcher when several
   players are open (the one picked stays the bar's player)

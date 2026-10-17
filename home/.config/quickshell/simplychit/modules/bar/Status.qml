@@ -5,7 +5,7 @@ import qs.services
 import qs.widgets
 
 // The status widgets that sit next to each other in a bar layout, in one
-// island: "indicators" (recording, stay awake, do not disturb), "volume",
+// island: "indicators" (privacy, recording, stay awake, do not disturb), "volume",
 // "cpu" (temperature) and "battery", in the order given. Bar.qml groups
 // them; a layout that puts something else between two of them gets two
 // islands.
@@ -26,7 +26,7 @@ Island {
     function wantedPart(name: string): bool {
         switch (name) {
         case "indicators":
-            return Recorder.recording || Idle.inhibited || Idle.appInhibited || Notifs.dnd;
+            return Privacy.any || Recorder.recording || Idle.inhibited || Idle.appInhibited || Notifs.dnd;
         case "volume":
             return true;
         case "cpu":
@@ -82,6 +82,29 @@ Island {
         RowLayout {
             spacing: 0
 
+            // something recording you: microphone, camera, screen; a click
+            // lists the apps
+            Hot {
+                visible: Privacy.any
+                onClicked: Panels.toggle("privacy")
+
+                RowLayout {
+                    spacing: 0
+
+                    Repeater {
+                        model: [[Privacy.screen, "\u{f0379}"], [Privacy.camera, "\u{f0100}"], [Privacy.mic, "\u{f036c}"]].filter(k => k[0].length > 0)
+
+                        BarText {
+                            required property var modelData
+
+                            text: modelData[1]
+                            leftPadding: 3
+                            rightPadding: 3
+                            color: Colours.alert
+                        }
+                    }
+                }
+            }
             // recording: a click stops it
             Hot {
                 visible: Recorder.recording

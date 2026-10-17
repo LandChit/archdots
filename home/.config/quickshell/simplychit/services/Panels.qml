@@ -12,7 +12,7 @@ import Quickshell.Hyprland
 Singleton {
     id: root
 
-    readonly property list<string> names: ["launcher", "powermenu", "clipboard", "emoji", "calendar", "battery", "notifications", "control", "wallpaper", "screenshot", "keybinds", "notepad", "qr"]
+    readonly property list<string> names: ["launcher", "powermenu", "clipboard", "emoji", "calendar", "battery", "notifications", "control", "wallpaper", "screenshot", "keybinds", "notepad", "qr", "privacy"]
 
     property string current: ""
     // The monitor a panel opens on: the focused one, caught at open time so a

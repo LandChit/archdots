@@ -10,20 +10,22 @@ gives up after three crashes in a minute. `qs kill` stops it for good.
 Apps that ask the screen to stay awake over D-Bus (browsers playing video)
 reach the idle timers through `simplychit inhibitors` (home/.local/bin), which
 writes `$XDG_RUNTIME_DIR/simplychit-inhibitors.json`; `services/Idle.qml`
-reads it.
+reads it. The privacy indicators see microphone, screen-share and camera
+streams in PipeWire (`services/Privacy.qml`); apps that open a camera
+directly come from `simplychit privacy-watch`, which the service runs.
 
 ```
 shell.qml        entry point: what is on screen, and the IPC targets
 config/          Config (settings.json over defaults), Colours (pywal16)
 services/        state, no UI: Audio, Battery, Brightness, CalendarEvents, CpuTemp, Displays,
-                 Events, Hypr, Idle, IdleTimers, Media, Notifs, Panels, Power,
+                 Events, Hypr, Idle, IdleTimers, Media, Notifs, Panels, Power, Privacy,
                  FirstRun, PowerProfile, QrScan, Recorder, SettingsCheck, SettingsState,
                  Sounds, Theme, UsageCounts
 widgets/         shared pieces: Panel, SearchPanel, ListPanel, ListRow,
                  CardMenu, Island, BarText, Hot, Toggle, Slider, InfoRow, …
 modules/         one folder per surface: bar, launcher, clipboard, emoji,
                  calendar, battery, control, notifications, osd, powermenu,
-                 screenshot, keybinds, notepad, qr, wallpaper, polkit, lock,
+                 screenshot, keybinds, notepad, qr, privacy, wallpaper, polkit, lock,
                  settings, welcome
 settings.qml     the settings app on its own (qs -p …/settings.qml)
 greeter.qml      the login screen for greetd (install.sh --greeter); a preview

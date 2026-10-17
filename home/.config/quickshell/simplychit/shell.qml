@@ -18,6 +18,7 @@ import qs.modules.notifications
 import qs.modules.osd
 import qs.modules.polkit
 import qs.modules.powermenu
+import qs.modules.privacy
 import qs.modules.qr
 import qs.modules.screenshot
 import qs.modules.settings
@@ -90,6 +91,7 @@ ShellRoot {
     readonly property var settingsCheck: SettingsCheck
     readonly property var sounds: Sounds
     BatteryCard {}
+    PrivacyCard {}
 
     Osd {
         id: osd

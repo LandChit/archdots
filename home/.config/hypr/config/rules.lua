@@ -130,16 +130,20 @@ hl.window_rule({
 
 
 
+-- Games open in their own scratchpad, special:games (SUPER+G shows or hides
+-- it), whatever workspace their launcher is on: the game shows over it, and
+-- hiding it leaves the game running. Launchers (Steam, Prism) are not
+-- matched and stay where they open. A game ruled there shows the scratchpad
+-- on the focused screen by itself, and it closes when the last game exits.
 steam_games = "^(?i)steam_app_.*"
 
--- Games on work 4
 hl.window_rule({
     name = "steam",
     match = {
         class = steam_games
     },
     fullscreen = true,
-    workspace = "4",
+    workspace = "special:games",
 })
 
 -- hl.on("window.close", function(window)
@@ -160,7 +164,7 @@ hl.window_rule({
         class = "^Minecraft.*"
     },
     tile = true,
-    workspace = "4",
+    workspace = "special:games",
 })
 
 -- Frosted glass for the shell's surfaces (namespaces "simplychit-<name>").

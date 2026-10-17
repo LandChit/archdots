@@ -111,13 +111,15 @@ end
 binds[#binds + 1] = { "scratchpad-terminal", mainMod .. " + GRAVE", scratchpad.toggle("terminal", apps.terminal), "Scratchpad: Drop-down terminal" }
 binds[#binds + 1] = { "scratchpad-scratch", mainMod .. " + MINUS", scratchpad.toggle("scratch"), "Scratchpad: Show / hide the scratchpad" }
 binds[#binds + 1] = { "scratchpad-send", mainMod .. " + SHIFT + MINUS", scratchpad.send("scratch"), "Scratchpad: Send window to / back from the scratchpad" }
+-- games open there by themselves (rules.lua); their launchers stay put
+binds[#binds + 1] = { "scratchpad-games", mainMod .. " + G", scratchpad.toggle("games"), "Scratchpad: Show / hide games" }
 local extra_pads = settings.get("keybinds.scratchpads", {})
 if type(extra_pads) ~= "table" then
     extra_pads = {}
 end
 local pad_names = {}
 for name, pad in pairs(extra_pads) do
-    local builtin = name == "terminal" or name == "scratch" or name == "send" -- change those with remap
+    local builtin = name == "terminal" or name == "scratch" or name == "send" or name == "games" -- change those with remap
     if not builtin and type(pad) == "table" and type(pad.keys) == "string" and name:match("^[%w_-]+$") then
         pad_names[#pad_names + 1] = name
     end

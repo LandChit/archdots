@@ -7,40 +7,64 @@ import qs.services
 import qs.widgets
 
 // The wallpapers in Config.wallpaper.directory, newest first, with
-// thumbnails. Enter sets one everywhere and recolours everything from it;
-// Shift+Enter sets it on the focused screen only.
+// thumbnails. Enter sets one everywhere and recolours everything from it.
+// With a wallpaper per screen (wallpaper.perMonitor) and more than one
+// screen, it asks for the screen first; the primary screen's recolours.
 ListPanel {
     id: root
 
+    // The screen being picked for; "" is every screen, or not chosen yet.
+    property string target: ""
+    readonly property bool perScreen: Config.wallpaper.perMonitor && Quickshell.screens.length > 1
+    readonly property bool choosingScreen: perScreen && target === ""
+
     name: "wallpaper"
-    glyph: "\u{f0e09}"
-    placeholder: "Search wallpapers"
-    hints: ["↕ navigate", "↵ apply", "⇧↵ this screen only", "esc close"]
+    glyph: choosingScreen ? "\u{f0379}" : "\u{f0e09}"
+    placeholder: choosingScreen ? "Which screen?" : target !== "" ? "Wallpaper for " + target : "Search wallpapers"
+    hints: choosingScreen ? ["↕ navigate", "↵ choose screen", "esc close"] : ["↕ navigate", "↵ apply", "esc close"]
     listHeight: 470
 
     function filter(): void {
         const needle = query.trim().toLowerCase();
+        if (choosingScreen) {
+            const screens = Quickshell.screens.map(s => s.name).filter(n => n.toLowerCase().includes(needle));
+            const focused = Hyprland.focusedMonitor ? screens.indexOf(Hyprland.focusedMonitor.name) : -1;
+            defaultIndex = Math.max(0, focused);
+            items = screens;
+            return;
+        }
+        defaultIndex = 0;
         items = Theme.available.filter(p => p.slice(p.lastIndexOf("/") + 1).toLowerCase().includes(needle));
     }
 
     onOpened: {
+        target = "";
         Theme.rescan();
         filter();
     }
     onQueryChanged: Qt.callLater(filter)
-    onActivated: (path, modifiers) => {
-        if (modifiers & Qt.ShiftModifier)
-            Theme.applyTo(Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : "", path);
+    onActivated: item => {
+        if (choosingScreen) {
+            target = item;
+            if (query === "")
+                filter();
+            else
+                query = "";
+            return;
+        }
+        if (target !== "")
+            Theme.setFor(target, item);
         else
-            Theme.apply(path);
+            Theme.apply(item);
         close();
     }
+
 
     Connections {
         target: Theme
 
         function onAvailableChanged(): void {
-            if (root.shown)
+            if (root.shown && !root.choosingScreen)
                 root.filter();
         }
     }
@@ -51,8 +75,12 @@ ListPanel {
         required property string modelData
         required property int index
         readonly property bool selected: ListView.isCurrentItem && ListView.view.showSelection
-        readonly property bool active: modelData === Theme.current
+        readonly property bool isScreen: root.choosingScreen
+        readonly property bool primary: isScreen && Screens.primary !== null && Screens.primary.name === modelData
+        readonly property string picture: isScreen ? Theme.wallpaperFor(modelData) : modelData
+        readonly property bool active: !isScreen && modelData === (root.target !== "" ? Theme.wallpaperFor(root.target) : Theme.current)
         readonly property string fileName: modelData.slice(modelData.lastIndexOf("/") + 1)
+        readonly property var screen: Quickshell.screens.find(s => s.name === modelData) ?? null
 
         width: ListView.view.width
         implicitHeight: 66
@@ -76,7 +104,7 @@ ListPanel {
 
                 Image {
                     anchors.fill: parent
-                    source: "file://" + row.modelData
+                    source: row.picture === "" ? "" : "file://" + row.picture
                     sourceSize: Qt.size(192, 108)
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
@@ -89,15 +117,15 @@ ListPanel {
 
                 BarText {
                     Layout.fillWidth: true
-                    text: row.fileName.replace(/\.[^.]+$/, "")
+                    text: row.isScreen ? row.modelData + (row.screen && row.screen.model !== "" ? " · " + row.screen.model : "") : row.fileName.replace(/\.[^.]+$/, "")
                     px: 13
                     elide: Text.ElideRight
                 }
                 BarText {
                     Layout.fillWidth: true
-                    text: row.active ? "Current" : row.fileName
+                    text: row.isScreen ? (row.primary ? "Primary · the colours come from here" : row.picture.slice(row.picture.lastIndexOf("/") + 1)) : row.active ? "Current" : row.fileName
                     px: 11
-                    color: row.active ? Colours.accentBright : Colours.subtext
+                    color: row.active || row.primary ? Colours.accentBright : Colours.subtext
                     elide: Text.ElideRight
                 }
             }

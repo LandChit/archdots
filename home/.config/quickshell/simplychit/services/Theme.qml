@@ -21,7 +21,10 @@ import qs.config
 // names, so the lock screen shows the same picture.
 //
 // Wallpapers per screen are kept in ~/.local/state/simplychit/wallpapers.json:
-// { "default": path, "monitors": { "DP-1": path } }.
+// { "default": path, "monitors": { "DP-1": path } }. With wallpaper.perMonitor
+// each screen is picked on its own (setFor) and the palette, `current`,
+// follows the primary screen's (services/Screens.qml), also when the primary
+// screen changes.
 Singleton {
     id: root
 
@@ -34,6 +37,8 @@ Singleton {
     property var perMonitor: ({})
     property var available: []
     property bool working: false
+    // The wallpaper the colours should come from.
+    readonly property string paletteSource: Config.wallpaper.perMonitor && Screens.primary ? wallpaperFor(Screens.primary.name) : current
     readonly property list<string> backends: ["wal", "colorthief", "colorz", "haishoku", "fast_colorthief", "modern_colorthief", "okthief"]
 
     function wallpaperFor(monitor: string): string {
@@ -42,20 +47,42 @@ Singleton {
 
     // Every screen, and the palette with it.
     function apply(path: string): void {
-        current = path;
         perMonitor = {};
+        recolour(path);
+    }
+
+    // One screen only. The primary screen's also recolours everything.
+    function setFor(monitor: string, path: string): void {
+        pin();
+        const next = Object.assign({}, perMonitor);
+        next[monitor] = path;
+        perMonitor = next;
+        if (Screens.primary && monitor === Screens.primary.name)
+            recolour(path);
+        else
+            save();
+    }
+
+    // Gives every connected screen without a wallpaper of its own the current
+    // one, so a new `current` moves none of them.
+    function pin(): void {
+        if (current === "")
+            return;
+        const next = Object.assign({}, perMonitor);
+        for (const screen of Quickshell.screens) {
+            if (!(screen.name in next))
+                next[screen.name] = current;
+        }
+        perMonitor = next;
+    }
+
+    // The palette from `path`, which hyprlock shows too.
+    function recolour(path: string): void {
+        current = path;
         save();
         pointerSetter.command = ["sh", "-c", "mkdir -p \"$(dirname \"$1\")\" && ln -sfn \"$2\" \"$1.new\" && mv -T \"$1.new\" \"$1\"", "sh", pointer, path];
         pointerSetter.running = true;
         repaint("", "");
-    }
-
-    // One screen only; the palette stays with the main wallpaper.
-    function applyTo(monitor: string, path: string): void {
-        const next = Object.assign({}, perMonitor);
-        next[monitor] = path;
-        perMonitor = next;
-        save();
     }
 
     // The new value goes to wal directly: Config only sees it once
@@ -70,12 +97,21 @@ Singleton {
         repaint(Config.theme.mode, backend);
     }
 
+    // Another wallpaper from the folder; per screen, one for each.
     function next(random: bool): void {
         if (available.length === 0)
             return;
-        const others = available.filter(p => p !== current);
-        const pool = others.length > 0 ? others : available;
-        apply(random ? pool[Math.floor(Math.random() * pool.length)] : pool[(Math.max(0, available.indexOf(current)) ) % pool.length]);
+        const pick = now => {
+            const others = available.filter(p => p !== now);
+            const pool = others.length > 0 ? others : available;
+            return random ? pool[Math.floor(Math.random() * pool.length)] : pool[Math.max(0, available.indexOf(now)) % pool.length];
+        };
+        if (!Config.wallpaper.perMonitor) {
+            apply(pick(current));
+            return;
+        }
+        for (const screen of Quickshell.screens)
+            setFor(screen.name, pick(wallpaperFor(screen.name)));
     }
 
     function repaint(mode: string, backend: string): void {
@@ -160,6 +196,16 @@ Singleton {
             }
         }
     }
+
+    // A new primary screen, or the setting turned on: colours from the
+    // primary screen's wallpaper. Deferred, as paletteSource's inputs change
+    // one at a time (the state file loading sets current, then perMonitor).
+    onPaletteSourceChanged: Qt.callLater(() => {
+        if (paletteSource !== "" && paletteSource !== current) {
+            pin();
+            recolour(paletteSource);
+        }
+    })
 
     Timer {
         interval: Math.max(1, Config.wallpaper.cycleMinutes) * 60000

@@ -142,6 +142,9 @@ Singleton {
                 property int cycleMinutes: 0
                 // Crossfade length when the wallpaper changes, in ms; 0 is a cut.
                 property int transitionMs: 700
+                // Each screen its own wallpaper, picked screen first (SUPER+W);
+                // the colours come from the primary screen's.
+                property bool perMonitor: false
             }
 
             property JsonObject theme: JsonObject {

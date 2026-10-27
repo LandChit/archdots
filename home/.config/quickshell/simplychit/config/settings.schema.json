@@ -225,6 +225,11 @@
           "default": 700,
           "description": "Crossfade length when the wallpaper changes, in ms; 0 is a cut.",
           "minimum": 0
+        },
+        "perMonitor": {
+          "type": "boolean",
+          "default": false,
+          "description": "Each screen its own wallpaper, picked screen first (SUPER+W); the colours come from the primary screen's."
         }
       },
       "additionalProperties": false

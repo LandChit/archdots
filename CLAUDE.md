@@ -5,9 +5,10 @@
 - Use the `rewrite` branch for all changes.
 - Update [TODO.md](TODO.md) after every completed task: tick it, and note
   what is left or where it moved.
-- The active dotfiles are in `~/archdots`; `~/.config` and `~/.zshrc` are
-  stowed from there. This repo (`~/archdots_rewrite`) is the development
-  rewrite, so editing it never changes the running desktop.
+- This repo (`~/archdots`) is the live install: `~/.config` and `~/.zshrc`
+  are stowed from its `home/`, so editing a file here changes the running
+  desktop (on the next reload or restart of that program).
+  `~/archdots_rewrite` is the old development clone and is no longer used.
 - Work through TODO.md phase by phase, in order.
 
 ## Name
@@ -16,8 +17,8 @@
   SimplyChit; paths and ids are lowercase `simplychit` (`~/.config/simplychit/`,
   `qs -c simplychit`, `simplychit doctor`, layer namespaces `simplychit-*`).
 - Not renamed: the GitHub repo URL (`LandChit/archdots`, until the owner
-  renames it there) and the owner's own folders `~/archdots` (live clone) and
-  `~/archdots_rewrite`. install.sh's `retire_old_name` migrates an existing
+  renames it there) and the owner's own folder `~/archdots` (this clone).
+  install.sh's `retire_old_name` migrates an existing
   install from the old name.
 
 ## Layout
@@ -32,13 +33,15 @@
   never in the repo. GTK user files stay in `~/.config/gtk-{3,4}.0/`.
   `config/custom/` is the legacy override folder, still loaded first.
   User-facing guide: [CUSTOMIZING.md](CUSTOMIZING.md).
-- `~/archdots` (live) is still on the old root layout and the fabric shell
-  until it updates. In this repo fabric is gone: the shell is Quickshell,
+- Fabric is gone: the shell is Quickshell,
   `home/.config/quickshell/simplychit/` (`qs -c simplychit`).
 
 ## Testing without touching the live desktop
 
-- Nothing here is live, so test against this repo's files, not `~/.config`.
+- This repo is live: a saved edit reaches the desktop as soon as the
+  program reloads (Quickshell watches its files and reloads by itself), so
+  keep the tree working between edits. For risky changes, test a copy in the
+  scratchpad (`qs -p <copy>`) before editing the real file.
 - `SIMPLYCHIT_REPO=$PWD ./simplychit_docker/runscript.sh --fast` runs install.sh
   in a container (repo mounted read-only). It ends with exit 1 at
   "could not set gtk-theme" on every commit; that is a container limit, not

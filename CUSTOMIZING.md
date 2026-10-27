@@ -39,7 +39,7 @@ GTK only reads its own folders, so those two files live there:
 | Terminal font, size, opacity, padding | `local/alacritty.toml` | `[font]` `size = 14.0` |
 | GTK 4 / libadwaita apps | `~/.config/gtk-4.0/user.css` | |
 | GTK 3 apps | `~/.config/gtk-3.0/gtk.css` | |
-| Wallpaper and colours | the wallpaper picker (SUPER + W); colours follow the wallpaper. Shift+Enter sets it for one screen | |
+| Wallpaper and colours | the wallpaper picker (SUPER + W); colours follow the wallpaper. Settings → Appearance has the same pictures, and "A wallpaper per screen" (`wallpaper.perMonitor`): then the picker asks for the screen first, and the colours come from the primary screen's | |
 | Light or dark colours, colour scheme | `theme.mode`, `theme.backend` in `settings.json`, or the launcher's `>` actions | |
 | Bar layout, and a different one per screen | the Bar page (pick a screen, turn off "Use the default layout"), or `bar.left` / `bar.center` / `bar.right` and `bar.monitors` in `settings.json` | `"monitors": {"HDMI-A-1": {"right": ["volume", "clock"]}}` |
 | Stay awake (no dim, lock or suspend) | SUPER + SHIFT + I toggles it | |
@@ -190,6 +190,7 @@ Every key, with its default:
 | `games.classes` | more window classes (regular expressions, `^…$` for an exact one) that open fullscreen in the games scratchpad, e.g. `["^Albion Online$"]` |
 | `displays` | written by the Displays page: one layout per set of connected monitors, by description |
 | `wallpaper.cycleMinutes` | switch to another wallpaper from the folder every N minutes; 0 is off |
+| `wallpaper.perMonitor` | each screen its own wallpaper: SUPER+W asks for the screen first; the colours come from the primary screen's (`displays.primary`) |
 | `theme.mode` | `light` or `dark` palette from the wallpaper (the launcher's `>` has it too) |
 | `theme.backend` | pywal16's colour backend: `wal`, `colorthief`, `colorz`, `haishoku`, … |
 | `battery.criticalAction` | at `actionPercent`, after a 30 s countdown you can cancel: `suspend`, `hibernate`, `poweroff` or `none` |

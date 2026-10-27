@@ -216,9 +216,15 @@ belong to it. Done, apart from checking it all on a real session (last item).
 - [x] **16. Wallpaper extras** (done): per-monitor wallpapers, animated transitions,
   timed cycling
   - The shell draws the wallpaper (`modules/wallpaper/Background.qml`).
-    Shift+Enter in the picker = this screen only; crossfade
-    (`wallpaper.transitionMs`); `wallpaper.cycleMinutes`.
+    Crossfade (`wallpaper.transitionMs`); `wallpaper.cycleMinutes`.
   - hyprpaper is gone (not started, not installed).
+  - [x] A setting for it (`wallpaper.perMonitor`, Settings → Appearance):
+    on, SUPER+W picks the screen first and the colours follow the primary
+    screen's wallpaper (also when the primary screen changes); off, one
+    wallpaper everywhere (Shift+Enter "this screen only" is gone).
+    Appearance shows the wallpapers as thumbnails to pick from.
+    Tested on a scratch copy with shims; the thumbnails were not clicked
+    in the test (they call the same `Theme.setFor`/`apply` as the picker).
 - [x] **C7. Special-workspace indicators in the bar** (done; not exercised live: no special workspace in use here)
 - [x] **C7. Per-monitor bar config** (done): different widgets per screen, excluded
   screens (`bar.monitors`, `bar.excluded` in settings.json)

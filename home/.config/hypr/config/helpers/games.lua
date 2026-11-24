@@ -143,6 +143,24 @@ local function windowed(window)
     return false
 end
 
+-- Put a window (by address, "0x…") in the games scratchpad, fullscreen
+-- unless it is a windowed game, and show it. For the shell's "add to games"
+-- answer, as one `hyprctl eval`, so the steps keep their order.
+function M.take(address)
+    local selector = "address:" .. address
+    local window = hl.get_window(selector)
+    if not window then
+        return
+    end
+    if not (window.workspace and window.workspace.name == M.workspace) then
+        hl.dispatch(hl.dsp.window.move({ workspace = M.workspace, follow = false, window = selector }))
+    end
+    if not windowed(window) then
+        hl.dispatch(hl.dsp.window.fullscreen({ action = "set", window = selector }))
+    end
+    scratchpad.show(M.name)
+end
+
 -- Send the focused window to the games scratchpad, fullscreen, and show it;
 -- or, when it is in there already, back to the workspace under it.
 function M.send()

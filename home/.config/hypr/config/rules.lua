@@ -169,7 +169,7 @@ hl.layer_rule(
 hl.layer_rule(
     {
         name = "simplychit-scrims",
-        match = { namespace = "simplychit-(powermenu|screenshot|keybinds|polkit|lock-preview)" },
+        match = { namespace = "simplychit-(powermenu|screenshot|keybinds|polkit|games|lock-preview)" },
         blur = true,
         ignore_alpha = 0.1,
     }

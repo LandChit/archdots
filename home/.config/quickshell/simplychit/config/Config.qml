@@ -34,6 +34,7 @@ Singleton {
     property alias apps: adapter.apps
     property alias notifications: adapter.notifications
     property alias input: adapter.input
+    property alias games: adapter.games
     property alias keybinds: adapter.keybinds
     property alias displays: adapter.displays
     property alias brightness: adapter.brightness

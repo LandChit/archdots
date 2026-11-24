@@ -758,9 +758,22 @@ scratchpads kept on the primary screen.
   `keybinds.scratchpads.<name>.primaryMonitor`. Tested live with a test
   class: opened, hidden and shown again from the external screen, it stays
   on eDP-1. SUPER+SHIFT+G makes the window fullscreen unless windowed
-- [ ] **Ask before adding**: `services/Games.qml` + `modules/games/GamesDialog.qml`
+- [x] **Ask before adding** (done): `services/Games.qml` watches
+  Hyprland's `movewindowv2` into `special:games`; a window in no list and
+  not in `games.ignored` gets `modules/games/GamesDialog.qml` on the
+  primary screen (Enter: add, Esc: No, remembered). Yes writes
+  `games.classes` (`^class$`), runs `games.refresh()` and `games.take()`
+  (moved in, fullscreen, shown) in one eval each. One lookup Process per
+  window (a shared one restarted from `onExited` lost requests). IPC
+  `games ask|answer|add`. Tested in a scratch shell with a hyprctl shim:
+  Yes, No, listed, ignored, a real move, and a move of a window already
+  answered; `take()` tested live
+- [x] **Detect games as they open** (done, same service): content type
+  `game`, a `.exe` class, `gamescope`, or `SteamAppId`/`STEAM_COMPAT_APP_ID`/
+  `LUTRIS_GAME_UUID`/`HEROIC_APP_NAME`/`GAMEID` (not empty, not 0) in
+  `/proc/<pid>/environ`; launchers skipped. Tested with `SteamAppId=123`
+  and a `Game.exe` class (asked) and `SteamAppId=0` (not). Not checked on
+  a real Lutris/Heroic launch: whether those variable names are set
 - [ ] **Settings → Games** page
-- [ ] **Detect games as they open** (content type, `.exe`, gamescope,
-  launcher env vars)
 - [ ] **Drop games-to-review.txt** and its mentions; docs (CUSTOMIZING,
   DO_THIS)

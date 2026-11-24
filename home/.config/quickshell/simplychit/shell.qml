@@ -10,6 +10,7 @@ import qs.modules.calendar
 import qs.modules.clipboard
 import qs.modules.control
 import qs.modules.emoji
+import qs.modules.games
 import qs.modules.keybinds
 import qs.modules.launcher
 import qs.modules.lock
@@ -66,6 +67,7 @@ ShellRoot {
     Popups {}
     Toasts {}
     PolkitDialog {}
+    GamesDialog {}
 
     // after a display change, and Identify; also run by the Displays service
     // on hotplug, so it lives here rather than in the settings window
@@ -280,6 +282,26 @@ ShellRoot {
 
         function open(): void {
             FirstRun.show();
+        }
+    }
+
+    // The "add to games?" question (services/Games.qml). `ask <address>`
+    // asks about any window in no list (an address from hyprctl clients);
+    // `answer true|false` answers it; `add <class>` adds a class as is.
+    IpcHandler {
+        target: "games"
+
+        function ask(address: string): void {
+            Games.consider(address, false, true);
+        }
+        function answer(yes: bool): void {
+            if (yes)
+                Games.answerYes();
+            else
+                Games.answerNo();
+        }
+        function add(cls: string): void {
+            Games.add(cls, cls);
         }
     }
 

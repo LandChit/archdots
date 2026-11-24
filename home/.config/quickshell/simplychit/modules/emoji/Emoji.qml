@@ -7,7 +7,10 @@ import qs.services
 import qs.widgets
 
 // Emoji grid with a group rail, most-used first. Enter or a click copies.
-// ↑↓ move by row; ←→ move while the search is empty; PgUp/PgDn change group.
+// Two places for the keys: the search box (typing; ←→ move the text cursor)
+// and the grid (←→↑↓ move the selection). ↓ goes from the box into the grid,
+// ↑ from the grid's top row back to the box; with an empty search ←→ step
+// into the grid too. Typing goes back to the box. PgUp/PgDn change group.
 //
 // The data is unicode-emoji-json, cached at
 // ~/.cache/emoji-picker/; downloaded once if it is missing.
@@ -28,6 +31,7 @@ SearchPanel {
     property var emoji: []
     property var shown: []
     property string group: "All"
+    // the keys move in the grid (a selection is shown), not in the search box
     property bool moved: false
 
     function load(text: string): void {
@@ -57,6 +61,26 @@ SearchPanel {
         grid.currentIndex = Math.max(0, Math.min(shown.length - 1, grid.currentIndex + delta));
     }
 
+    // ↓ from the search box selects the first emoji, then moves by row
+    function down(): void {
+        if (!moved) {
+            if (shown.length > 0) {
+                moved = true;
+                grid.currentIndex = 0;
+            }
+            return;
+        }
+        move(columns);
+    }
+
+    // ↑ moves by row; from the top row, back to the search box
+    function up(): void {
+        if (moved && grid.currentIndex < columns)
+            moved = false;
+        else if (moved)
+            move(-columns);
+    }
+
     function pick(index: int): void {
         const e = shown[index];
         if (!e)
@@ -80,8 +104,8 @@ SearchPanel {
             refilter();
     }
     onQueryChanged: Qt.callLater(refilter)
-    onMoveUp: move(-columns)
-    onMoveDown: move(columns)
+    onMoveUp: up()
+    onMoveDown: down()
     onMoveLeft: move(-1)
     onMoveRight: move(1)
     onAccepted: pick(grid.currentIndex)
@@ -90,8 +114,10 @@ SearchPanel {
             stepGroup(1);
         else if (event.key === Qt.Key_PageUp)
             stepGroup(-1);
+        else if ((event.key === Qt.Key_Left || event.key === Qt.Key_Right) && (moved || query === ""))
+            move(event.key === Qt.Key_Left ? -1 : 1);
         else
-            return;
+            return; // ←→ with text in the box: the text cursor (SearchPanel)
         event.accepted = true;
     }
 

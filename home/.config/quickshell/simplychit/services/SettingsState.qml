@@ -15,6 +15,7 @@ Singleton {
         ["notifications", "Notifications", "\u{f009a}"],
         ["input", "Input", "\u{f030c}"],
         ["keybinds", "Keybinds", "\u{f0313}"],
+        ["games", "Games", "\u{f0297}"],
         ["about", "About", "\u{f02fd}"]
     ]
 

@@ -774,6 +774,11 @@ scratchpads kept on the primary screen.
   `/proc/<pid>/environ`; launchers skipped. Tested with `SteamAppId=123`
   and a `Game.exe` class (asked) and `SteamAppId=0` (not). Not checked on
   a real Lutris/Heroic launch: whether those variable names are set
-- [ ] **Settings → Games** page
+- [x] **Settings → Games** page (done): `pages/GamesPage.qml`, behaviour
+  switches (primary screen, ask, detect), your games (fullscreen switch,
+  Remove, add from an open window or by class), the shipped list with an
+  on/off per game, and "Not games" (Add as a game / Ask again). Each change
+  goes through `Games.write`, then `games.refresh()`. Tested in a scratch
+  shell: every action over IPC, the page redrawn to match
 - [ ] **Drop games-to-review.txt** and its mentions; docs (CUSTOMIZING,
   DO_THIS)

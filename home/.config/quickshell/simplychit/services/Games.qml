@@ -49,7 +49,7 @@ Singleton {
 
     function entryOf(value: var): var {
         if (typeof value === "string")
-            return value === "" ? null : { name: value, class: value, title: "", fullscreen: true };
+            return value === "" ? null : { name: value.replace(/^\^|\$$/g, ""), class: value, title: "", fullscreen: true };
         if (value && typeof value === "object" && typeof value.class === "string" && value.class !== "")
             return {
                 name: typeof value.name === "string" && value.name !== "" ? value.name : value.class,

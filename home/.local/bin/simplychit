@@ -182,7 +182,7 @@ def checks():
 
 # ── settings.json against its schema ────────────────────────────────────────
 # Just the parts of JSON Schema the generated schema uses: type, properties,
-# additionalProperties, items, enum, minimum, maximum, pattern.
+# additionalProperties, items, enum, minimum, maximum, pattern, anyOf.
 
 KINDS = {
     "boolean": ("true or false", lambda v: isinstance(v, bool)),
@@ -195,6 +195,19 @@ KINDS = {
 
 
 def validate(value, schema, path, problems):
+    if "anyOf" in schema:
+        # fine if any option is; else report against the option of the same
+        # type (a misspelled key in an object, not "should be text")
+        tries = []
+        for option in schema["anyOf"]:
+            found = []
+            validate(value, option, path, found)
+            if not found:
+                return
+            kind = option.get("type")
+            tries.append((0 if kind and KINDS[kind][1](value) else 1, len(found), found))
+        problems.extend(min(tries, key=lambda t: t[:2])[2])
+        return
     kind = schema.get("type")
     if kind and not KINDS[kind][1](value):
         problems.append(f"{path}: should be {KINDS[kind][0]}, not {json.dumps(value)}")

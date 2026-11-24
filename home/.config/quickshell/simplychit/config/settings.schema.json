@@ -401,15 +401,68 @@
       "properties": {
         "classes": {
           "type": "array",
+          "default": [],
+          "description": "Your games, on top of the shipped ones: a class regex (^\u2026$ for an exact one), or { \"name\", \"class\", \"title\", \"fullscreen\": false } to open one windowed.",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "class": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "fullscreen": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "ignored": {
+          "type": "array",
           "items": {
             "type": "string"
           },
           "default": [],
-          "description": "More window classes (regular expressions, ^\u2026$ for an exact one) that open fullscreen in the games scratchpad. Windows sent there by hand are listed in ~/.config/simplychit/games-to-review.txt."
+          "description": "Classes you answered \"not a game\" for: never asked again."
+        },
+        "disabled": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Shipped games switched off, by name."
+        },
+        "primaryMonitor": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the games scratchpad on the primary screen."
+        },
+        "ask": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ask whether to add a window moved into games that is in no list."
+        },
+        "detect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ask about a window that opens looking like a game (Wine, Lutris, Heroic, Steam, gamescope, a \"game\" content type)."
         }
       },
       "additionalProperties": false,
-      "description": "Read by hypr/config/rules.lua: the games scratchpad."
+      "description": "The games scratchpad (SUPER+G), read by hypr/config/helpers/games.lua and services/Games.qml; the shipped games are in ~/.config/hypr/games.json."
     },
     "keybinds": {
       "type": "object",
@@ -431,7 +484,7 @@
         "scratchpads": {
           "type": "object",
           "default": {},
-          "description": "More scratchpads: name -> { \"keys\": \"SUPER + M\", \"command\": \"spotify\" }. The command starts when the scratchpad is empty.",
+          "description": "More scratchpads: name -> { \"keys\": \"SUPER + M\", \"command\": \"spotify\" }. The command starts when the scratchpad is empty. \"primaryMonitor\": true keeps one on the primary screen (also for the built-in \"terminal\" and \"scratch\", without keys).",
           "additionalProperties": {
             "type": "object",
             "additionalProperties": false,
@@ -441,6 +494,9 @@
               },
               "command": {
                 "type": "string"
+              },
+              "primaryMonitor": {
+                "type": "boolean"
               }
             }
           }

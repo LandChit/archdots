@@ -47,6 +47,12 @@ function M.load()
     return cache
 end
 
+-- Forget what was read, so the next get() reads the file again. For code
+-- run later by `hyprctl eval` (games.refresh()); a reload starts fresh anyway.
+function M.reload()
+    cache = nil
+end
+
 -- settings.get("displays.active", default): a dotted path into the file
 function M.get(key, default)
     local node = M.load()

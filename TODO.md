@@ -732,3 +732,35 @@ extras), with the owner's choices.
   lines follow the position, the spectrum moves, a pinned paused player is
   shown while the other plays, "No lyrics found" for an unknown track. Not
   tested: a real player's seek bar, cover art over http, the chips by click
+
+## Phase 10: games scratchpad
+
+The games list as data, a Games page, a question before adding a game, and
+scratchpads kept on the primary screen.
+
+- [x] **Shipped list and live rules** (done): `home/.config/hypr/games.json`
+  (Steam games, CS2, Minecraft, Sober, gamescope, osu!, Factorio,
+  SuperTuxKart, RetroArch) plus settings.json `games.classes` (strings, or
+  `{name, class, title, fullscreen}`), minus `games.disabled`.
+  `helpers/games.lua` `refresh()` makes a rule per game (`game-<n>`,
+  fullscreen, or tagged `game-windowed` for `"fullscreen": false`); a rule
+  declared again under its name replaces the old one, leftovers are switched
+  off, so `hyprctl eval 'require("config.helpers.games").refresh()'` applies
+  a change without a reload. Checked live: `set_enabled`, same-name
+  redeclare, a later user rule with `fullscreen = false` wins. Only Steam,
+  CS2 and Minecraft classes were seen on a real launch; the rest are from
+  the apps' known ids
+- [x] **Primary screen** (done): `helpers/screens.lua` (displays.primary,
+  else eDP, else the first, as `services/Screens.qml`);
+  `scratchpad.keep_on_primary(name)` moves a kept scratchpad to it on
+  `workspace.special_active` (`monitor:set_special_workspace`) and toggles
+  it there. Games: `games.primaryMonitor` (on); others:
+  `keybinds.scratchpads.<name>.primaryMonitor`. Tested live with a test
+  class: opened, hidden and shown again from the external screen, it stays
+  on eDP-1. SUPER+SHIFT+G makes the window fullscreen unless windowed
+- [ ] **Ask before adding**: `services/Games.qml` + `modules/games/GamesDialog.qml`
+- [ ] **Settings → Games** page
+- [ ] **Detect games as they open** (content type, `.exe`, gamescope,
+  launcher env vars)
+- [ ] **Drop games-to-review.txt** and its mentions; docs (CUSTOMIZING,
+  DO_THIS)

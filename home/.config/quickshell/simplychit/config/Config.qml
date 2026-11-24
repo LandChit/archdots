@@ -189,13 +189,24 @@ Singleton {
                 }
             }
 
-            // Read by hypr/config/rules.lua: the games scratchpad.
+            // The games scratchpad (SUPER+G), read by hypr/config/helpers/games.lua
+            // and services/Games.qml; the shipped games are in ~/.config/hypr/games.json.
             property JsonObject games: JsonObject {
-                // More window classes (regular expressions, ^…$ for an exact
-                // one) that open fullscreen in the games scratchpad. Windows
-                // sent there by hand are listed in
-                // ~/.config/simplychit/games-to-review.txt.
-                property list<string> classes: []
+                // Your games, on top of the shipped ones: a class regex
+                // (^…$ for an exact one), or { "name", "class", "title",
+                // "fullscreen": false } to open one windowed.
+                property var classes: []
+                // Classes you answered "not a game" for: never asked again.
+                property list<string> ignored: []
+                // Shipped games switched off, by name.
+                property list<string> disabled: []
+                // Show the games scratchpad on the primary screen.
+                property bool primaryMonitor: true
+                // Ask whether to add a window moved into games that is in no list.
+                property bool ask: true
+                // Ask about a window that opens looking like a game (Wine, Lutris,
+                // Heroic, Steam, gamescope, a "game" content type).
+                property bool detect: true
             }
 
             // Read by hypr/config/keybind.lua: id -> keys, and ids to drop.
@@ -204,6 +215,8 @@ Singleton {
                 property list<string> disabled: []
                 // More scratchpads: name -> { "keys": "SUPER + M", "command":
                 // "spotify" }. The command starts when the scratchpad is empty.
+                // "primaryMonitor": true keeps one on the primary screen (also
+                // for the built-in "terminal" and "scratch", without keys).
                 property var scratchpads: ({})
             }
 

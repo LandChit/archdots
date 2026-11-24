@@ -46,7 +46,13 @@ EXTRA = {
     "keybinds.remap": {"additionalProperties": {"type": "string"}},
     "keybinds.scratchpads": {"additionalProperties": {
         "type": "object", "additionalProperties": False,
-        "properties": {"keys": {"type": "string"}, "command": {"type": "string"}}}},
+        "properties": {"keys": {"type": "string"}, "command": {"type": "string"},
+                       "primaryMonitor": {"type": "boolean"}}}},
+    "games.classes": {"type": "array", "items": {"anyOf": [
+        {"type": "string"},
+        {"type": "object", "additionalProperties": False,
+         "properties": {"name": {"type": "string"}, "class": {"type": "string"},
+                        "title": {"type": "string"}, "fullscreen": {"type": "boolean"}}}]}},
     "audio.scrollStep": {"minimum": 1, "maximum": 50},
     "audio.maxVolume": {"minimum": 1, "maximum": 3},
 }

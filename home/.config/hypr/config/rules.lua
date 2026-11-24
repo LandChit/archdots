@@ -133,18 +133,13 @@ hl.window_rule({
 -- Games open in their own scratchpad, special:games (SUPER+G shows or hides
 -- it), whatever workspace their launcher is on: the game shows over it, and
 -- hiding it leaves the game running. Launchers (Steam, Prism) are not
--- matched and stay where they open. A game ruled there shows the scratchpad
--- on the focused screen by itself, and it closes when the last game exits.
-steam_games = "^(?i)steam_app_.*"
-
-hl.window_rule({
-    name = "steam",
-    match = {
-        class = steam_games
-    },
-    fullscreen = true,
-    workspace = "special:games",
-})
+-- matched and stay where they open. The games are listed in
+-- ~/.config/hypr/games.json (shipped) and settings.json games.classes
+-- (yours, from Settings > Games); helpers/games.lua makes a rule for each,
+-- fullscreen unless the entry says otherwise. To open one windowed with a
+-- rule of your own, add one with fullscreen = false to
+-- ~/.config/simplychit/hypr/rules.lua: it loads later and wins.
+require("config.helpers.games").refresh()
 
 -- hl.on("window.close", function(window)
 --     if window.class == "steam_app_2225070" then
@@ -157,32 +152,6 @@ hl.window_rule({
 --         })
 --     end
 -- end)
-
-hl.window_rule({
-    name = "minecraft",
-    match = {
-        class = "^Minecraft.*"
-    },
-    tile = true,
-    workspace = "special:games",
-})
-
--- More games, from settings.json: "games": { "classes": ["^Albion Online$"] }.
--- Windows sent there by hand (SUPER+SHIFT+G) are noted in
--- ~/.config/simplychit/games-to-review.txt to pick these from.
-local game_classes = require("config.helpers.settings").get("games.classes", {})
-if type(game_classes) == "table" then
-    for i, class in ipairs(game_classes) do
-        if type(class) == "string" and class ~= "" then
-            hl.window_rule({
-                name = "game-" .. i,
-                match = { class = class },
-                fullscreen = true,
-                workspace = "special:games",
-            })
-        end
-    end
-end
 
 -- Frosted glass for the shell's surfaces (namespaces "simplychit-<name>").
 -- ignore_alpha 0.5 blurs behind the 0.88-0.94 alpha islands and cards but not

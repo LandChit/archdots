@@ -109,12 +109,15 @@ end
 -- whatever you send it. More in settings.json, each with the id
 -- "scratchpad-<name>":
 --   "keybinds": { "scratchpads": { "music": { "keys": "SUPER + M", "command": "spotify" } } }
+-- "primaryMonitor": true keeps one on the primary screen; for the built-in
+-- terminal and scratch too ({ "terminal": { "primaryMonitor": true } }). Games:
+-- settings.json games.primaryMonitor, on unless false (helpers/games.lua).
 binds[#binds + 1] = { "scratchpad-terminal", mainMod .. " + GRAVE", scratchpad.toggle("terminal", apps.terminal), "Scratchpad: Drop-down terminal" }
 binds[#binds + 1] = { "scratchpad-scratch", mainMod .. " + MINUS", scratchpad.toggle("scratch"), "Scratchpad: Show / hide the scratchpad" }
 binds[#binds + 1] = { "scratchpad-send", mainMod .. " + SHIFT + MINUS", scratchpad.send("scratch"), "Scratchpad: Send window to / back from the scratchpad" }
--- games open there by themselves (rules.lua); their launchers stay put
+-- games open there by themselves (helpers/games.lua); their launchers stay put
 binds[#binds + 1] = { "scratchpad-games", mainMod .. " + G", scratchpad.toggle("games"), "Scratchpad: Show / hide games" }
--- a game not ruled there: send it (and note its class for games.classes)
+-- a game not listed: send it, fullscreen (the shell asks whether to add it)
 binds[#binds + 1] = { "scratchpad-games-send", mainMod .. " + SHIFT + G", games.send(), "Scratchpad: Send window to / back from games" }
 local extra_pads = settings.get("keybinds.scratchpads", {})
 if type(extra_pads) ~= "table" then
@@ -122,6 +125,9 @@ if type(extra_pads) ~= "table" then
 end
 local pad_names = {}
 for name, pad in pairs(extra_pads) do
+    if name ~= "games" and type(pad) == "table" and pad.primaryMonitor == true then
+        scratchpad.keep_on_primary(name, true)
+    end
     local builtin = name == "terminal" or name == "scratch" or name == "send" or name == "games" -- change those with remap
     if not builtin and type(pad) == "table" and type(pad.keys) == "string" and name:match("^[%w_-]+$") then
         pad_names[#pad_names + 1] = name

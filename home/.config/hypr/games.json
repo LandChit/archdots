@@ -1,0 +1,15 @@
+{
+  "about": "Games that open in the games scratchpad (special:games, SUPER+G) by themselves, fullscreen unless an entry says \"fullscreen\": false. Shipped with SimplyChit: to add one for everybody, add a line here (name, class: a regular expression for the window class, see `hyprctl clients`; optional title). Your own games go in Settings > Games, which writes ~/.config/simplychit/settings.json, not this file.",
+  "games": [
+    { "name": "Steam games", "class": "^(?i)steam_app_.*" },
+    { "name": "Counter-Strike 2", "class": "^cs2$" },
+    { "name": "Minecraft", "class": "^Minecraft.*" },
+    { "name": "Minecraft (new launcher window)", "class": "^com\\.mojang.*" },
+    { "name": "Roblox (Sober)", "class": "^org\\.vinegarhq\\.Sober$" },
+    { "name": "Gamescope", "class": "^gamescope$" },
+    { "name": "osu!", "class": "^osu!$" },
+    { "name": "Factorio", "class": "^factorio$" },
+    { "name": "SuperTuxKart", "class": "^supertuxkart$" },
+    { "name": "RetroArch", "class": "^(retroarch|com\\.libretro\\.RetroArch|org\\.libretro\\.RetroArch)$" }
+  ]
+}

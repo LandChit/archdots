@@ -1,54 +1,150 @@
--- The games scratchpad (special:games). Steam games and Minecraft open there
--- by themselves (rules.lua), and so do the classes in settings.json's
--- games.classes. Any other game is sent there by hand (SUPER+SHIFT+G), and
--- its class is noted once in ~/.config/simplychit/games-to-review.txt, so it
--- can be looked over later and added to games.classes.
+-- The games scratchpad (special:games, SUPER+G). A game opens there by
+-- itself, fullscreen, when its class is in one of two lists:
+--   · ~/.config/hypr/games.json, shipped with SimplyChit (Steam games,
+--     Minecraft, ...); entries can be switched off in settings.json
+--     games.disabled, by name;
+--   · settings.json games.classes, your own: strings (a class regex) or
+--     { "name": …, "class": …, "title": …, "fullscreen": false }.
+-- An entry with "fullscreen": false opens windowed; so does a game matched by
+-- a rule of your own with fullscreen = false (~/.config/simplychit/hypr/rules.lua
+-- loads later and wins).
+--
+-- The settings app and the shell's "add this game?" dialog change the lists,
+-- then run `hyprctl eval 'require("config.helpers.games").refresh()'`, which
+-- applies them without a reload. The dialog itself is the shell's
+-- (services/Games.qml): it sees every window moved in here, by SUPER+SHIFT+G,
+-- the mouse or hyprctl, and asks about the ones in neither list.
 --
 --   local games = require("config.helpers.games")
 --   hl.bind("SUPER + SHIFT + G", games.send())
+local json = require("config.helpers.json")
+local settings = require("config.helpers.settings")
+local scratchpad = require("config.helpers.scratchpad")
+
 local M = {}
 
+M.name = "games"
 M.workspace = "special:games"
-M.review_file = os.getenv("HOME") .. "/.config/simplychit/games-to-review.txt"
+M.list_file = os.getenv("HOME") .. "/.config/hypr/games.json"
+-- the tag a windowed game gets, so send() knows not to make it fullscreen
+M.windowed_tag = "game-windowed"
 
-local HEADER = [[
-# Windows sent to the games scratchpad by hand (SUPER+SHIFT+G), one class each,
-# first time only: class, window title, date. To open one there by itself from
-# now on, add its class to settings.json:
-#   "games": { "classes": ["^Albion Online$"] }
-# (a regular expression; ^…$ for the exact class). Delete lines once handled.
-]]
+-- the rules made by refresh(), by name, to switch off the ones gone since
+local rules = {}
 
--- Note a class in the review file, unless it is listed there already.
-function M.note(class, title)
-    if class == nil or class == "" then
-        return
+local function report(message)
+    local log = io.open(os.getenv("HOME") .. "/.cache/hypr-custom.log", "a")
+    if log then
+        log:write(os.date("%Y-%m-%d %H:%M:%S ") .. "games.json: " .. message .. "\n")
+        log:close()
     end
-    local existing = io.open(M.review_file, "r")
-    if existing then
-        for line in existing:lines() do
-            if line:match("^([^\t#]+)") == class then
-                existing:close()
-                return
-            end
-        end
-        existing:close()
-    end
-    os.execute("mkdir -p '" .. M.review_file:match("^(.*)/") .. "'")
-    local out = io.open(M.review_file, "a")
-    if not out then
-        return
-    end
-    if existing == nil then
-        out:write(HEADER)
-    end
-    local clean = (title or ""):gsub("[\t\n]", " ")
-    out:write(class .. "\t" .. clean .. "\t" .. os.date("%Y-%m-%d") .. "\n")
-    out:close()
 end
 
--- Send the focused window to the games scratchpad and show it, noting its
--- class; or, when it is in there already, back to the workspace under it.
+-- The shipped list, as given: { { name = …, class = … }, … }.
+function M.shipped()
+    local file = io.open(M.list_file, "r")
+    if not file then
+        return {}
+    end
+    local text = file:read("a")
+    file:close()
+    local ok, data = pcall(json.decode, text)
+    if not ok or type(data) ~= "table" or type(data.games) ~= "table" then
+        report(ok and "no \"games\" list" or tostring(data))
+        return {}
+    end
+    return data.games
+end
+
+local function entry_of(value)
+    if type(value) == "string" and value ~= "" then
+        return { name = value, class = value, fullscreen = true }
+    end
+    if type(value) == "table" and type(value.class) == "string" and value.class ~= "" then
+        return {
+            name = type(value.name) == "string" and value.name or value.class,
+            class = value.class,
+            title = type(value.title) == "string" and value.title ~= "" and value.title or nil,
+            fullscreen = value.fullscreen ~= false,
+        }
+    end
+    return nil
+end
+
+-- Every game that has a rule: the shipped ones not switched off, then yours.
+function M.entries()
+    local off = {}
+    local disabled = settings.get("games.disabled", {})
+    if type(disabled) == "table" then
+        for _, name in ipairs(disabled) do
+            off[name] = true
+        end
+    end
+    local list = {}
+    for _, value in ipairs(M.shipped()) do
+        local entry = entry_of(value)
+        if entry and not off[entry.name] then
+            list[#list + 1] = entry
+        end
+    end
+    local own = settings.get("games.classes", {})
+    if type(own) == "table" then
+        for _, value in ipairs(own) do
+            local entry = entry_of(value)
+            if entry then
+                list[#list + 1] = entry
+            end
+        end
+    end
+    return list
+end
+
+-- (Re)make one rule per game, read fresh from both lists. A rule declared
+-- again under the same name replaces the old one; names no longer used are
+-- switched off.
+function M.refresh()
+    settings.reload()
+    local used = {}
+    for i, entry in ipairs(M.entries()) do
+        local name = "game-" .. i
+        local spec = {
+            name = name,
+            match = { class = entry.class, title = entry.title },
+            workspace = M.workspace,
+        }
+        if entry.fullscreen then
+            spec.fullscreen = true
+        else
+            spec.tag = "+" .. M.windowed_tag
+        end
+        local ok, rule = pcall(hl.window_rule, spec)
+        if ok and rule then
+            rules[name] = rule
+            used[name] = true
+        else
+            report(entry.name .. ": " .. tostring(rule))
+        end
+    end
+    for name, rule in pairs(rules) do
+        if not used[name] then
+            rule:set_enabled(false)
+            rules[name] = nil
+        end
+    end
+    scratchpad.keep_on_primary(M.name, settings.get("games.primaryMonitor", true) ~= false)
+end
+
+local function windowed(window)
+    for _, tag in ipairs(type(window.tags) == "table" and window.tags or {}) do
+        if tostring(tag):gsub("%*$", "") == M.windowed_tag then
+            return true
+        end
+    end
+    return false
+end
+
+-- Send the focused window to the games scratchpad, fullscreen, and show it;
+-- or, when it is in there already, back to the workspace under it.
 function M.send()
     return function()
         local window = hl.get_active_window()
@@ -60,12 +156,12 @@ function M.send()
             hl.dispatch(hl.dsp.window.move({ workspace = regular and regular.id or "e+0" }))
             return
         end
-        M.note(window.class, window.title)
-        hl.dispatch(hl.dsp.window.move({ workspace = M.workspace, follow = false }))
-        local shown = hl.get_active_special_workspace()
-        if not shown or shown.name ~= M.workspace then
-            hl.dispatch(hl.dsp.workspace.toggle_special("games"))
+        local address = "address:" .. window.address
+        hl.dispatch(hl.dsp.window.move({ workspace = M.workspace, follow = false, window = address }))
+        if not windowed(window) then
+            hl.dispatch(hl.dsp.window.fullscreen({ action = "set", window = address }))
         end
+        scratchpad.show(M.name)
     end
 end
 

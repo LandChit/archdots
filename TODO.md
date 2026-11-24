@@ -780,5 +780,10 @@ scratchpads kept on the primary screen.
   on/off per game, and "Not games" (Add as a game / Ask again). Each change
   goes through `Games.write`, then `games.refresh()`. Tested in a scratch
   shell: every action over IPC, the page redrawn to match
-- [ ] **Drop games-to-review.txt** and its mentions; docs (CUSTOMIZING,
-  DO_THIS)
+- [x] **Drop games-to-review.txt** (done): `note()` and the file are gone
+  from games.lua (the dialog replaces them), and every mention (keybind.lua,
+  rules.lua, Config.qml/schema, CUSTOMIZING). An existing file is left
+  alone, it is the user's. CUSTOMIZING has `games.*` and the per-scratchpad
+  `primaryMonitor`; DO_THIS section 7b is the check on a real session
+  (Steam/Lutris/Heroic launches, which the detection's variable names
+  still need)

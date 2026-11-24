@@ -206,6 +206,26 @@ AUR list). Then:
   while held) and a chime on `notify-send hi`; both switch off on the
   Notifications page; nothing under do not disturb
 
+## 7b. Check the games scratchpad (phase 10)
+
+- [ ] Start a Steam game while the external screen has focus: it opens
+  fullscreen in Games on the primary screen; SUPER+G hides and shows it
+- [ ] Settings → Games: switch Minecraft off, start it: it opens where
+  the launcher is; switch it back on
+- [ ] Open a game in no list (a Lutris/Heroic/Wine one) and press
+  SUPER+SHIFT+G: it goes fullscreen into Games and the question shows on
+  the primary screen. "Add to games" puts it under Your games; next launch
+  opens there by itself
+- [ ] Do the same with a non-game and answer No: it shows under Not games
+  and is not asked again; "Ask again" there brings the question back
+- [ ] A Lutris or Heroic game opening is asked about by itself (detection);
+  if not, note which launcher, and the output of
+  `tr '\0' '\n' < /proc/<pid>/environ | grep -iE 'lutris|heroic|gameid|steam'`
+- [ ] Optional: `"keybinds": {"scratchpads": {"terminal": {"primaryMonitor": true}}}`
+  keeps the drop-down terminal on the primary screen
+- [ ] `~/.config/simplychit/games-to-review.txt` is no longer written to;
+  add anything from it you still want, then delete it
+
 ## When it all works
 
 - [ ] Merge `rewrite` into `main` (and push) when you are happy with it
